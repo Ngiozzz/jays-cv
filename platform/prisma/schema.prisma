@@ -1,0 +1,670 @@
+// The single source of truth for the database.
+// Every business-owned table carries `tenantId`; the app only reaches them through
+// `tenantDb()` (src/lib/tenant-db.ts), which adds that filter to every query.
+// Money is always whole Kenyan shillings (Int), never floating point.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Businesses (tenants)
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  // Public domain (e.g. "jaycvs.co.ke"); requests are matched to a business by host
+  domain          String?  @unique
+  orderPrefix     String   @default("JC")
+  // Next order number to hand out; incremented inside the order-creating transaction
+  nextOrderNumber Int      @default(1041)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  settings       BusinessSettings?
+  homepage       Homepage?
+  memberships    Membership[]
+  invites        Invite[]
+  jobs           Job[]
+  orders         Order[]
+  orderEvents    OrderEvent[]
+  orderRevisions OrderRevision[]
+  payments       Payment[]
+  files          StoredFile[]
+  packages       Package[]
+  services       Service[]
+  reviews        Review[]
+  samples        Sample[]
+  posts          Post[]
+  faqs           Faq[]
+  contentChanges ContentChange[]
+  tokenEntries   TokenLedgerEntry[]
+  payouts        WriterPayout[]
+}
+
+enum MpesaMode {
+  TEST
+  LIVE
+}
+
+// The owner edits these in Admin → Website content → Business settings
+model BusinessSettings {
+  id               String    @id @default(cuid())
+  tenantId         String    @unique
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  whatsapp         String
+  email            String
+  address          String
+  channelLink      String?
+  linkedinUrl      String?
+  facebookUrl      String?
+  instagramUrl     String?
+  xUrl             String?
+  unpaidHours      Int       @default(24)
+  reminderDays     Int       @default(2)
+  autoCompleteDays Int       @default(5)
+  revisionHours    Int       @default(24)
+  // Client files are deleted this many months after delivery
+  retentionMonths  Int       @default(6)
+  aiWarnPct        Int       @default(20)
+  paybill          String
+  mpesaMode        MpesaMode @default(TEST)
+  updatedAt        DateTime  @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Logins (Better Auth tables: field names follow its expected schema)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions    Session[]
+  accounts    Account[]
+  memberships Membership[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// Team: who belongs to which business, and what they may do
+// ---------------------------------------------------------------------------
+
+enum Role {
+  OWNER
+  WRITER
+}
+
+enum MemberStatus {
+  ACTIVE
+  PAUSED
+  REMOVED
+}
+
+model Membership {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        Role
+  status      MemberStatus @default(ACTIVE)
+  displayName String
+  phone       String?
+  canWrite    Boolean      @default(true)
+  canPostJobs Boolean      @default(false)
+  // Writer's share of each order they deliver, in whole percent
+  payPercent  Int          @default(0)
+  joinedAt    DateTime     @default(now())
+  lastSeenAt  DateTime?
+
+  acceptedOrders Order[]            @relation("OrderWriter")
+  payouts        WriterPayout[]
+  invitesSent    Invite[]           @relation("InvitedBy")
+  orderEvents    OrderEvent[]
+  postsWritten   Post[]
+  jobsCreated    Job[]
+  contentChanges ContentChange[]
+  tokenEntries   TokenLedgerEntry[]
+
+  @@unique([tenantId, userId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+// Sign-in is invite-only: a Google account may only be created for an email with a pending invite
+model Invite {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Stored lower-case so matching the Google email is exact
+  email       String
+  name        String
+  phone       String?
+  role        Role         @default(WRITER)
+  canWrite    Boolean      @default(true)
+  canPostJobs Boolean      @default(false)
+  payPercent  Int          @default(0)
+  status      InviteStatus @default(PENDING)
+  invitedById String?
+  invitedBy   Membership?  @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+  acceptedAt  DateTime?
+
+  @@index([email, status])
+  @@index([tenantId])
+}
+
+// ---------------------------------------------------------------------------
+// Jobs board
+// ---------------------------------------------------------------------------
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Job {
+  id               String      @id @default(cuid())
+  tenantId         String
+  tenant           Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug             String
+  title            String
+  company          String
+  location         String
+  workMode         String
+  type             String
+  category         String
+  summary          String
+  responsibilities String[]
+  requirements     String[]
+  salary           String?
+  postedAt         DateTime    @default(now())
+  // null = open until filled
+  deadline         DateTime?   @db.Date
+  // How to apply; shape is validated by modules/jobs/jobs.schema.ts
+  apply            Json
+  source           String?
+  status           JobStatus   @default(DRAFT)
+  createdById      String?
+  createdBy        Membership? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  files        StoredFile[]
+  tokenEntries TokenLedgerEntry[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status, postedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  NEW
+  ABANDONED
+  PAID
+  WRITING
+  DRAFT_SENT
+  REVISIONS
+  DELIVERED
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  tenantId          String
+  tenant            Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Shown as `${orderPrefix}-${number}`, e.g. JC-1048; also the M-Pesa account number
+  number            Int
+  status            OrderStatus @default(NEW)
+  // Name of what was bought, copied at order time so later price list edits don't change it
+  itemName          String
+  packageId         String?
+  package           Package?    @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  serviceId         String?
+  service           Service?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  amount            Int
+  // Timing rules copied from the package at order time
+  firstDraftHours   Int
+  // null = unlimited rounds within revisionWindowDays
+  revisionRounds    Int?
+  extraHours        Int         @default(0)
+  clientName        String
+  clientPhone       String
+  clientEmail       String?
+  whatsappUpdates   Boolean     @default(true)
+  targetRole        String?
+  industry          String?
+  experience        String?
+  notes             String?
+  noCv              Boolean     @default(false)
+  source            String      @default("website")
+  // Only a hash of the private tracking-link token is stored, so a database leak can't reveal links
+  trackingTokenHash String      @unique
+  writerId          String?
+  writer            Membership? @relation("OrderWriter", fields: [writerId], references: [id], onDelete: SetNull)
+  paidAt            DateTime?
+  acceptedAt        DateTime?
+  draftSentAt       DateTime?
+  remindedAt        DateTime?
+  deliveredAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  events       OrderEvent[]
+  revisions    OrderRevision[]
+  payments     Payment[]
+  files        StoredFile[]
+  reviews      Review[]
+  tokenEntries TokenLedgerEntry[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, status])
+  @@index([tenantId, writerId])
+}
+
+model OrderRevision {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  round       Int
+  requestedBy String
+  text        String
+  requestedAt DateTime @default(now())
+
+  @@unique([orderId, round])
+}
+
+enum ActorType {
+  CLIENT
+  STAFF
+  SYSTEM
+  MPESA
+}
+
+// The order's history. `data` holds structured details (amounts, codes) so the
+// text can be rendered per viewer: writers never see money.
+model OrderEvent {
+  id              String      @id @default(cuid())
+  tenantId        String
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId         String
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind            String
+  actorType       ActorType
+  actorId         String?
+  actor           Membership? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  data            Json?
+  visibleToClient Boolean     @default(false)
+  at              DateTime    @default(now())
+
+  @@index([orderId, at])
+}
+
+// ---------------------------------------------------------------------------
+// Payments (M-Pesa Daraja)
+// ---------------------------------------------------------------------------
+
+enum PaymentChannel {
+  MPESA_STK
+  MPESA_PAYBILL
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+}
+
+// How a confirmed payment was tied to an order
+enum PaymentMatch {
+  ORDER_NUMBER
+  PHONE_AMOUNT_NAME
+  MANUAL
+  UNMATCHED
+  OTHER
+}
+
+model Payment {
+  id                String         @id @default(cuid())
+  tenantId          String
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId           String?
+  order             Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  channel           PaymentChannel
+  status            PaymentStatus  @default(PENDING)
+  match             PaymentMatch?
+  amount            Int
+  fee               Int            @default(0)
+  phone             String?
+  payerName         String?
+  accountReference  String?
+  // M-Pesa receipt code: unique, so one code can never pay two orders
+  receipt           String?        @unique
+  checkoutRequestId String?        @unique
+  merchantRequestId String?
+  raw               Json?
+  recordedById      String?
+  createdAt         DateTime       @default(now())
+  confirmedAt       DateTime?
+
+  @@index([tenantId, status])
+  @@index([tenantId, match])
+}
+
+model WriterPayout {
+  id        String     @id @default(cuid())
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  writerId  String
+  writer    Membership @relation(fields: [writerId], references: [id], onDelete: Cascade)
+  amount    Int
+  reference String?
+  paidAt    DateTime   @default(now())
+
+  @@index([tenantId, writerId])
+}
+
+// ---------------------------------------------------------------------------
+// Files (Supabase Storage, private buckets, short-lived signed links only)
+// ---------------------------------------------------------------------------
+
+enum FileKind {
+  CURRENT_CV
+  JOB_ADVERT
+  DRAFT
+  FINAL
+  JOB_POSTER
+  OTHER
+}
+
+model StoredFile {
+  id          String    @id @default(cuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  jobId       String?
+  job         Job?      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  kind        FileKind
+  // Draft number (1, 2, …) for DRAFT files
+  version     Int?
+  name        String
+  mimeType    String
+  sizeBytes   Int
+  storagePath String    @unique
+  uploadedBy  String
+  createdAt   DateTime  @default(now())
+  // Set from the retention setting when the order is delivered
+  deleteAfter DateTime?
+  deletedAt   DateTime?
+
+  @@index([tenantId, orderId])
+  @@index([deleteAfter])
+}
+
+// ---------------------------------------------------------------------------
+// Website content (edited by the owner)
+// ---------------------------------------------------------------------------
+
+model Package {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Short name used across the site and admin, e.g. "Professional"
+  shortName          String
+  name               String
+  price              Int
+  bestFor            String
+  firstDraftHours    Int
+  // null = unlimited rounds within revisionWindowDays
+  revisionRounds     Int?
+  revisionWindowDays Int?
+  features           String[]
+  popular            Boolean  @default(false)
+  visible            Boolean  @default(true)
+  sortOrder          Int      @default(0)
+  updatedAt          DateTime @updatedAt
+
+  orders Order[]
+
+  @@unique([tenantId, shortName])
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  note            String
+  price           Int
+  firstDraftHours Int      @default(48)
+  revisionRounds  Int      @default(1)
+  visible         Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  orders Order[]
+
+  @@unique([tenantId, name])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  tenantId  String
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  name      String
+  role      String?
+  // Optional photo path; reviews without one show initials
+  photo     String?
+  rating    Int
+  text      String
+  status    ReviewStatus @default(PENDING)
+  featured  Boolean      @default(false)
+  // The client agreed to their review being shown on the website
+  consent   Boolean      @default(false)
+  source    String
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+
+  @@index([tenantId, status])
+}
+
+model Sample {
+  id        String  @id @default(cuid())
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug      String
+  role      String
+  tag       String
+  caption   String
+  published Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  @@unique([tenantId, slug])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Post {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug        String
+  title       String
+  category    String
+  status      PostStatus  @default(DRAFT)
+  authorId    String?
+  author      Membership? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName  String
+  cover       String?
+  coverAlt    String?
+  excerpt     String
+  // Markdown
+  body        String
+  readMinutes Int         @default(5)
+  publishedAt DateTime?
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status, publishedAt])
+}
+
+model Faq {
+  id        String  @id @default(cuid())
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  visible   Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  @@index([tenantId, sortOrder])
+}
+
+model Homepage {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  headline         String
+  highlight        String
+  lead             String
+  // [{ value, label }], validated by modules/content/content.schema.ts
+  stats            Json
+  announcementOn   Boolean  @default(false)
+  announcementText String   @default("")
+  announcementLink String   @default("")
+  updatedAt        DateTime @updatedAt
+}
+
+// Every content edit is recorded with who made it, so it can be undone
+model ContentChange {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  section     String
+  summary     String
+  before      Json
+  changedById String?
+  changedBy   Membership? @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  at          DateTime    @default(now())
+
+  @@index([tenantId, at])
+}
+
+// ---------------------------------------------------------------------------
+// AI tokens: each business has a balance (sum of `delta`); the owner sees tokens, never money
+// ---------------------------------------------------------------------------
+
+enum TokenEntryKind {
+  GRANT
+  TOP_UP
+  USAGE
+  ADJUSTMENT
+}
+
+model TokenLedgerEntry {
+  id           String         @id @default(cuid())
+  tenantId     String
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  kind         TokenEntryKind
+  // Positive for grants and top-ups, negative for usage
+  delta        Int
+  feature      String?
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  memberId     String?
+  member       Membership?    @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  orderId      String?
+  order        Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  jobId        String?
+  job          Job?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  note         String?
+  createdAt    DateTime       @default(now())
+
+  @@index([tenantId, createdAt])
+}
