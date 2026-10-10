@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jay CVS – Project Status Report</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root { --gold: #B8913F; --gold-text: #7A5E22; --black: #0D0D0D; --cream: #FAF7F2; --line: #E3DCCD; --text: #2f2b26; --muted: #6E675C; --good: #15803d; --warn: #b45309; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); font-size: 10.5pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; color: var(--black); line-height: 1.2; }
+  /* Cover */
+  .cover { height: 255mm; display: flex; flex-direction: column; justify-content: space-between; padding: 22mm 14mm; background: var(--black); color: #e9e3d6; page-break-after: always; border-radius: 4px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: Georgia, serif; font-size: 18pt; color: #fff; }
+  .logo span.m { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--gold); color: var(--black); font-weight: 700; }
+  .logo b { color: var(--gold); font-weight: 700; }
+  .cover h1 { color: #fff; font-size: 34pt; margin: 0 0 10px; }
+  .cover .rule { width: 70px; height: 4px; background: var(--gold); margin: 0 0 18px; }
+  .cover p.lead { font-size: 13pt; color: #d9d2c5; max-width: 140mm; margin: 0; }
+  .meta { display: grid; grid-template-columns: repeat(3, auto); gap: 6px 28px; justify-content: start; font-size: 9.5pt; color: #a39c8f; }
+  .meta b { display: block; color: #fff; font-weight: 600; }
+  .conf { font-size: 8.5pt; color: #a39c8f; border-top: 1px solid #2a261f; padding-top: 10px; }
+  /* Body */
+  h2 { font-size: 16pt; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 2px solid var(--gold); page-break-after: avoid; }
+  h2 .n { display: inline-block; min-width: 26px; color: var(--gold-text); }
+  h3 { font-size: 12pt; margin: 14px 0 6px; page-break-after: avoid; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 8px; padding-left: 18px; }
+  li { margin: 2px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 9.5pt; page-break-inside: avoid; }
+  th, td { padding: 6px 8px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+  thead th { background: var(--cream); color: var(--black); font-size: 8.5pt; text-transform: uppercase; letter-spacing: .04em; }
+  td.c { text-align: center; white-space: nowrap; }
+  .ok { color: var(--good); font-weight: 700; } .wn { color: var(--warn); font-weight: 700; }
+  .box { padding: 10px 12px; border-radius: 6px; background: var(--cream); border-left: 4px solid var(--gold); margin: 8px 0 12px; page-break-inside: avoid; }
+  .box.dark { background: var(--black); color: #e9e3d6; border-left-color: var(--gold); }
+  .box.dark b { color: var(--gold); }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+  .summary div { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  .summary b { display: block; font-family: Georgia, serif; font-size: 16pt; color: var(--black); }
+  .summary span { font-size: 8.5pt; color: var(--muted); }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 8pt; font-weight: 700; background: #F4ECDA; color: var(--gold-text); }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps li { counter-increment: s; position: relative; padding: 6px 0 6px 34px; border-bottom: 1px dashed var(--line); }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 6px; width: 22px; height: 22px; border-radius: 50%; background: var(--black); color: var(--gold); font-weight: 700; font-size: 9pt; display: grid; place-items: center; }
+  .section { page-break-inside: auto; }
+  .pb { page-break-before: always; }
+  .foot { margin-top: 18px; font-size: 8.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ============ Cover ============ -->
+<section class="cover">
+  <div class="logo"><span class="m">J</span>Jay<b>CVS</b></div>
+  <div>
+    <div class="rule"></div>
+    <h1>Project Status Report</h1>
+    <p class="lead">Website, jobs board, admin system and AI features: what's built, what's left, the decisions needed and the plan to go live.</p>
+  </div>
+  <div>
+    <div class="meta">
+      <div><b>Date</b>4 October 2026</div>
+      <div><b>Stage</b>Design preview (front end only)</div>
+      <div><b>Next</b>Pitch polish → real build (Next.js)</div>
+    </div>
+    <p class="conf" style="margin-top:18px">Prepared by the developer for internal planning. Contains pricing and AI cost assumptions: not for sharing with the client as-is.</p>
+  </div>
+</section>
+
+<!-- ============ 1. Summary ============ -->
+<h2><span class="n">1</span>At a glance</h2>
+<div class="summary">
+  <div><b>24</b><span>pages built (website, admin, developer)</span></div>
+  <div><b>0</b><span>script errors found in the health check</span></div>
+  <div><b>7</b><span>decisions waiting on you / Jay</span></div>
+  <div><b>4</b><span>build phases to go live</span></div>
+</div>
+<div class="box">
+  <b>In one line:</b> the whole system is designed and clickable as a preview. Nothing is stored, paid or sent for real yet. The data lives only in the browser that opens it. What remains is real content from Jay, a few missing pages, and the real build.
+</div>
+
+<!-- ============ 2. Health check ============ -->
+<h2><span class="n">2</span>Health check</h2>
+<p>Every page was loaded in a browser and checked automatically.</p>
+<table>
+  <thead><tr><th style="width:42%">Check</th><th style="width:14%">Result</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Script errors on all 24 pages</td><td class="c ok">None</td><td>Website, admin and developer pages all load cleanly.</td></tr>
+    <tr><td>Old (blue) colours left</td><td class="c ok">None</td><td>Everything is on the black / cream / gold brand, including the sample CVs.</td></tr>
+    <tr><td>Broken links between pages</td><td class="c ok">None</td><td>Except the two missing files below.</td></tr>
+    <tr><td>Missing files</td><td class="c wn">2</td><td><code>img/favicon.png</code> (browser tab icon) and <code>img/logo.svg</code> are referenced but don't exist.</td></tr>
+    <tr><td>Placeholders visible to visitors</td><td class="c wn">Yes</td><td>Stats ("[2,000+] clients", "[4.9/5]"), "[48 hours]", "[Office address]", footer links "[About us]" / "[Privacy policy]", blog author and dates, some sample salaries.</td></tr>
+    <tr><td>Developer cost page on a laptop screen</td><td class="c wn">Minor</td><td>A wide table causes a small sideways scroll.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 3. What's built ============ -->
+<h2><span class="n">3</span>What's built (design preview)</h2>
+<table>
+  <thead><tr><th style="width:22%">Area</th><th>What's there</th></tr></thead>
+  <tbody>
+    <tr><td><b>Public website</b></td><td>Home, Services, How it works, Pricing, Samples, Blog and article, the order card (choose service → upload CV → private tracking link → pay with Paystack test checkout).</td></tr>
+    <tr><td><b>Jobs board</b></td><td>Find a job page with filters, single job pages, homepage "Latest jobs", "Is your CV ready?" prompts.</td></tr>
+    <tr><td><b>Client tracking page</b></td><td>Order progress, pay, <b>Preview draft</b> in the page (watermarked), "I'm happy" / "Request changes", view final Word and PDF, leave a review.</td></tr>
+    <tr><td><b>Admin: orders</b></td><td>Orders list with quick filters, order page (accept, upload draft, revisions, complete), <b>View</b> files in the page, WhatsApp message templates, AI assistant, paid-but-not-accepted orders in red.</td></tr>
+    <tr><td><b>Admin: jobs</b></td><td>Jobs list, Post a job (read one poster with AI), <b>Jobs inbox</b> (bulk posters → AI reads → scam / duplicate / deadline flags → approve → WhatsApp channel post).</td></tr>
+    <tr><td><b>Admin: Jay only</b></td><td><b>Team</b> (invite writers, permissions, pay %, pause / remove), <b>Finance</b> (takings, Paystack fees, writer pay, payouts, CSV), <b>Website content</b> (prices, reviews, samples, tips, FAQs, homepage, settings), owner dashboard with "This month" money strip.</td></tr>
+    <tr><td><b>Roles</b></td><td>Jay (owner and senior writer) sees money and controls everything; writers accept orders and work only on their own; they see no money. Breadcrumb navigation. AI shown to Jay as a <b>token balance</b> (1,000,000 starter tokens), never as money.</td></tr>
+    <tr><td><b>Demos</b></td><td>Order flow demo: team and client side by side, or <b>Jay vs a writer</b> on the same screen.</td></tr>
+    <tr><td><b>Developer only</b></td><td>AI cost console, AI feature plan (16 features), tokens explainer (Markdown), this report.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 4. What's missing ============ -->
+<h2 class="pb"><span class="n">4</span>What's still missing from the preview</h2>
+<h3>Content only Jay can provide</h3>
+<ol>
+  <li><b>Real prices</b> and turnaround times (the site shows example prices: KES 1,500 / 3,000 / 6,000).</li>
+  <li><b>Real stats</b> (clients served, rating), or remove those badges.</li>
+  <li><b>Office address</b>, social media links, and the <b>WhatsApp channel invite link</b>.</li>
+  <li><b>Blog articles</b> and the author name.</li>
+  <li><b>Real client reviews</b>, with permission to show them.</li>
+</ol>
+<h3>Pages that don't exist yet</h3>
+<ol start="6">
+  <li><b>About us</b>, <b>Privacy policy</b> and <b>Terms</b>. The privacy policy matters: the site collects CVs, which are personal data under Kenya's Data Protection Act.</li>
+  <li>A <b>404 "page not found"</b> page, the <b>logo</b> file and the <b>favicon</b>.</li>
+</ol>
+<h3>Features discussed but not built</h3>
+<table>
+  <thead><tr><th style="width:5%">#</th><th style="width:35%">Feature</th><th>Why it matters</th></tr></thead>
+  <tbody>
+    <tr><td>8</td><td><b>"Clients &amp; tokens"</b> developer page</td><td>See every client's token balance and usage; add tokens after they pay.</td></tr>
+    <tr><td>9</td><td><b>Token top-ups paid by M-Pesa</b> to the developer</td><td>Clients buy more AI tokens themselves; credits added automatically.</td></tr>
+    <tr><td>10</td><td><b>Alerts</b> (WhatsApp / email)</td><td>Writers hear about new paid orders, Jay hears about red orders, clients hear when a draft is ready. Today the team must open the admin to see them.</td></tr>
+    <tr><td>11</td><td><b>Jobs board extras</b></td><td>Google for Jobs listing, "Tailor my CV for this job", saved jobs, "Report this job", "Get jobs like this on WhatsApp".</td></tr>
+    <tr><td>12</td><td><b>Self-service CV builder tier</b> (CareerGo-style)</td><td>A cheap DIY option paid by short M-Pesa passes, with an upgrade to a human writer. Waiting for your go-ahead.</td></tr>
+    <tr><td>13</td><td><b>System-wide activity log</b> for Jay</td><td>Who changed what and when, across everything. Orders already keep their own history.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 5. Decisions ============ -->
+<h2><span class="n">5</span>Decisions waiting on you / Jay</h2>
+<table>
+  <thead><tr><th style="width:5%">#</th><th style="width:40%">Decision</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Should <b>Executive orders go straight to Jay</b>?</td><td>The package now says "Written personally by Jay", but orders are still open to all writers.</td></tr>
+    <tr><td>2</td><td><b>Writer pay model</b></td><td>% of order price (40% / 35% are placeholders), fixed amount per CV, or salary.</td></tr>
+    <tr><td>3</td><td><b>How long to keep client CVs</b></td><td>The setting exists (3 / 6 / 12 / 24 months); Jay picks.</td></tr>
+    <tr><td>4</td><td><b>Your deal with Jay</b></td><td>KES 5,000 monthly maintenance fee, 1M starter tokens, top-up prices, and who pays hosting.</td></tr>
+    <tr><td>5</td><td><b>AI features at launch</b></td><td>The AI feature plan has a ready "Launch set" (8 features, ≈ KES 1,100 a month on Claude Haiku).</td></tr>
+    <tr><td>6</td><td><b>WhatsApp number</b> for the live site</td><td>And whether writers ever message clients from their own phones.</td></tr>
+    <tr><td>7</td><td><b>AI model choice</b></td><td>Test Claude Haiku vs Gemini Flash-Lite on 20 real posters; the cheaper one roughly quarters poster-reading cost.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 6. Real build ============ -->
+<h2 class="pb"><span class="n">6</span>The real build (Next.js)</h2>
+<p>This turns the preview into a working system. Everything below is designed already; it needs a server, a database and real connections.</p>
+<table>
+  <thead><tr><th style="width:5%">#</th><th style="width:28%">Piece</th><th>What it involves</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><b>Database</b></td><td>Jobs, orders, order history, files, team and roles, website content, AI token usage, payouts.</td></tr>
+    <tr><td>2</td><td><b>Real logins</b></td><td>Jay and each writer with their own password and permissions; invites become real links.</td></tr>
+    <tr><td>3</td><td><b>Private file storage</b></td><td>CVs and drafts opened only through short-lived private links (as the viewer already describes).</td></tr>
+    <tr><td>4</td><td><b>Paystack, live</b></td><td>Checkout (M-Pesa prompt or card) and automatic confirmation when money arrives (webhook).</td></tr>
+    <tr><td>5</td><td><b>AI connection</b></td><td>Through the developer's server and key, counting tokens per client. <b>Built to serve several clients from day one</b>: the SaaS plan.</td></tr>
+    <tr><td>6</td><td><b>Messages</b></td><td>WhatsApp (start with ready-to-send links; WhatsApp Business API later) and email.</td></tr>
+    <tr><td>7</td><td><b>Google &amp; SEO</b></td><td>Every job as its own page, sitemap, "Google for Jobs" markup.</td></tr>
+    <tr><td>8</td><td><b>Hosting, domain, backups</b></td><td>Move jaycvs.co.ke to the new site without losing Google ranking; daily backups.</td></tr>
+    <tr><td>9</td><td><b>Data protection</b></td><td>Privacy notice, consent on upload, automatic deletion after the retention period. Check whether Jay CVS must <b>register with the Data Protection Commissioner (ODPC)</b>.</td></tr>
+  </tbody>
+</table>
+<h3>Suggested build order</h3>
+<ol class="steps">
+  <li><b>Public site + jobs board</b>: quickest win; brings in traffic from Google and the WhatsApp channel.</li>
+  <li><b>Orders, Paystack, tracking links and logins</b>: where the money starts.</li>
+  <li><b>AI</b>: poster reading, CV tools, and the developer's token system.</li>
+  <li><b>Team, Finance, alerts</b> and the extras.</li>
+</ol>
+
+<!-- ============ 7. AI & business model ============ -->
+<h2 class="pb"><span class="n">7</span>AI and the developer's business model</h2>
+<div class="box">
+  The developer runs the AI on <b>one account of their own</b> and resells it to clients as <b>token balances</b>. Jay starts with <b>1,000,000 tokens</b>, sees only tokens (never money), and asks the developer for more when they run low.
+</div>
+<table>
+  <thead><tr><th>Item</th><th>Figure</th></tr></thead>
+  <tbody>
+    <tr><td>Tokens Jay CVS uses in a normal month (1,200 posters + 120 orders)</td><td>≈ 3.6 million</td></tr>
+    <tr><td>How long 1M starter tokens last</td><td>≈ 450 posters ≈ 8 days</td></tr>
+    <tr><td>AI cost of a normal month to the developer (Claude Haiku 4.5)</td><td>≈ KES 840 ($6.50)</td></tr>
+    <tr><td>Same month with Gemini Flash-Lite for posters</td><td>≈ KES 60–250</td></tr>
+    <tr><td>Monthly maintenance fee (proposed)</td><td>KES 5,000</td></tr>
+    <tr><td>Example top-ups</td><td>KES 500 = 1M tokens · KES 2,000 = 5M tokens</td></tr>
+    <tr><td>Paying the AI provider</td><td>Prepaid with auto-reload (Anthropic, OpenAI); postpaid via Google Cloud or AWS / Azure</td></tr>
+  </tbody>
+</table>
+<p style="font-size:9pt;color:var(--muted)">Prices are those researched for this project in 2026 at KES 130 = $1. Check the providers' pricing pages before quoting.</p>
+
+<!-- ============ 8. Pitch ============ -->
+<h2><span class="n">8</span>Before pitching Jay</h2>
+<ul>
+  <li><b>Put the preview online</b> on a private link (e.g. a free static host) so Jay can click through on his phone.</li>
+  <li><b>Fix the quick things:</b> logo and favicon; replace the visible "[…]" placeholders with sensible example text or hide them.</li>
+  <li><b>Leave out the developer pages</b>: they're for you, not the client.</li>
+</ul>
+<h3>10-minute walkthrough</h3>
+<ol class="steps">
+  <li>A client chooses a package, uploads their CV, gets a private tracking link and pays.</li>
+  <li>The order shows in red as "Not accepted"; a writer accepts it.</li>
+  <li>The writer uses the AI assistant, uploads a draft; the client previews it and requests a change.</li>
+  <li>Jay's dashboard: the money this month, the team, the token balance.</li>
+  <li>Jobs inbox: drop 8 posters, see the scam and duplicate caught, approve, copy the WhatsApp channel post.</li>
+  <li>Jay vs a writer: same order, two views. Only Jay sees money and team controls.</li>
+</ol>
+
+<!-- ============ 9. Next steps ============ -->
+<h2><span class="n">9</span>Recommended next steps</h2>
+<div class="box dark">
+  <b>1. Pitch polish</b> (about one session): placeholders, logo and favicon, developer page scroll, walkthrough script.<br>
+  <b>2. Put the preview online</b> on a private link for Jay.<br>
+  <b>3. After Jay says yes:</b> settle the 7 decisions in section 5, then start the Next.js build at phase 1.
+</div>
+
+<p class="foot">Jay CVS · Project status report · 4 October 2026 · Source files: <code>_build/</code> (page generators), <code>js/</code>, <code>css/</code>, <code>admin/</code>, <code>developer/</code>.</p>
+</body>
+</html>

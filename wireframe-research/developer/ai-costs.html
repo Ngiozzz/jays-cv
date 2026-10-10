@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>AI Cost Console</title>
+  <!-- DEVELOPER ONLY. Not linked from the Jay CVS website or admin. Do not deploy with the client's site. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #14171c; --text: #39404b; --muted: #6b7280; --line: #e3e6ea; --bg: #f4f5f7; --card: #ffffff;
+      --accent: #0f766e; --accent-soft: #e6f4f2; --good: #15803d; --good-soft: #dcfce7; --warn: #b45309; --warn-soft: #fff4de;
+      --bad: #b91c1c; --bad-soft: #fee2e2; --bar: #0f766e; --bar-2: #5eaaa2; --bar-3: #a7d3cd; --bar-4: #cbd5e1;
+      --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+    header { background: var(--ink); color: #e5e7eb; padding: 22px 16px; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+    header .wrap { padding: 0; }
+    header h1 { margin: 0; font-size: 1.45rem; color: #fff; letter-spacing: -.01em; }
+    header p { margin: 4px 0 0; color: #9ca3af; font-size: .9rem; }
+    .tag { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #f59e0b; color: #111; font-size: .7rem; font-weight: 800; letter-spacing: .06em; vertical-align: middle; }
+    main { padding: 22px 0 60px; }
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+    .card + .card { margin-top: 16px; }
+    h2 { margin: 0 0 4px; font-size: 1.05rem; color: var(--ink); }
+    .sub { margin: 0 0 14px; color: var(--muted); font-size: .86rem; }
+    .inputs { position: sticky; top: 16px; }
+    .f { display: grid; gap: 4px; margin-bottom: 12px; }
+    .f label, .f .lbl { font-size: .8rem; font-weight: 700; color: var(--ink); }
+    .f small { font-size: .75rem; color: var(--muted); }
+    .f input, .f select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: .9rem; background: #fff; color: var(--ink); }
+    .f input:focus, .f select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .check { display: flex; gap: 8px; align-items: flex-start; font-size: .84rem; margin-bottom: 10px; cursor: pointer; }
+    .check input { margin-top: 3px; accent-color: var(--accent); }
+    .sep { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+    .kpi span { display: block; font-size: .76rem; font-weight: 700; color: var(--muted); }
+    .kpi strong { display: block; font-size: 1.45rem; color: var(--ink); letter-spacing: -.01em; }
+    .kpi small { font-size: .76rem; color: var(--muted); }
+    .kpi.good { border-color: #86efac; background: #f6fef9; } .kpi.good strong { color: var(--good); }
+    .kpi.warn { border-color: #fcd34d; background: #fffbf0; } .kpi.warn strong { color: var(--warn); }
+    .kpi.bad { border-color: #fca5a5; background: #fff7f7; } .kpi.bad strong { color: var(--bad); }
+    .split { display: flex; gap: 2px; height: 30px; border-radius: 6px; overflow: hidden; margin: 6px 0 10px; background: var(--line); }
+    .split span { min-width: 3px; }
+    .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: .88rem; }
+    .legend li { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 10px; align-items: center; }
+    .legend .sw { width: 14px; height: 14px; border-radius: 4px; }
+    .legend b { color: var(--ink); } .legend small { color: var(--muted); min-width: 40px; text-align: right; }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    th, td { padding: 8px 10px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+    thead th { border-top: 0; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    td.n, th.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    tr.sel td { background: var(--accent-soft); }
+    .scroll { overflow-x: auto; }
+    #models td:first-child { min-width: 150px; } #models td:last-child { min-width: 200px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .74rem; font-weight: 800; white-space: nowrap; }
+    .pill.good { background: var(--good-soft); color: var(--good); } .pill.warn { background: var(--warn-soft); color: var(--warn); } .pill.bad { background: var(--bad-soft); color: var(--bad); }
+    .note { font-size: .78rem; color: var(--muted); }
+    .bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .bars li { display: grid; grid-template-columns: 170px 1fr 90px; gap: 10px; align-items: center; font-size: .86rem; }
+    .bars .track { height: 18px; background: #f1f3f5; border-radius: 4px; position: relative; }
+    .bars .fill { height: 100%; border-radius: 0 4px 4px 0; background: var(--bar); min-width: 3px; }
+    .bars .fee-line { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--bad); }
+    .bars b { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .bars li.sel span:first-child { font-weight: 800; color: var(--accent); }
+    .tips { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: .88rem; }
+    .tips b { color: var(--ink); }
+    .callout { padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); border-left: 4px solid var(--accent); font-size: .9rem; color: var(--ink); margin-bottom: 16px; }
+    code { font-size: .82rem; background: #f1f3f5; padding: 1px 5px; border-radius: 4px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .inputs { position: static; } .kpis { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .bars li { grid-template-columns: 110px 1fr 76px; } .legend li { grid-template-columns: 14px 1fr auto; } .legend small { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>AI cost console <span class="tag">DEVELOPER ONLY</span></h1>
+      <p>Jay CVS · what the AI features really use each month, and whether the maintenance fee covers it. The client never sees this page.</p>
+      <p><a href="ai-features.html" style="color:#5eead4;font-weight:700">See every AI feature in detail →</a></p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- ============ Inputs ============ -->
+      <aside class="inputs">
+        <div class="card">
+          <h2>Your deal</h2>
+          <div class="f"><label for="fee">Monthly maintenance fee (KES)</label><input id="fee" type="number" min="0" step="500" value="5000"></div>
+          <div class="f"><label for="other">Other running costs you pay (KES / month)</label><input id="other" type="number" min="0" step="100" value="2600"><small>e.g. hosting (Vercel Pro ≈ $20 ≈ KES 2,600), database, domain. Put 0 if Jay pays hosting directly.</small></div>
+          <div class="f"><label for="fx">KES per US dollar</label><input id="fx" type="number" min="1" step="1" value="130"><small>AI is billed in dollars. Check today's rate.</small></div>
+
+          <hr class="sep">
+          <h2>Models</h2>
+          <div class="f"><label for="m-poster">For reading job posters</label><select id="m-poster"></select></div>
+          <div class="f"><label for="m-cv">For the CV assistant</label><select id="m-cv"></select><small>You can use a cheap model for posters and a stronger one for CVs.</small></div>
+
+          <hr class="sep">
+          <h2>Monthly volume</h2>
+          <div class="row2">
+            <div class="f"><label for="posters">Posters read</label><input id="posters" type="number" min="0" step="50" value="1200"></div>
+            <div class="f"><label for="orders">CV orders</label><input id="orders" type="number" min="0" step="10" value="120"></div>
+          </div>
+          <div class="row2">
+            <div class="f"><label for="an">CV analyses per order</label><input id="an" type="number" min="0" step="0.1" value="1.2"></div>
+            <div class="f"><label for="su">Summary drafts per order</label><input id="su" type="number" min="0" step="0.1" value="1.5"></div>
+          </div>
+          <div class="f"><label for="retry">Re-reads and retries (%)</label><input id="retry" type="number" min="0" max="100" step="5" value="10"><small>Someone presses "Read again", a call fails and is retried, etc.</small></div>
+          <label class="check"><input type="checkbox" id="batch"> <span>Read posters with the <b>batch API</b> (50% off; results within minutes to hours, not seconds)</span></label>
+        </div>
+      </aside>
+
+      <!-- ============ Results ============ -->
+      <section>
+        <div class="callout" id="verdict"></div>
+        <div class="kpis" id="kpis"></div>
+
+        <div class="card">
+          <h2>Where the KES <span id="fee-echo"></span> goes each month</h2>
+          <p class="sub">At the volumes on the left.</p>
+          <div class="split" id="split" role="img"></div>
+          <ul class="legend" id="split-legend"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Tokens by feature</h2>
+          <p class="sub">Per run, the realistic size of what goes in (instructions + poster image or CV text) and what comes out (the answer).</p>
+          <div class="scroll"><table>
+            <thead><tr><th>Feature</th><th>Model</th><th class="n">Runs / month</th><th class="n">In / run</th><th class="n">Out / run</th><th class="n">Tokens / month</th><th class="n">Cost / month</th></tr></thead>
+            <tbody id="features"></tbody>
+          </table></div>
+          <p class="note" id="feature-note"></p>
+        </div>
+
+        <div class="card">
+          <h2>Busy months</h2>
+          <p class="sub">The fee is fixed; usage isn't. This is what happens to your margin when the channel gets busier.</p>
+          <div class="scroll"><table>
+            <thead><tr><th>Month</th><th class="n">Posters</th><th class="n">Orders</th><th class="n">Tokens</th><th class="n">AI cost</th><th class="n">You keep</th><th></th></tr></thead>
+            <tbody id="scenarios"></tbody>
+          </table></div>
+          <p class="note" id="breakeven"></p>
+        </div>
+
+        <div class="card">
+          <h2>Same month, every model</h2>
+          <p class="sub">Total AI cost if one model did everything. The red line is your fee minus your other costs: past it, you lose money.</p>
+          <ul class="bars" id="models-bars"></ul>
+          <div class="scroll" style="margin-top:14px"><table>
+            <thead><tr><th>Model</th><th class="n">Price in / out ($ per 1M tokens)</th><th class="n">Poster image</th><th class="n">Per poster</th><th class="n">Per month</th><th>Notes</th></tr></thead>
+            <tbody id="models"></tbody>
+          </table></div>
+          <p class="note">Prices are the ones researched for this project in 2026. Providers change them: check their pricing pages before you sign a fee with the client. "Poster image" is how many tokens a poster shrunk to about 1000 px becomes for that model.</p>
+        </div>
+
+        <div class="card">
+          <h2>Keeping the fee safe</h2>
+          <ul class="tips">
+            <li><b>Shrink posters before sending.</b> About 1000 px on the long side reads fine and keeps image tokens near the figures above. A full-size phone photo can cost 3–4 times more.</li>
+            <li><b>Set a monthly cap.</b> The admin already has an AI budget setting (Website content → Business settings). In the real build, stop or switch to the cheap model when the cap is reached, and email yourself at 80%.</li>
+            <li><b>Mix models.</b> Posters are simple to read: use the cheapest model that passes your accuracy test. Keep the stronger model for CV analysis, where quality sells.</li>
+            <li><b>Cache the instructions.</b> The long instruction prompt is the same on every call; prompt caching makes the repeated part much cheaper on most providers.</li>
+            <li><b>Don't use free tiers for client CVs.</b> Free tiers may use the data to train models. CVs hold personal details, so use a paid key.</li>
+            <li><b>Put the AI clause in the contract.</b> e.g. "Fee covers up to N posters and M CV orders a month; above that, KES X per extra 100 posters."</li>
+          </ul>
+        </div>
+
+        <div class="card" id="preview-card" hidden>
+          <h2>Logged in this browser's preview</h2>
+          <p class="sub">What the admin demo has recorded so far (sample data plus anything you clicked).</p>
+          <div class="scroll"><table><thead><tr><th>Feature</th><th class="n">Runs</th><th class="n">Tokens in</th><th class="n">Tokens out</th><th class="n">Per run</th></tr></thead><tbody id="preview"></tbody></table></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+  (() => {
+    // ---- Models: price per 1M tokens (USD), poster image tokens, extra "thinking" output per call ----
+    const MODELS = [
+      { id: 'g25fl', name: 'Gemini 2.5 Flash-Lite', pin: 0.10, pout: 0.40, img: 1000, think: 0, note: 'Cheapest. Test it on blurry and handwritten posters first.' },
+      { id: 'nano', name: 'OpenAI gpt-5-nano', pin: 0.05, pout: 0.40, img: 1536, think: 600, note: 'Very cheap, but its hidden reasoning is billed as output (included here).' },
+      { id: 'g31fl', name: 'Gemini 3.1 Flash-Lite', pin: 0.25, pout: 1.50, img: 1100, think: 0, note: 'Newer Flash-Lite; better reading, higher price.' },
+      { id: '41mini', name: 'OpenAI gpt-4.1-mini', pin: 0.40, pout: 1.60, img: 1659, think: 0, note: 'No reasoning overhead; predictable cost.' },
+      { id: 'g25f', name: 'Gemini 2.5 Flash', pin: 0.30, pout: 2.50, img: 1000, think: 300, note: 'Thinking is on by default; turn it down for posters.' },
+      { id: 'mini5', name: 'OpenAI gpt-5-mini', pin: 0.25, pout: 2.00, img: 1659, think: 600, note: 'Reasoning output billed (included here).' },
+      { id: 'haiku', name: 'Claude Haiku 4.5', pin: 1.00, pout: 5.00, img: 1333, think: 0, note: 'What the admin preview assumes. Strong on messy text and layouts.' },
+      { id: 'sonnet', name: 'Claude Sonnet 5', pin: 2.00, pout: 10.00, img: 1333, think: 0, note: 'Top quality. Worth it for CV analysis, too pricey for posters.' },
+    ];
+    // ---- Realistic token sizes per run (same figures the admin uses) ----
+    const INSTRUCTIONS = 450;   // the fixed instructions + the job fields it must return
+    const FEATURES = {
+      poster: { label: 'Poster reading', in: (m) => m.img + INSTRUCTIONS, out: (m) => 450 + m.think, why: 'poster image + instructions → job details as data' },
+      analysis: { label: 'CV analysis', in: () => 2050, out: (m) => 560 + m.think, why: '2-page CV as text (~1,600) + instructions → score, fixes, keywords' },
+      summary: { label: 'Summary draft', in: () => 900, out: (m) => 190 + m.think, why: 'key CV facts + instructions → a short paragraph' },
+    };
+    const $ = (id) => document.getElementById(id);
+    const num = (id) => Math.max(0, Number($(id).value) || 0);
+    const fmt = (n) => Math.round(n).toLocaleString('en-KE');
+    const kes = (n) => `KES ${fmt(n)}`;
+    const tok = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}K` : fmt(n));
+    const usd = (inT, outT, m) => (inT * m.pin + outT * m.pout) / 1e6;
+    const model = (id) => MODELS.find((m) => m.id === id);
+
+    ['m-poster', 'm-cv'].forEach((id) => { $(id).innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.name} ($${m.pin} / $${m.pout})</option>`).join(''); });
+    $('m-poster').value = 'haiku';
+    $('m-cv').value = 'haiku';
+
+    // One month of usage for given volumes and models
+    function month(v, mp, mc) {
+      const k = 1 + v.retry / 100;
+      const rows = [
+        { f: 'poster', m: mp, runs: v.posters * k },
+        { f: 'analysis', m: mc, runs: v.orders * v.an * k },
+        { f: 'summary', m: mc, runs: v.orders * v.su * k },
+      ].map((r) => {
+        const F = FEATURES[r.f];
+        const i = F.in(r.m); const o = F.out(r.m);
+        let cost = r.runs * usd(i, o, r.m);
+        if (r.f === 'poster' && v.batch) cost *= 0.5;
+        return { ...r, label: F.label, why: F.why, inRun: i, outRun: o, tokens: r.runs * (i + o), usd: cost };
+      });
+      const usdTotal = rows.reduce((s, r) => s + r.usd, 0);
+      return { rows, tokens: rows.reduce((s, r) => s + r.tokens, 0), usd: usdTotal, kes: usdTotal * v.fx };
+    }
+
+    function render() {
+      const v = { fee: num('fee'), other: num('other'), fx: num('fx') || 130, posters: num('posters'), orders: num('orders'), an: num('an'), su: num('su'), retry: num('retry'), batch: $('batch').checked };
+      const mp = model($('m-poster').value); const mc = model($('m-cv').value);
+      const m = month(v, mp, mc);
+      const keep = v.fee - v.other - m.kes;
+      const pctAi = v.fee ? (m.kes / v.fee) * 100 : 0;
+      const tone = keep < 0 ? 'bad' : keep < v.fee * 0.2 ? 'warn' : 'good';
+
+      $('verdict').innerHTML = keep < 0
+        ? `<b>The fee doesn't cover it.</b> At these volumes you'd lose ${kes(-keep)} a month. Raise the fee, switch models, or cap usage.`
+        : `<b>The fee covers it.</b> AI costs about ${kes(m.kes)} a month (${pctAi.toFixed(0)}% of the fee). After your other costs you keep <b>${kes(keep)}</b> for your time and profit.`;
+      $('kpis').innerHTML = `
+        <div class="kpi"><span>Tokens / month</span><strong>${tok(m.tokens)}</strong><small>${tok(m.rows.reduce((s, r) => s + r.runs * r.inRun, 0))} in · ${tok(m.rows.reduce((s, r) => s + r.runs * r.outRun, 0))} out</small></div>
+        <div class="kpi"><span>AI cost / month</span><strong>${kes(m.kes)}</strong><small>$${m.usd.toFixed(2)}</small></div>
+        <div class="kpi"><span>Other costs</span><strong>${kes(v.other)}</strong><small>hosting etc.</small></div>
+        <div class="kpi ${tone}"><span>You keep</span><strong>${kes(keep)}</strong><small>${v.fee ? `${Math.round((keep / v.fee) * 100)}% of the fee` : ''}</small></div>`;
+
+      // Split of the fee (part-to-whole, every part labelled)
+      $('fee-echo').textContent = fmt(v.fee);
+      const parts = [['AI tokens', m.kes, 'var(--bar)'], ['Other running costs', v.other, 'var(--bar-2)'], [keep >= 0 ? 'You keep' : 'Shortfall', Math.abs(keep), keep >= 0 ? 'var(--good)' : 'var(--bad)']];
+      const tot = Math.max(1, v.fee, m.kes + v.other);
+      $('split').innerHTML = parts.map(([l, n, c]) => `<span style="flex:${n};background:${c}" title="${l}: ${kes(n)}"></span>`).join('');
+      $('split').setAttribute('aria-label', parts.map(([l, n]) => `${l}: ${kes(n)}`).join(', '));
+      $('split-legend').innerHTML = parts.map(([l, n, c]) => `<li><span class="sw" style="background:${c}"></span>${l}<b>${kes(n)}</b><small>${Math.round((n / tot) * 100)}%</small></li>`).join('');
+
+      // Features
+      $('features').innerHTML = m.rows.map((r) => `<tr><td><b>${r.label}</b><br><span class="note">${r.why}</span></td><td>${r.m.name}</td>
+        <td class="n">${fmt(r.runs)}</td><td class="n">${fmt(r.inRun)}</td><td class="n">${fmt(r.outRun)}</td><td class="n">${tok(r.tokens)}</td><td class="n">${kes(r.usd * v.fx)}<br><span class="note">$${r.usd.toFixed(2)}</span></td></tr>`).join('');
+      const share = m.kes ? Math.round((m.rows[0].usd * v.fx / m.kes) * 100) : 0;
+      $('feature-note').textContent = `Poster reading is ${share}% of the AI bill: it's the volume (${fmt(v.posters)} a month) that matters, not the CV tools.${v.batch ? ' Batch discount applied to posters.' : ''}`;
+
+      // Busy months
+      const SC = [['Quiet', 0.5], ['Normal (your inputs)', 1], ['Busy', 2], ['Very busy', 3], ['Viral month', 5]];
+      $('scenarios').innerHTML = SC.map(([l, x]) => {
+        const s = month({ ...v, posters: v.posters * x, orders: v.orders * x }, mp, mc);
+        const k = v.fee - v.other - s.kes;
+        const t = k < 0 ? ['bad', 'Losing money'] : k < v.fee * 0.2 ? ['warn', 'Thin'] : ['good', 'Fine'];
+        return `<tr${x === 1 ? ' class="sel"' : ''}><td>${l}</td><td class="n">${fmt(v.posters * x)}</td><td class="n">${fmt(v.orders * x)}</td><td class="n">${tok(s.tokens)}</td><td class="n">${kes(s.kes)}</td><td class="n">${kes(k)}</td><td><span class="pill ${t[0]}">${t[1]}</span></td></tr>`;
+      }).join('');
+      // Break-even: how many times busier before the fee stops covering
+      const unit = month({ ...v, posters: v.posters, orders: v.orders }, mp, mc).kes;
+      const room = v.fee - v.other;
+      $('breakeven').textContent = room <= 0
+        ? 'Your other costs already use up the whole fee.'
+        : unit > 0 ? `Break-even: the fee covers up to about ${(room / unit).toFixed(1)}× your normal month (≈ ${fmt((room / unit) * v.posters)} posters and ${fmt((room / unit) * v.orders)} orders).` : '';
+
+      // Every model doing everything
+      const all = MODELS.map((x) => ({ x, k: month(v, x, x).kes })).sort((a, b) => a.k - b.k);
+      const max = Math.max(room, ...all.map((a) => a.k)) * 1.05 || 1;
+      $('models-bars').innerHTML = all.map((a) => `<li class="${a.x.id === mp.id && mp.id === mc.id ? 'sel' : ''}"><span>${a.x.name}</span>
+        <span class="track"><span class="fill" style="display:block;width:${(a.k / max) * 100}%;${a.k > room ? 'background:var(--bad)' : ''}"></span>${room > 0 ? `<span class="fee-line" style="left:${(room / max) * 100}%" title="Fee minus other costs: ${kes(room)}"></span>` : ''}</span>
+        <b>${kes(a.k)}</b></li>`).join('');
+      $('models').innerHTML = MODELS.map((x) => {
+        const p = usd(FEATURES.poster.in(x), FEATURES.poster.out(x), x) * (v.batch ? 0.5 : 1);
+        return `<tr class="${x.id === mp.id || x.id === mc.id ? 'sel' : ''}"><td><b>${x.name}</b></td><td class="n">$${x.pin.toFixed(2)} / $${x.pout.toFixed(2)}</td><td class="n">${fmt(x.img)}</td>
+          <td class="n">KES ${(p * v.fx).toFixed(2)}</td><td class="n">${kes(month(v, x, x).kes)}</td><td class="note">${x.note}</td></tr>`;
+      }).join('');
+
+      // What the admin preview logged in this browser
+      let u = null;
+      try { u = JSON.parse(localStorage.getItem('jaycvs-mock-ai-tokens')); } catch (e) { u = null; }
+      $('preview-card').hidden = !u;
+      if (u) $('preview').innerHTML = Object.entries(u).map(([k, r]) => `<tr><td>${k}</td><td class="n">${fmt(r.runs)}</td><td class="n">${tok(r.inTokens)}</td><td class="n">${tok(r.outTokens)}</td><td class="n">${r.runs ? fmt((r.inTokens + r.outTokens) / r.runs) : '—'}</td></tr>`).join('');
+    }
+    document.querySelectorAll('input, select').forEach((el) => el.addEventListener('input', render));
+    render();
+  })();
+  </script>
+</body>
+</html>

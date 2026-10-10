@@ -1,0 +1,78 @@
+  <main id="main">
+
+    <section class="page-hero jobs-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Find a job</span></nav>
+        <h1>Find a job in Kenya</h1>
+        <p class="lead">Fresh vacancies from across Kenya, shared daily by the Jay CVS team. Search, filter and apply, then make sure your CV is ready.</p>
+
+        <form class="job-search" id="job-search" role="search">
+          <label class="job-search-field">
+            <svg aria-hidden="true"><use href="#i-search"/></svg>
+            <span class="sr-only">Keyword</span>
+            <input type="search" id="job-q" placeholder="Job title, company or keyword" autocomplete="off">
+          </label>
+          <label class="job-search-field job-search-loc">
+            <svg aria-hidden="true"><use href="#i-pin"/></svg>
+            <span class="sr-only">Location</span>
+            <select id="job-loc"><option value="">All locations</option></select>
+          </label>
+          <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+        <p class="jobs-hero-note">
+          <svg aria-hidden="true"><use href="#i-whatsapp"/></svg>
+          Join 57,000+ job seekers on our <a href="#" target="_blank" rel="noopener" data-c="channel">WhatsApp job channel</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="section jobs-section">
+      <div class="container">
+        <div class="filters jobs-cats" data-job-cats role="group" aria-label="Filter by category"></div>
+
+        <div class="jobs-layout">
+          <aside class="jobs-sidebar" aria-label="Filters">
+            <div class="card side-block">
+              <h3>Job type</h3>
+              <div data-job-types></div>
+            </div>
+            <div class="card side-block">
+              <h3>Deadline</h3>
+              <label class="check"><input type="checkbox" id="job-soon"> Closing within 7 days</label>
+            </div>
+            <button type="button" id="job-reset" class="btn btn-ghost btn-sm btn-block">Clear all filters</button>
+
+            <div class="card side-block channel-card">
+              <span class="channel-icon"><svg aria-hidden="true"><use href="#i-whatsapp"/></svg></span>
+              <h3>Never miss a job</h3>
+              <p>New vacancies every day on our WhatsApp channel.</p>
+              <a class="btn btn-wa btn-sm btn-block" href="#" target="_blank" rel="noopener" data-c="channel">Follow the channel</a>
+            </div>
+            <div class="card side-block safety">
+              <h3><svg aria-hidden="true"><use href="#i-shield"/></svg>Stay safe</h3>
+              <p>Genuine employers never ask for money to apply or to get an interview.</p>
+            </div>
+          </aside>
+
+          <div class="jobs-results">
+            <div class="results-bar">
+              <p id="job-count" aria-live="polite"></p>
+              <label class="sort">Sort by
+                <select id="job-sort">
+                  <option value="newest">Newest first</option>
+                  <option value="closing">Closing soon</option>
+                </select>
+              </label>
+            </div>
+            <div id="job-results" class="job-stack"></div>
+            <div id="job-empty" class="job-empty" hidden>
+              <svg aria-hidden="true"><use href="#i-search"/></svg>
+              <h3>No jobs match your search</h3>
+              <p>Try a different keyword or location, or clear the filters.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>

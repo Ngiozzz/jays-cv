@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>AI Feature Plan</title>
+  <!-- DEVELOPER ONLY. Not linked from the Jay CVS website or admin. Do not deploy with the client's site. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #14171c; --text: #39404b; --muted: #6b7280; --line: #e3e6ea; --bg: #f4f5f7; --card: #ffffff;
+      --accent: #0f766e; --accent-soft: #e6f4f2; --good: #15803d; --good-soft: #dcfce7; --warn: #b45309; --warn-soft: #fff4de;
+      --bad: #b91c1c; --bad-soft: #fee2e2; --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+    header { background: var(--ink); color: #e5e7eb; padding: 22px 16px; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+    header .wrap { padding: 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+    header h1 { margin: 0; font-size: 1.45rem; color: #fff; }
+    header p { margin: 4px 0 0; color: #9ca3af; font-size: .9rem; }
+    header a { color: #5eead4; font-weight: 700; font-size: .9rem; }
+    .tag { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #f59e0b; color: #111; font-size: .7rem; font-weight: 800; letter-spacing: .06em; vertical-align: middle; }
+    main { padding: 20px 0 60px; }
+    /* Sticky summary */
+    .summary { position: sticky; top: 0; z-index: 5; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; box-shadow: 0 6px 20px rgba(20, 23, 28, .06); }
+    .sum-top { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: flex-end; }
+    .sum-top .f { display: grid; gap: 3px; }
+    .sum-top label { font-size: .74rem; font-weight: 700; color: var(--muted); }
+    .sum-top select, .sum-top input { padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: .88rem; }
+    .sum-top input { width: 110px; }
+    .totals { display: flex; flex-wrap: wrap; gap: 18px; margin-left: auto; }
+    .totals div span { display: block; font-size: .72rem; font-weight: 700; color: var(--muted); }
+    .totals div strong { font-size: 1.2rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .totals .keep.good strong { color: var(--good); } .totals .keep.warn strong { color: var(--warn); } .totals .keep.bad strong { color: var(--bad); }
+    .meter { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line); margin-top: 12px; gap: 2px; }
+    .meter span { min-width: 2px; }
+    .meter-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; font-size: .76rem; color: var(--muted); }
+    .meter-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .presets button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 12px; font: inherit; font-size: .8rem; font-weight: 700; color: var(--ink); cursor: pointer; }
+    .presets button:hover { border-color: var(--accent); color: var(--accent); }
+    /* Groups & cards */
+    .group { margin-top: 26px; }
+    .group h2 { margin: 0; font-size: 1.1rem; color: var(--ink); }
+    .group > p { margin: 2px 0 12px; color: var(--muted); font-size: .88rem; }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
+    .card.off { opacity: .6; }
+    .card-head { display: flex; gap: 10px; align-items: flex-start; }
+    .num { flex-shrink: 0; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--ink); color: #fff; font-weight: 800; font-size: .82rem; }
+    .card-head h3 { margin: 0; font-size: 1rem; color: var(--ink); line-height: 1.3; }
+    .card-head .badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+    .incl { margin-left: auto; display: flex; gap: 6px; align-items: center; font-size: .78rem; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; }
+    .incl input { width: 17px; height: 17px; accent-color: var(--accent); }
+    .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .7rem; font-weight: 800; white-space: nowrap; }
+    .pill.built { background: var(--good-soft); color: var(--good); }
+    .pill.prop { background: #eef2ff; color: #3730a3; }
+    .pill.p1 { background: var(--accent-soft); color: var(--accent); } .pill.p2 { background: #f1f5f9; color: #334155; } .pill.p3 { background: #f8fafc; color: #64748b; border: 1px solid var(--line); }
+    .pill.risk { background: var(--warn-soft); color: var(--warn); }
+    .what { margin: 0; color: var(--ink); }
+    dl { margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 4px 12px; font-size: .84rem; }
+    dt { color: var(--muted); font-weight: 600; }
+    dd { margin: 0; }
+    .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px; border-radius: 10px; background: #f8fafb; border: 1px solid var(--line); }
+    .nums div span { display: block; font-size: .68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .nums div b { font-size: .95rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .nums input { width: 100%; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: .9rem; font-weight: 700; }
+    .guard { margin: 0; padding: 9px 11px; border-radius: 9px; font-size: .82rem; background: var(--warn-soft); color: #7c3f00; }
+    .guard.ok { background: var(--accent-soft); color: #134e4a; }
+    .not { margin-top: 26px; }
+    .not ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+    .foot { margin-top: 18px; font-size: .78rem; color: var(--muted); }
+    @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } .totals { margin-left: 0; } .summary { position: static; } }
+    @media (max-width: 520px) { .nums { grid-template-columns: 1fr 1fr; } dl { grid-template-columns: 1fr; } dt { margin-top: 4px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div>
+        <h1>AI feature plan <span class="tag">DEVELOPER ONLY</span></h1>
+        <p>Jay CVS · every place AI could be used, what each costs, and which ones fit inside the maintenance fee.</p>
+      </div>
+      <a href="ai-costs.html">Open the AI cost console →</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="summary" aria-label="Monthly total for the ticked features">
+      <div class="sum-top">
+        <div class="f"><label for="model">Model</label><select id="model"></select></div>
+        <div class="f"><label for="scale">Busyness</label><select id="scale"><option value="0.5">Quiet month (×0.5)</option><option value="1" selected>Normal month</option><option value="2">Busy month (×2)</option><option value="3">Very busy (×3)</option></select></div>
+        <div class="f"><label for="fee">Your fee (KES)</label><input id="fee" type="number" value="5000" step="500"></div>
+        <div class="f"><label for="other">Other costs (KES)</label><input id="other" type="number" value="2600" step="100"></div>
+        <div class="totals">
+          <div><span>Features on</span><strong id="t-count">0</strong></div>
+          <div><span>Tokens / month</span><strong id="t-tokens">0</strong></div>
+          <div><span>AI cost / month</span><strong id="t-cost">KES 0</strong></div>
+          <div class="keep" id="t-keep-box"><span>You keep</span><strong id="t-keep">KES 0</strong></div>
+        </div>
+      </div>
+      <div class="meter" id="meter" role="img"></div>
+      <div class="meter-legend" id="meter-legend"></div>
+      <div class="presets" aria-label="Quick selections">
+        <button type="button" data-preset="built">Only what's built</button>
+        <button type="button" data-preset="1">Launch set (phase 1)</button>
+        <button type="button" data-preset="2">Phase 1 + 2</button>
+        <button type="button" data-preset="all">Everything</button>
+      </div>
+    </section>
+
+    <div id="groups"></div>
+
+    <section class="card not">
+      <h2 style="margin:0;font-size:1.05rem;color:var(--ink)">Deliberately left out</h2>
+      <ul>
+        <li><b>AI writing the whole CV on its own.</b> Jay sells expert human writing; the admin already says the AI "helps the writer, doesn't replace them".</li>
+        <li><b>AI replying to clients by itself</b> (WhatsApp auto-replies). A wrong promise to a paying client costs more than the time saved.</li>
+        <li><b>Free AI tiers for anything containing a client's CV.</b> Free tiers may use the data for training; CVs hold personal details.</li>
+      </ul>
+    </section>
+    <p class="foot">Token sizes are realistic estimates for this project (instructions + the poster image or CV text in; the answer out). Monthly runs assume a normal month of 1,200 posters and 120 CV orders: change any "Runs / month" box to match reality. Prices per 1M tokens are those researched for this project in 2026; check the providers' pages before quoting a client. KES 130 = $1.</p>
+  </main>
+
+  <script>
+  (() => {
+    const FX = 130;
+    const MODELS = [
+      { id: 'haiku', name: 'Claude Haiku 4.5', pin: 1.00, pout: 5.00, img: 1333 },
+      { id: 'g25fl', name: 'Gemini 2.5 Flash-Lite', pin: 0.10, pout: 0.40, img: 1000 },
+      { id: 'g31fl', name: 'Gemini 3.1 Flash-Lite', pin: 0.25, pout: 1.50, img: 1100 },
+      { id: '41mini', name: 'OpenAI gpt-4.1-mini', pin: 0.40, pout: 1.60, img: 1659 },
+      { id: 'sonnet', name: 'Claude Sonnet 5', pin: 2.00, pout: 10.00, img: 1333 },
+    ];
+    const GROUPS = [
+      { id: 'jobs', title: 'Jobs board', intro: 'Reading the 1,000+ posters a month that come from WhatsApp, LinkedIn and Facebook. This is where most of the tokens go.' },
+      { id: 'writer', title: 'Writer tools (order page)', intro: 'Used by Jay and the writers while working on a paid order. Cost follows the number of orders, so it stays predictable.' },
+      { id: 'public', title: 'Public website (clients use these)', intro: 'Anyone on the internet can trigger these. They bring in orders, but need limits so a popular month can\'t eat the fee.' },
+      { id: 'owner', title: 'Jay\'s tools', intro: 'Small helpers for running the business.' },
+    ];
+    // in: tokens sent per use (null = uses the model's poster-image size + instructions); out: tokens returned
+    const F = [
+      { n: 1, g: 'jobs', title: 'Read a job poster', status: 'built', phase: 1, on: true,
+        what: 'Turns a poster image into the job form: title, company, location, deadline, how to apply, requirements.',
+        who: 'Jay and writers with "Post jobs" permission', where: 'Admin → Jobs inbox (bulk) and Post a job (single)', trigger: 'Automatic when a poster is dropped in; "Read again" re-runs it',
+        input: 'The poster image (shrunk to ~1000 px) + fixed instructions', output: 'The job details as structured data, plus "unsure" fields',
+        tin: null, tout: 450, runs: 1320, guard: 'Shrink images before sending; one read per poster unless someone presses "Read again". This is 80%+ of the AI bill, so it\'s the place to use the cheapest accurate model.', risk: false },
+      { n: 4, g: 'jobs', title: 'Smarter scam check', status: 'prop', phase: 1, on: true,
+        what: 'While reading the poster, the AI also rates "does this look like a scam?" and says why, on top of the fixed rules (fees, personal numbers).',
+        who: 'Automatic', where: 'Jobs inbox flags', trigger: 'Same call as the poster read (no extra request)',
+        input: 'Nothing extra: the poster is already being read', output: 'A scam score and one-line reason',
+        tin: 0, tout: 60, runs: 1320, guard: 'The AI only flags; a person still decides. Protects Jay\'s name with the 57k channel.', risk: false, addon: true },
+      { n: 5, g: 'jobs', title: 'Category, tags and a Google-friendly description', status: 'prop', phase: 1, on: true,
+        what: 'Picks the category, adds search tags (e.g. "CPA", "Nairobi", "entry level") and writes a 2-sentence summary for the job page.',
+        who: 'Automatic', where: 'Jobs inbox → job page on the website', trigger: 'Same call as the poster read',
+        input: 'Nothing extra', output: 'Category, 5–8 tags, a short summary',
+        tin: 0, tout: 150, runs: 1320, guard: 'Better filters and more Google traffic for almost no cost.', risk: false, addon: true },
+      { n: 2, g: 'writer', title: 'CV analysis', status: 'built', phase: 1, on: true,
+        what: 'Scores the client\'s current CV for their target role and lists what\'s working, what to fix and the keywords to include.',
+        who: 'Writer on the order (and Jay)', where: 'Admin → Order → AI assistant', trigger: 'Writer presses "Analyse the client\'s CV"',
+        input: 'The client\'s CV as text (~2 pages) + the brief + instructions', output: 'Score, strengths, fixes, keywords',
+        tin: 2050, tout: 560, runs: 144, guard: 'Suggestions only; the writer decides. Hidden on orders the writer hasn\'t accepted.', risk: false },
+      { n: 3, g: 'writer', title: 'Professional summary draft', status: 'built', phase: 1, on: true,
+        what: 'Writes a first version of the profile summary at the top of the CV for the writer to edit.',
+        who: 'Writer on the order', where: 'Admin → Order → AI assistant', trigger: 'Writer presses "Draft a professional summary"',
+        input: 'Key facts from the CV + target role', output: 'One short paragraph',
+        tin: 900, tout: 190, runs: 180, guard: 'Always edited by the writer before it goes into the CV.', risk: false },
+      { n: 6, g: 'writer', title: 'Duties → achievements', status: 'prop', phase: 1, on: true,
+        what: 'Rewrites weak duty lines ("Responsible for sales") into achievement bullets ("Grew sales 30% in 6 months"), asking for the real numbers where they\'re missing.',
+        who: 'Writer on the order', where: 'Order → AI assistant (new button)', trigger: 'Writer pastes a job\'s bullets and presses "Improve"',
+        input: 'The bullets for one job + role context', output: '3–5 stronger bullets with [number?] gaps to fill',
+        tin: 600, tout: 300, runs: 240, guard: 'Must never invent results: gaps are marked for the writer to confirm with the client.', risk: false },
+      { n: 7, g: 'writer', title: 'Cover letter first draft', status: 'prop', phase: 1, on: true,
+        what: 'Drafts a cover letter from the CV and the job the client is applying for.',
+        who: 'Writer on a Cover letter / Professional order', where: 'Order → AI assistant', trigger: 'Writer presses "Draft cover letter"',
+        input: 'CV text + the job advert + tone instructions', output: 'A one-page letter',
+        tin: 2500, tout: 600, runs: 48, guard: 'Writer personalises it; the client never receives an unedited AI letter.', risk: false },
+      { n: 8, g: 'writer', title: 'LinkedIn headline and "About" drafts', status: 'prop', phase: 1, on: true,
+        what: 'Suggests 3 headlines and an "About" section for the LinkedIn revamp package.',
+        who: 'Writer on a LinkedIn order', where: 'Order → AI assistant', trigger: 'Writer presses "LinkedIn drafts"',
+        input: 'CV text + target role', output: '3 headlines + a 2–3 paragraph About',
+        tin: 2000, tout: 700, runs: 18, guard: 'Edited by the writer.', risk: false },
+      { n: 9, g: 'writer', title: 'Tailor the CV to a job', status: 'prop', phase: 2, on: false,
+        what: 'Compares the CV with a specific job advert: match %, missing keywords, which bullets to move up or reword. Enables a paid "Tailored CV" add-on.',
+        who: 'Writer on a tailored order', where: 'Order → AI assistant; also linked from the job page', trigger: 'Writer presses "Tailor to job" and picks the advert',
+        input: 'CV text + the job advert + instructions', output: 'Match %, keyword gaps, suggested edits',
+        tin: 3000, tout: 900, runs: 24, guard: 'Charged as an add-on, so it pays for itself.', risk: false },
+      { n: 10, g: 'writer', title: 'Final check before sending', status: 'prop', phase: 2, on: false,
+        what: 'Checks the draft for spelling, inconsistent dates, missing contact details, and whether screening software (ATS) can read it.',
+        who: 'Writer, before "Send draft"', where: 'Order → when uploading a draft', trigger: 'Optional button on upload (or automatic)',
+        input: 'The draft as text + checklist', output: 'A short list of issues to fix',
+        tin: 2500, tout: 500, runs: 180, guard: 'Fewer revision rounds = less writer time, which matters more than the token cost.', risk: false },
+      { n: 11, g: 'writer', title: 'Summarise a change request', status: 'prop', phase: 2, on: false,
+        what: 'Paste a long WhatsApp chat with the client; get a clean numbered list of the changes they asked for, ready for "Client asked for changes".',
+        who: 'Writer or Jay', where: 'Order → "Client asked for changes" dialog', trigger: 'Paste the chat, press "Summarise"',
+        input: 'The pasted chat text', output: 'A numbered list of changes',
+        tin: 1500, tout: 200, runs: 48, guard: 'Nothing promised gets missed; the list is shown to the writer before saving.', risk: false },
+      { n: 12, g: 'public', title: 'Free CV check (website)', status: 'prop', phase: 2, on: false,
+        what: 'A visitor uploads their CV and gets a score plus 3 fixes, then an offer to have it professionally rewritten.',
+        who: 'Any website visitor', where: 'Website → new "Free CV check" page and homepage button', trigger: 'Visitor uploads a CV',
+        input: 'The CV text + instructions', output: 'Score + 3 fixes (short, to leave room for the paid service)',
+        tin: 2000, tout: 400, runs: 400, guard: 'NEEDS LIMITS: one check per phone number per day, a monthly cap, and a bot check. Delete the CV after checking unless they order.', risk: true },
+      { n: 13, g: 'public', title: '"Is my CV ready for this job?"', status: 'prop', phase: 2, on: false,
+        what: 'On each job page, a visitor uploads their CV and sees a match % and missing keywords for that job, with a "Get a tailored CV" button.',
+        who: 'Any website visitor', where: 'Website → job pages', trigger: 'Visitor uploads a CV on a job page',
+        input: 'CV text + the job details + instructions', output: 'Match %, 5 missing keywords, 1 tip',
+        tin: 2800, tout: 400, runs: 600, guard: 'NEEDS LIMITS: same as the free CV check. This turns job-board traffic into orders.', risk: true },
+      { n: 14, g: 'public', title: 'Website chat assistant', status: 'prop', phase: 3, on: false,
+        what: 'Answers common questions (prices, turnaround, how it works) and helps visitors pick a package, at any hour. Hands over to WhatsApp for anything else.',
+        who: 'Any website visitor', where: 'Website → chat bubble', trigger: 'Each message the visitor sends',
+        input: 'FAQ + package info + the chat so far (per message)', output: 'A short reply',
+        tin: 1500, tout: 200, runs: 1800, guard: 'NEEDS LIMITS: messages per visitor, a monthly cap; answers only from Jay\'s FAQ, never makes promises. Runs ≈ 300 chats × 6 messages.', risk: true },
+      { n: 15, g: 'owner', title: 'Career-tips article drafts', status: 'prop', phase: 3, on: false,
+        what: 'Drafts blog articles (e.g. "How to write a CV for a bank job in Kenya") for Jay to edit and publish.',
+        who: 'Jay (and writers drafting for Jay)', where: 'Admin → Website content → Career tips', trigger: '"Draft with AI" button on a new article',
+        input: 'Topic + outline + style guide', output: 'An 800–1,000 word draft',
+        tin: 600, tout: 1500, runs: 8, guard: 'Edited by a person before publishing (Google ranks helpful, original content).', risk: false },
+      { n: 16, g: 'owner', title: 'Review screening', status: 'prop', phase: 3, on: false,
+        what: 'Flags reviews from the tracking page that look rude, fake or spammy before Jay approves them.',
+        who: 'Automatic', where: 'Admin → Website content → Reviews', trigger: 'When a client submits a review',
+        input: 'The review text', output: 'OK / flag + reason',
+        tin: 300, tout: 50, runs: 40, guard: 'Jay still approves every review.', risk: false },
+    ];
+    const PHASE = { 1: 'Phase 1 · launch', 2: 'Phase 2', 3: 'Phase 3 · later' };
+    const COL = { jobs: '#0f766e', writer: '#5eaaa2', public: '#d97706', owner: '#94a3b8' };
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n) => Math.round(n).toLocaleString('en-KE');
+    const tok = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}K` : fmt(n));
+    const model = () => MODELS.find((m) => m.id === $('model').value);
+    const tin = (f, m) => (f.tin === null ? m.img + 450 : f.tin);
+    const perUse = (f, m) => (tin(f, m) * m.pin + f.tout * m.pout) / 1e6; // USD
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    $('model').innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.name} ($${m.pin} / $${m.pout})</option>`).join('');
+
+    function cards() {
+      $('groups').innerHTML = GROUPS.map((g) => `<section class="group"><h2>${g.title}</h2><p>${g.intro}</p><div class="cards">
+        ${F.filter((f) => f.g === g.id).map((f) => `<article class="card" id="c${f.n}">
+          <div class="card-head"><span class="num">${f.n}</span><div><h3>${esc(f.title)}</h3>
+            <div class="badges"><span class="pill ${f.status === 'built' ? 'built' : 'prop'}">${f.status === 'built' ? 'In the preview' : 'Proposed'}</span><span class="pill p${f.phase}">${PHASE[f.phase]}</span>${f.risk ? '<span class="pill risk">Public: needs limits</span>' : ''}${f.addon ? '<span class="pill p3">Same call as #1</span>' : ''}</div></div>
+            <label class="incl"><input type="checkbox" data-on="${f.n}"${f.on ? ' checked' : ''}> Include</label></div>
+          <p class="what">${esc(f.what)}</p>
+          <dl><dt>Who uses it</dt><dd>${esc(f.who)}</dd><dt>Where</dt><dd>${esc(f.where)}</dd><dt>When it runs</dt><dd>${esc(f.trigger)}</dd>
+            <dt>Goes in</dt><dd>${esc(f.input)}</dd><dt>Comes out</dt><dd>${esc(f.output)}</dd></dl>
+          <div class="nums">
+            <div><span>Tokens / use</span><b data-tk="${f.n}"></b></div>
+            <div><span>Cost / use</span><b data-pu="${f.n}"></b></div>
+            <div><span>Runs / month</span><input type="number" min="0" step="10" data-runs="${f.n}" value="${f.runs}" aria-label="Runs per month for ${esc(f.title)}"></div>
+            <div><span>Per month</span><b data-pm="${f.n}"></b></div>
+          </div>
+          <p class="guard ${f.risk ? '' : 'ok'}">${esc(f.guard)}</p>
+        </article>`).join('')}</div></section>`).join('');
+    }
+
+    function render() {
+      const m = model();
+      const scale = Number($('scale').value);
+      let usdTotal = 0; let tokTotal = 0; let count = 0;
+      const byGroup = { jobs: 0, writer: 0, public: 0, owner: 0 };
+      F.forEach((f) => {
+        f.on = document.querySelector(`[data-on="${f.n}"]`).checked;
+        f.runs = Math.max(0, Number(document.querySelector(`[data-runs="${f.n}"]`).value) || 0);
+        const runs = f.runs * scale;
+        const pu = perUse(f, m);
+        const t = tin(f, m) + f.tout;
+        document.querySelector(`[data-tk="${f.n}"]`).textContent = `${fmt(tin(f, m))} + ${fmt(f.tout)}`;
+        document.querySelector(`[data-pu="${f.n}"]`).textContent = `KES ${(pu * FX).toFixed(2)}`;
+        document.querySelector(`[data-pm="${f.n}"]`).textContent = `KES ${fmt(pu * runs * FX)}`;
+        $(`c${f.n}`).classList.toggle('off', !f.on);
+        if (f.on) { usdTotal += pu * runs; tokTotal += t * runs; count++; byGroup[f.g] += pu * runs * FX; }
+      });
+      const fee = Number($('fee').value) || 0;
+      const other = Number($('other').value) || 0;
+      const aiKes = usdTotal * FX;
+      const keep = fee - other - aiKes;
+      $('t-count').textContent = `${count} of ${F.length}`;
+      $('t-tokens').textContent = tok(tokTotal);
+      $('t-cost').textContent = `KES ${fmt(aiKes)}`;
+      $('t-keep').textContent = `KES ${fmt(keep)}`;
+      $('t-keep-box').className = `keep ${keep < 0 ? 'bad' : keep < fee * 0.2 ? 'warn' : 'good'}`;
+      // How the fee is used: AI by area, other costs, what's left
+      const parts = [['Jobs board AI', byGroup.jobs, COL.jobs], ['Writer tools AI', byGroup.writer, COL.writer], ['Public website AI', byGroup.public, COL.public], ['Jay\'s tools AI', byGroup.owner, COL.owner], ['Other costs', other, '#cbd5e1'], [keep >= 0 ? 'You keep' : 'Over the fee', Math.abs(keep), keep >= 0 ? '#15803d' : '#b91c1c']].filter((p) => p[1] > 0);
+      $('meter').innerHTML = parts.map(([l, v, c]) => `<span style="flex:${v};background:${c}" title="${l}: KES ${fmt(v)}"></span>`).join('');
+      $('meter').setAttribute('aria-label', parts.map(([l, v]) => `${l}: KES ${fmt(v)}`).join(', '));
+      $('meter-legend').innerHTML = parts.map(([l, v, c]) => `<span><i style="background:${c}"></i>${l} KES ${fmt(v)}</span>`).join('');
+    }
+
+    cards();
+    document.addEventListener('input', (e) => { if (e.target.matches('input, select')) render(); });
+    document.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
+      const p = b.dataset.preset;
+      F.forEach((f) => { document.querySelector(`[data-on="${f.n}"]`).checked = p === 'all' || (p === 'built' ? f.status === 'built' : f.phase <= Number(p)); });
+      render();
+    }));
+    render();
+  })();
+  </script>
+</body>
+</html>
