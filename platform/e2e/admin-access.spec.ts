@@ -1,0 +1,41 @@
+import { expect, test } from "@playwright/test";
+import { removeTestStaff, setMemberStatus, signInAs } from "./staff";
+
+test.afterAll(removeTestStaff);
+
+test("signed-out visitors are sent to the sign-in page", async ({ page }) => {
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByRole("heading", { name: "Admin sign in" })).toBeVisible();
+});
+
+test("the owner sees the dashboard, every menu item and the AI token balance", async ({ page, context }) => {
+  await signInAs(context, "OWNER", "Jay Test");
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Hello, Jay 👋" })).toBeVisible();
+  await expect(page.getByText("AI tokens")).toBeVisible();
+  const menu = page.getByRole("complementary", { name: "Admin menu" });
+  await expect(menu.getByText("Team")).toBeVisible();
+  await expect(menu.getByText("Finance")).toBeVisible();
+});
+
+test("a writer never sees money, the team or finance", async ({ page, context }) => {
+  await signInAs(context, "WRITER", "Grace Test");
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Hello, Grace 👋" })).toBeVisible();
+  await expect(page.getByText("AI tokens")).toHaveCount(0);
+  const menu = page.getByRole("complementary", { name: "Admin menu" });
+  await expect(menu.getByText("Team")).toHaveCount(0);
+  await expect(menu.getByText("Finance")).toHaveCount(0);
+  await expect(page.getByText("See prices, takings and payouts")).toHaveCount(0);
+});
+
+test("pausing a member blocks them on their next request", async ({ page, context }) => {
+  const { userId } = await signInAs(context, "WRITER", "Brian Test");
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Hello, Brian 👋" })).toBeVisible();
+  await setMemberStatus(userId, "PAUSED");
+  await page.reload();
+  await expect(page).toHaveURL(/error=no_access/);
+  await expect(page.getByRole("alert")).toContainText("paused");
+});
