@@ -127,7 +127,8 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
                 <span>{message.text}</span>
               </div>
             )}
-            <button type="button" className="link-btn danger" onClick={remove}>
+            <button type="button" className="btn btn-danger btn-sm" onClick={remove}>
+              <Icon name="trash" />
               Remove poster
             </button>
           </div>

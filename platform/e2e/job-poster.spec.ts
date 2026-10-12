@@ -9,7 +9,8 @@ test.afterAll(async () => {
 // Runs with no Claude key, so the AI is in "pretend" mode and fills in the Kilimall sample
 test("a poster is read into the form, highlighted, and saved with the job", async ({ page, context }) => {
   await signInAs(context, "OWNER", "Jay Test");
-  await page.goto("/admin/jobs/new");
+  // Wait until the form is interactive before choosing files
+  await page.goto("/admin/jobs/new", { waitUntil: "networkidle" });
 
   await page.getByLabel("Upload job poster").setInputFiles("e2e/fixtures/poster.png");
   await expect(page.getByAltText("Job poster")).toBeVisible();

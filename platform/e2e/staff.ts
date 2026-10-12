@@ -64,3 +64,9 @@ export async function removeWorkOfTestStaff() {
   await db.job.deleteMany({ where: { createdById: { in: ids } } });
   await db.company.deleteMany({ where: { jobs: { none: {} }, logoPath: null } });
 }
+
+export async function removeTestInvites() {
+  await db.invite.deleteMany({ where: { email: { endsWith: `@${TEST_DOMAIN}` } } });
+}
+
+export const testEmail = (name: string) => `${name.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@${TEST_DOMAIN}`;

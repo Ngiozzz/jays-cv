@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/icons/Icon";
 import { startTransition, useActionState, useRef } from "react";
 import { removeLogoAction, uploadLogoAction } from "@/app/(admin)/admin/(signed-in)/companies/actions";
 import { JobLogo } from "@/components/jobs/JobLogo";
@@ -57,7 +58,8 @@ export function CompanyLogoRow({ id, name, logoUrl, jobCount }: Props) {
             />
           </label>
           {logoUrl && (
-            <button type="button" className="link-btn danger" onClick={remove}>
+            <button type="button" className="btn btn-danger btn-sm" onClick={remove}>
+              <Icon name="trash" />
               Remove
             </button>
           )}

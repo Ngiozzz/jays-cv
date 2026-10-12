@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/icons/Icon";
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { deleteJobAction, saveJobAction } from "@/app/(admin)/admin/(signed-in)/jobs/actions";
 import { JobCard } from "@/components/jobs/JobCard";
@@ -325,7 +326,8 @@ function DeleteJob({ jobId, title }: { jobId: string; title: string }) {
   };
   return (
     <div className="publish-foot">
-      <button type="button" className="link-btn danger" onClick={confirmDelete}>
+      <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+        <Icon name="trash" />
         Delete job
       </button>
     </div>

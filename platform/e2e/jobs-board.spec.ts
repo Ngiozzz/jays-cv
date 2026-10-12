@@ -31,11 +31,11 @@ test("a published job appears on the website, and leaves it when unpublished", a
   await expect(page.locator("#jobs").getByRole("link", { name: title })).toBeVisible();
 
   // Find a job: listed, searchable, and filtered by a shared link
-  await page.goto("/jobs");
+  await page.goto("/jobs", { waitUntil: "networkidle" });
   await expect(page.getByRole("link", { name: title })).toBeVisible();
-  await page.getByPlaceholder("Job title, company or keyword").fill("savanna");
+  await page.getByPlaceholder("Job title, company or keyword").filter({ visible: true }).fill("savanna");
   await expect(page.getByRole("link", { name: title })).toBeVisible();
-  await page.getByPlaceholder("Job title, company or keyword").fill("no-such-job-xyz");
+  await page.getByPlaceholder("Job title, company or keyword").filter({ visible: true }).fill("no-such-job-xyz");
   await expect(page.getByText("No jobs match your search")).toBeVisible();
   await page.goto("/jobs?q=savanna");
   // While the page loads, the plain list briefly sits next to the version that reads the address
@@ -55,7 +55,7 @@ test("a published job appears on the website, and leaves it when unpublished", a
   const row = page.getByRole("row", { name: new RegExp(title) });
   await row.getByTitle("Move to drafts").click();
   await expect(row).toHaveCount(0);
-  await page.goto("/jobs");
+  await page.goto("/jobs", { waitUntil: "networkidle" });
   await expect(page.getByRole("link", { name: title })).toHaveCount(0);
   const response = await page.goto(jobUrl);
   expect(response?.status()).toBe(404);

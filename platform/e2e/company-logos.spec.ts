@@ -13,7 +13,8 @@ test.afterAll(async () => {
 
 test("a logo added while posting shows on the website and is remembered for the company", async ({ page, context }) => {
   await signInAs(context, "OWNER", "Jay Test");
-  await page.goto("/admin/jobs/new");
+  // Wait until the form is interactive before choosing files
+  await page.goto("/admin/jobs/new", { waitUntil: "networkidle" });
   await page.getByLabel("Job title").fill(title);
   await page.getByLabel("Company").fill(company);
   await page.getByLabel("Location").fill("Nairobi");
@@ -30,7 +31,8 @@ test("a logo added while posting shows on the website and is remembered for the 
   await expect(card.locator(".job-logo.has-logo img")).toBeVisible();
 
   // A new job for the same company picks the saved logo up by itself
-  await page.goto("/admin/jobs/new");
+  // Wait until the form is interactive before choosing files
+  await page.goto("/admin/jobs/new", { waitUntil: "networkidle" });
   await page.getByLabel("Company").fill(company.toUpperCase());
   await expect(page.getByText(`Saved logo for ${company}.`)).toBeVisible();
 
