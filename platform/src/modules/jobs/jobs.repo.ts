@@ -44,3 +44,21 @@ export function updateJob(tenantId: string, id: string, data: Prisma.JobUnchecke
 export function deleteJob(tenantId: string, id: string) {
   return tenantDb(tenantId).job.delete({ where: { id } });
 }
+
+export function findPosters(tenantId: string, jobId: string) {
+  return tenantDb(tenantId).storedFile.findMany({
+    where: { jobId, kind: "JOB_POSTER", deletedAt: null },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export function createPosterRecord(
+  tenantId: string,
+  poster: { jobId: string; storagePath: string; name: string; mimeType: string; sizeBytes: number; uploadedBy: string },
+) {
+  return tenantDb(tenantId).storedFile.create({ data: { ...poster, tenantId, kind: "JOB_POSTER" } });
+}
+
+export function deleteFileRecords(tenantId: string, ids: string[]) {
+  return tenantDb(tenantId).storedFile.deleteMany({ where: { id: { in: ids } } });
+}

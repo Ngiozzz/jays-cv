@@ -4,18 +4,37 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { jobFormToInput } from "@/modules/jobs/jobs.schema";
 import { removeJob, saveJob, setPublished, type FieldErrors } from "@/modules/jobs/jobs.service";
+import { posterProblem } from "@/modules/jobs/poster";
+import { attachPoster, readPoster, removePoster, type ReadPosterResult } from "@/modules/jobs/poster.service";
 import { requirePermission } from "@/modules/team/current-member";
 
-// Thin wrappers: check who is asking, hand over to the jobs service, then move on
+// Thin wrappers: check who is asking, hand over to the jobs services, then move on
 
 export type JobFormState = { fieldErrors: FieldErrors } | null;
 
+// An <input type="file"> left empty still sends a nameless, zero-byte file
+const chosenFile = (value: FormDataEntryValue | null) => (value instanceof File && value.size > 0 ? value : null);
+
 export async function saveJobAction(jobId: string | null, _previous: JobFormState, form: FormData) {
   const member = await requirePermission("postJobs");
+  const poster = chosenFile(form.get("poster"));
+  const problem = poster && posterProblem(poster);
+  if (problem) return { fieldErrors: { poster: problem } };
+
   const intent = form.get("intent") === "publish" ? "publish" : "draft";
   const result = await saveJob(member, jobId, jobFormToInput(form), intent);
   if (!result.ok) return { fieldErrors: result.fieldErrors };
+
+  if (poster) await attachPoster(member, result.id, poster);
+  else if (form.get("removePoster") === "on") await removePoster(member, result.id);
   redirect(`/admin/jobs/${result.id}?saved=${result.published ? "published" : "draft"}`);
+}
+
+export async function readPosterAction(form: FormData): Promise<ReadPosterResult> {
+  const member = await requirePermission("postJobs");
+  const poster = chosenFile(form.get("poster"));
+  if (!poster) return { ok: false, error: "Choose the poster image first." };
+  return readPoster(member, poster);
 }
 
 export type RowActionState = { error: string } | null;

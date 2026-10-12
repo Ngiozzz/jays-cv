@@ -3,6 +3,7 @@ import type { Job } from "@/generated/prisma/client";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan } from "@/modules/team/permissions";
 import * as repo from "./jobs.repo";
+import { removePoster } from "./poster.service";
 import { displayStatus, slugify, todayInNairobi, uniqueSlug, type JobDisplayStatus } from "./jobs.rules";
 import { applySchema, jobDraftSchema, publishProblems, type JobInput } from "./jobs.schema";
 
@@ -140,5 +141,7 @@ export async function setPublished(member: CurrentMember, id: string, publish: b
 
 export async function removeJob(member: CurrentMember, id: string): Promise<void> {
   assertCan(member, "postJobs");
+  // Poster images live outside the database, so remove them before the job row goes
+  await removePoster(member, id);
   await repo.deleteJob(member.tenant.id, id);
 }

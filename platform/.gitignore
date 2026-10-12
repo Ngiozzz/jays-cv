@@ -52,3 +52,6 @@ next-env.d.ts
 /.windsurf
 /.claude
 /skills-lock.json
+
+# local file storage stand-in (development)
+/.uploads

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { deleteJobAction, saveJobAction } from "@/app/(admin)/admin/(signed-in)/jobs/actions";
 import { JobCard } from "@/components/jobs/JobCard";
 import type { JobDisplayStatus } from "@/modules/jobs/jobs.rules";
@@ -16,13 +16,40 @@ import {
 import { ApplyFields } from "./ApplyFields";
 import { FormField } from "./FormField";
 import { JobStatusPill } from "./JobStatusPill";
+import { PosterSection } from "./PosterSection";
 
-type Props = { jobId: string | null; initial: JobInput; status: JobDisplayStatus | "new"; today: string };
+type Props = {
+  jobId: string | null;
+  initial: JobInput;
+  status: JobDisplayStatus | "new";
+  today: string;
+  posterUrl: string | null;
+  aiPretend: boolean;
+};
 
-export function JobEditor({ jobId, initial, status, today }: Props) {
+export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend }: Props) {
   const [state, save, saving] = useActionState(saveJobAction.bind(null, jobId), null);
+  const [values, setValues] = useState(initial);
   const [live, setLive] = useState(initial);
+  // Bumped when the AI fills the form, so the fields re-render with its values
+  const [fillCount, setFillCount] = useState(0);
+  const fields = useRef<HTMLDivElement>(null);
   const errors = state?.fieldErrors ?? {};
+
+  // Highlight what the AI filled in, until the person edits it (see onInput below)
+  useEffect(() => {
+    if (!fillCount || !fields.current) return;
+    fields.current.querySelectorAll<HTMLInputElement>("input, textarea, select").forEach((el) => {
+      const filled = el.type === "checkbox" || el.type === "radio" ? false : Boolean(el.value);
+      el.classList.toggle("ai-filled", filled);
+    });
+  }, [fillCount]);
+
+  const fillFromPoster = (job: JobInput) => {
+    setValues(job);
+    setLive(job);
+    setFillCount((count) => count + 1);
+  };
 
   // Live preview and checklist follow what's typed
   const readForm = (form: HTMLFormElement) => {
@@ -44,36 +71,42 @@ export function JobEditor({ jobId, initial, status, today }: Props) {
       className="post-layout"
       noValidate
       onSubmit={submit}
-      onInput={(e) => readForm(e.currentTarget)}
+      onInput={(e) => {
+        (e.target as HTMLElement).classList.remove("ai-filled");
+        readForm(e.currentTarget);
+      }}
       onChange={(e) => readForm(e.currentTarget)}
     >
       <div className="post-form">
-        <BasicsSection initial={initial} errors={errors} />
-        <DetailsSection initial={initial} />
-        <DeadlineSection initial={initial} openEnded={live.openEnded} error={errors.deadline} />
-        <section className="form-section">
-          <h2>
-            <span className="n">4</span>How to apply
-          </h2>
-          <p className="hint">Choose how the employer wants applications. Only the fields you need will show.</p>
-          <ApplyFields initial={initial.apply} method={live.apply.method} errors={errors} />
-          <div className="fgrid">
-            <FormField
-              id="f-source"
-              label="Where did you find this advert?"
-              full
-              hint="Shown on the job page so readers can see the original source."
-            >
-              <input
-                type="text"
+        <PosterSection existingUrl={posterUrl} error={errors.poster} aiPretend={aiPretend} onRead={fillFromPoster} />
+        <div ref={fields} key={fillCount} className="post-fields">
+          <BasicsSection initial={values} errors={errors} />
+          <DetailsSection initial={values} />
+          <DeadlineSection initial={values} openEnded={live.openEnded} error={errors.deadline} />
+          <section className="form-section">
+            <h2>
+              <span className="n">5</span>How to apply
+            </h2>
+            <p className="hint">Choose how the employer wants applications. Only the fields you need will show.</p>
+            <ApplyFields initial={values.apply} method={live.apply.method} errors={errors} />
+            <div className="fgrid">
+              <FormField
                 id="f-source"
-                name="source"
-                defaultValue={initial.source}
-                placeholder="e.g. Company's LinkedIn page"
-              />
-            </FormField>
-          </div>
-        </section>
+                label="Where did you find this advert?"
+                full
+                hint="Shown on the job page so readers can see the original source."
+              >
+                <input
+                  type="text"
+                  id="f-source"
+                  name="source"
+                  defaultValue={values.source}
+                  placeholder="e.g. Company's LinkedIn page"
+                />
+              </FormField>
+            </div>
+          </section>
+        </div>
       </div>
 
       <aside className="post-aside">
@@ -109,7 +142,7 @@ function BasicsSection({ initial, errors }: { initial: JobInput; errors: Record<
   return (
     <section className="form-section">
       <h2>
-        <span className="n">1</span>The job
+        <span className="n">2</span>The job
       </h2>
       <p className="hint">What it is, who&apos;s hiring and where.</p>
       <div className="fgrid">
@@ -174,7 +207,7 @@ function DetailsSection({ initial }: { initial: JobInput }) {
   return (
     <section className="form-section">
       <h2>
-        <span className="n">2</span>Details
+        <span className="n">3</span>Details
       </h2>
       <p className="hint">Written text helps people find the job on Google. Put one item per line.</p>
       <div className="fgrid">
@@ -214,7 +247,7 @@ function DeadlineSection({ initial, openEnded, error }: { initial: JobInput; ope
   return (
     <section className="form-section">
       <h2>
-        <span className="n">3</span>Deadline
+        <span className="n">4</span>Deadline
       </h2>
       <p className="hint">The job hides from the website automatically after this date.</p>
       <div className="fgrid">

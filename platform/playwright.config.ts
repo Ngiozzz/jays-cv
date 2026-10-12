@@ -4,6 +4,9 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
+  // One browser at a time: the dev server compiles pages on demand and the dev database is remote,
+  // so parallel runs time out without anything being wrong
+  workers: 1,
   // The dev server compiles each page on its first visit, which can take several seconds
   expect: { timeout: 20_000 },
   timeout: 60_000,

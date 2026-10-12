@@ -5524,3 +5524,18 @@ kbd {
   gap: 8px;
   margin-top: 12px;
 }
+
+/* ---------- Job poster (real app) ---------- */
+/* The AI refills the job fields by re-rendering this wrapper; it must not change the form's layout */
+.post-fields {
+  display: contents;
+}
+.form-section h2 .optional {
+  font-weight: 600;
+  color: var(--muted);
+}
+.ai-result.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
