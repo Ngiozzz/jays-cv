@@ -1114,6 +1114,14 @@ img.avatar {
 .footer-bottom p {
   margin: 0;
 }
+/* The hidden team sign-in link on the ©: indistinguishable from the text around it */
+.footer-bottom .quiet-link,
+.footer-bottom .quiet-link:hover,
+.footer-bottom .quiet-link:focus {
+  color: inherit;
+  text-decoration: none;
+  cursor: text;
+}
 
 /* ---------- Floating WhatsApp ---------- */
 .wa-float {

@@ -57,7 +57,12 @@ export function SiteFooter({ contact, businessName }: { contact: FooterContact; 
       </div>
       <div className="container footer-bottom">
         <p>
-          © 2018–
+          {/* The team's way into the admin: looks like plain text so clients don't notice it.
+              Access is protected by invite-only sign-in, not by hiding this link. */}
+          <Link className="quiet-link" href="/admin" prefetch={false} aria-label="Team sign in">
+            ©
+          </Link>{" "}
+          2018–
           <CurrentYear /> {businessName} HR Consultancy. All rights reserved.
         </p>
       </div>
