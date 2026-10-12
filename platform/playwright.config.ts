@@ -5,7 +5,8 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   // The dev server compiles each page on its first visit, which can take several seconds
-  expect: { timeout: 15_000 },
+  expect: { timeout: 20_000 },
+  timeout: 60_000,
   use: { baseURL: "http://localhost:3000", trace: "retain-on-failure" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {

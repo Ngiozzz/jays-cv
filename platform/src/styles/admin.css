@@ -5458,3 +5458,69 @@ kbd {
     font-size: 1.1rem;
   }
 }
+
+/* ---------- Jobs (real app) ---------- */
+/* Status tabs are links here, so filters work without JavaScript and can be bookmarked */
+.tabs a {
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 9px;
+  color: var(--muted);
+  text-decoration: none;
+}
+.tabs a span {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+}
+.tabs a[aria-current="page"] {
+  background: var(--primary-soft);
+  color: var(--gold-text);
+}
+.tabs a[aria-current="page"] span {
+  background: #fff;
+}
+.cell-actions form {
+  display: contents;
+}
+.row-error {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  max-width: 280px;
+}
+.notice {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.published-notice {
+  margin-bottom: 22px;
+  border-color: #a7f3d0;
+  background: #f6fffa;
+}
+.published-notice h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-head);
+}
+.published-notice p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+.published-notice .wa-text {
+  min-height: 0;
+  resize: vertical;
+}
+.published-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}

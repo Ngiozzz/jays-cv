@@ -13,11 +13,13 @@ config({ path: ".env.local", quiet: true });
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" }) });
 const secret = process.env.BETTER_AUTH_SECRET ?? "";
 const TEST_DOMAIN = "e2e.jaycvs.test";
+const createdUserIds: string[] = [];
 
 export async function signInAs(context: BrowserContext, role: Role, name: string) {
   const tenant = await db.tenant.findUniqueOrThrow({ where: { slug: process.env.DEFAULT_TENANT_SLUG ?? "jaycvs" } });
   const id = randomBytes(12).toString("hex");
   const user = await db.user.create({ data: { id, name, email: `${id}@${TEST_DOMAIN}`, emailVerified: true } });
+  createdUserIds.push(user.id);
   await db.membership.create({ data: { tenantId: tenant.id, userId: user.id, role, displayName: name } });
   const token = randomBytes(24).toString("hex");
   await db.session.create({
@@ -37,7 +39,8 @@ export function setMemberStatus(userId: string, status: "ACTIVE" | "PAUSED") {
   return db.membership.updateMany({ where: { userId }, data: { status } });
 }
 
+// Only the people this test file created: other files run at the same time with their own test staff
 export async function removeTestStaff() {
-  await db.user.deleteMany({ where: { email: { endsWith: `@${TEST_DOMAIN}` } } });
+  await db.user.deleteMany({ where: { id: { in: createdUserIds } } });
   await db.$disconnect();
 }

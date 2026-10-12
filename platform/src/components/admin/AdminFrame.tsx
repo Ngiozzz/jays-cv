@@ -16,7 +16,7 @@ type Props = { nav: FrameNavItem[]; user: FrameUser; children: ReactNode };
 export function AdminFrame({ nav, user, children }: Props) {
   const pathname = usePathname();
   const [sideOpen, setSideOpen] = useState(false);
-  const current = nav.find((item) => item.href === pathname) ?? nav[0];
+  const current = currentItem(nav, pathname);
 
   return (
     <div className="admin-shell">
@@ -30,12 +30,7 @@ export function AdminFrame({ nav, user, children }: Props) {
         </Link>
         <nav className="side-nav">
           {nav.map((item) => (
-            <SideLink
-              key={item.href}
-              item={item}
-              active={item.href === pathname}
-              onNavigate={() => setSideOpen(false)}
-            />
+            <SideLink key={item.href} item={item} active={item === current} onNavigate={() => setSideOpen(false)} />
           ))}
         </nav>
         <div className="side-foot">
@@ -79,6 +74,16 @@ export function AdminFrame({ nav, user, children }: Props) {
       </div>
     </div>
   );
+}
+
+// The menu item for this page: the longest matching address, so /admin/jobs/abc highlights "Jobs"
+// and /admin/jobs/new highlights "Post a job"
+function currentItem(nav: FrameNavItem[], pathname: string): FrameNavItem {
+  const matches = nav.filter(
+    (item) =>
+      !item.phase && (item.href === pathname || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`))),
+  );
+  return matches.sort((a, b) => b.href.length - a.href.length)[0] ?? nav[0];
 }
 
 function SideLink({ item, active, onNavigate }: { item: FrameNavItem; active: boolean; onNavigate: () => void }) {
