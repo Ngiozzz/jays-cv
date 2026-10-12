@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JobLogo } from "@/components/jobs/JobLogo";
 import { companyKey } from "@/modules/jobs/companies";
 import { LOGO_SIZE, shrinkImage } from "./shrink-image";
@@ -25,6 +25,12 @@ export function CompanyLogoField({ company, known, error }: Props) {
     input.current.files = transfer.files;
     setChosen(URL.createObjectURL(small));
   };
+
+  // A file chosen in the moment before the page became interactive would otherwise be ignored
+  useEffect(() => {
+    const early = input.current?.files?.[0];
+    if (early) void choose(early);
+  }, []);
 
   const hint = chosen
     ? "New logo: saved with the job, and used for this company from now on."

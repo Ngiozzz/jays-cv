@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type ChangeEvent, type DragEvent } from "react";
 import { readPosterAction } from "@/app/(admin)/admin/(signed-in)/jobs/actions";
 import { Icon } from "@/components/icons/Icon";
 import type { JobInput } from "@/modules/jobs/jobs.schema";
@@ -37,6 +37,12 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
     setRemoved(false);
     setMessage(null);
   };
+
+  // A file chosen in the moment before the page became interactive would otherwise be ignored
+  useEffect(() => {
+    const early = input.current?.files?.[0];
+    if (early) void takeFile(early);
+  }, []);
 
   const remove = () => {
     if (input.current) input.current.value = "";

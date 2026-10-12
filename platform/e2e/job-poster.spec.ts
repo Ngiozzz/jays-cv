@@ -29,7 +29,8 @@ test("a poster is read into the form, highlighted, and saved with the job", asyn
   await expect(page.getByRole("heading", { name: "Job published 🎉" })).toBeVisible();
 
   // The saved poster shows on the job's page and loads
-  const poster = page.getByAltText("Job poster");
+  // The stored poster (not the preview made in the browser before saving)
+  const poster = page.locator('img[alt="Job poster"]:not([src^="blob:"])');
   await expect(poster).toBeVisible();
   expect(await poster.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
 
