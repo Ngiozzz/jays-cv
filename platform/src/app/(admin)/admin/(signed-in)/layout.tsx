@@ -32,8 +32,11 @@ function visibleNav(member: CurrentMember): FrameNavItem[] {
 }
 
 function frameUser(member: CurrentMember) {
+  // Letters only, so "Jay (test)" becomes "JT"
   const initials = member.name
+    .replace(/[^A-Za-z ]/g, "")
     .split(" ")
+    .filter(Boolean)
     .map((word) => word[0])
     .slice(0, 2)
     .join("")

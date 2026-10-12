@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
-export function GoogleSignInButton() {
+// `available` is false until the Google keys are in the environment: the button shows but can't be used
+export function GoogleSignInButton({ available }: { available: boolean }) {
   const [busy, setBusy] = useState(false);
 
   const signIn = async () => {
@@ -16,7 +17,13 @@ export function GoogleSignInButton() {
   };
 
   return (
-    <button className="btn btn-primary btn-lg btn-block" type="button" onClick={signIn} disabled={busy}>
+    <button
+      className="btn btn-primary btn-lg btn-block"
+      type="button"
+      onClick={signIn}
+      disabled={busy || !available}
+      title={available ? undefined : "Google sign-in switches on once its keys are added"}
+    >
       <GoogleMark />
       {busy ? "Opening Google…" : "Continue with Google"}
     </button>

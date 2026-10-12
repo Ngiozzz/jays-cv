@@ -5205,6 +5205,161 @@ kbd {
   font-size: 0.9rem;
 }
 
+/* ---------- Team sign-in (real app): brand panel + sign-in card ---------- */
+.signin-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(800px 500px at 85% -10%, rgba(184, 145, 63, 0.18), transparent 70%),
+    radial-gradient(600px 400px at 0% 110%, rgba(184, 145, 63, 0.1), transparent 70%), var(--dark);
+}
+.signin-shell {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  width: min(920px, 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid #2a261f;
+}
+.signin-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 40px 38px;
+  background: linear-gradient(160deg, #1a1712 0%, var(--black) 70%);
+  color: var(--on-dark);
+}
+.signin-brand .logo-mark {
+  background: var(--gold);
+  color: var(--black);
+}
+.signin-eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+}
+.signin-brand h2 {
+  margin: 0 0 22px;
+  font-family: var(--font-head);
+  font-size: 2rem;
+  line-height: 1.2;
+  color: var(--white);
+}
+.signin-brand h2 span {
+  color: var(--gold-light);
+}
+.signin-points {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.signin-points li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+.signin-points svg {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgba(230, 200, 119, 0.14);
+  color: var(--gold-light);
+  flex-shrink: 0;
+}
+.signin-small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--on-dark-muted);
+}
+.signin-small svg {
+  width: 15px;
+  height: 15px;
+}
+.signin-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 40px;
+  background: var(--white);
+}
+.signin-card h1 {
+  margin: 0 0 6px;
+  font-family: var(--font-head);
+  font-size: 1.9rem;
+  color: var(--ink);
+}
+.signin-lead {
+  margin: 0 0 26px;
+  color: var(--muted);
+}
+.signin-options {
+  display: grid;
+  gap: 4px;
+}
+.signin-options .btn svg {
+  margin-right: 4px;
+}
+.signin-options .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.signin-test {
+  margin-top: 22px;
+  padding-top: 4px;
+}
+.signin-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.signin-divider::before,
+.signin-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+@media (max-width: 760px) {
+  .signin-shell {
+    grid-template-columns: 1fr;
+  }
+  .signin-brand {
+    padding: 28px 24px;
+    gap: 20px;
+  }
+  .signin-brand h2 {
+    font-size: 1.5rem;
+  }
+  .signin-points {
+    display: none;
+  }
+  .signin-card {
+    padding: 32px 24px;
+  }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1440px) {
   .col-cat {

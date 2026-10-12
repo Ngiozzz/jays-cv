@@ -6,7 +6,7 @@ test.afterAll(removeTestStaff);
 test("signed-out visitors are sent to the sign-in page", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login$/);
-  await expect(page.getByRole("heading", { name: "Admin sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
 test("the owner sees the dashboard, every menu item and the AI token balance", async ({ page, context }) => {
@@ -38,4 +38,13 @@ test("pausing a member blocks them on their next request", async ({ page, contex
   await page.reload();
   await expect(page).toHaveURL(/error=no_access/);
   await expect(page.getByRole("alert")).toContainText("paused");
+});
+
+test("in development, 'Proceed for testing' signs in as the test owner", async ({ page }) => {
+  await page.goto("/admin/login");
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
+  await page.getByRole("button", { name: "Proceed for testing" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("heading", { name: "Hello, Jay 👋" })).toBeVisible();
 });

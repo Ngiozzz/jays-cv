@@ -1,9 +1,10 @@
-import { createHmac, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { config } from "dotenv";
 import { PrismaPg } from "@prisma/adapter-pg";
 import type { BrowserContext } from "@playwright/test";
 import { PrismaClient } from "../src/generated/prisma/client";
 import type { Role } from "../src/generated/prisma/enums";
+import { SESSION_COOKIE, signedSessionValue } from "../src/lib/session-cookie";
 
 config({ path: ".env.local", quiet: true });
 
@@ -22,11 +23,10 @@ export async function signInAs(context: BrowserContext, role: Role, name: string
   await db.session.create({
     data: { id: `s${id}`, token, userId: user.id, expiresAt: new Date(Date.now() + 3_600_000) },
   });
-  const signature = createHmac("sha256", secret).update(token).digest("base64");
   await context.addCookies([
     {
-      name: "better-auth.session_token",
-      value: encodeURIComponent(`${token}.${signature}`),
+      name: SESSION_COOKIE,
+      value: encodeURIComponent(signedSessionValue(token, secret)),
       url: "http://localhost:3000",
     },
   ]);
