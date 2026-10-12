@@ -2,7 +2,8 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { env } from "@/lib/env";
-import { PRETEND_READING, posterPrompt, posterReadingSchema, type PosterReading } from "./poster-reading";
+import { posterPrompt, posterReadingSchema, type PosterReading } from "./poster-reading";
+import { pretendReadingFor } from "./pretend-readings";
 
 // The one place the app talks to Claude. Without ANTHROPIC_API_KEY every call runs in
 // "pretend" mode: it returns sample data and reports no token use.
@@ -16,10 +17,10 @@ export const aiPretendMode = !env.ANTHROPIC_API_KEY;
 
 const client = env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
 
-export type PosterImage = { base64: string; mediaType: "image/jpeg" | "image/png" | "image/webp" };
+export type PosterImage = { base64: string; mediaType: "image/jpeg" | "image/png" | "image/webp"; fileName: string };
 
 export async function readJobPoster(image: PosterImage, today: string): Promise<AiResult<PosterReading>> {
-  if (!client) return { data: PRETEND_READING, usage: null };
+  if (!client) return { data: pretendReadingFor(image.fileName, today), usage: null };
 
   const response = await client.beta.messages.parse({
     model: env.ANTHROPIC_MODEL,

@@ -5552,3 +5552,37 @@ kbd {
 .cell-actions label.btn {
   cursor: pointer;
 }
+
+/* ---------- Jobs inbox (real app) ---------- */
+.notice-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+/* The intake side panel is dark */
+.intake-source {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--on-dark);
+}
+.intake-source select {
+  font: inherit;
+  font-weight: 500;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.reason-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  border: 0;
+}
+.reason-pick legend {
+  font-weight: 700;
+  margin-bottom: 6px;
+}

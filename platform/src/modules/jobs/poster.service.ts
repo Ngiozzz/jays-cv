@@ -26,7 +26,11 @@ export async function readPoster(member: CurrentMember, file: File): Promise<Rea
   }
 
   try {
-    const image = { base64: Buffer.from(await file.arrayBuffer()).toString("base64"), mediaType: file.type };
+    const image = {
+      base64: Buffer.from(await file.arrayBuffer()).toString("base64"),
+      mediaType: file.type,
+      fileName: file.name,
+    };
     const { data, usage } = await readJobPoster(image, todayInNairobi());
     if (usage) {
       await recordUsage(member.tenant.id, { feature: "Poster reading", memberId: member.id, ...usage });

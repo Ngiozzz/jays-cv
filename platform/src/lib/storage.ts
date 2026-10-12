@@ -1,5 +1,5 @@
 import "server-only";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { env } from "./env";
@@ -14,6 +14,7 @@ const BUCKET_LIMITS: Record<Bucket, string> = { "job-posters": "6MB", "company-l
 
 export interface FileStore {
   put(bucket: Bucket, filePath: string, bytes: Uint8Array, contentType: string): Promise<void>;
+  get(bucket: Bucket, filePath: string): Promise<Uint8Array>;
   remove(bucket: Bucket, filePath: string): Promise<void>;
   publicUrl(bucket: Bucket, filePath: string): string;
 }
@@ -48,6 +49,11 @@ function supabaseStore(url: string, serviceRoleKey: string): FileStore {
       const { error } = await client.storage.from(bucket).upload(filePath, bytes, { contentType, upsert: true });
       if (error) throw error;
     },
+    async get(bucket, filePath) {
+      const { data, error } = await client.storage.from(bucket).download(filePath);
+      if (error) throw error;
+      return new Uint8Array(await data.arrayBuffer());
+    },
     async remove(bucket, filePath) {
       const { error } = await client.storage.from(bucket).remove([filePath]);
       if (error) throw error;
@@ -68,6 +74,9 @@ function localStore(): FileStore {
       const target = fullPath(bucket, filePath);
       await mkdir(path.dirname(target), { recursive: true });
       await writeFile(target, bytes);
+    },
+    async get(bucket, filePath) {
+      return new Uint8Array(await readFile(fullPath(bucket, filePath)));
     },
     async remove(bucket, filePath) {
       await rm(fullPath(bucket, filePath), { force: true });

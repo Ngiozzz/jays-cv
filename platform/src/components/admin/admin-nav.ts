@@ -14,7 +14,7 @@ type AdminNavItem = {
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard", icon: "grid" },
   { href: "/admin/jobs", label: "Jobs", icon: "list", permission: "postJobs" },
-  { href: "/admin/inbox", label: "Jobs inbox", icon: "inbox", permission: "postJobs", phase: 2 },
+  { href: "/admin/inbox", label: "Jobs inbox", icon: "inbox", permission: "postJobs" },
   { href: "/admin/jobs/new", label: "Post a job", icon: "plus", permission: "postJobs" },
   { href: "/admin/companies", label: "Company logos", icon: "building", permission: "postJobs" },
   { href: "/admin/orders", label: "Orders", icon: "cart", phase: 3 },

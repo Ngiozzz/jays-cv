@@ -9,10 +9,29 @@ import {
   type JobInput,
 } from "@/modules/jobs/jobs.schema";
 
+// Fields a person may need to check against the poster (shown as "AI wasn't sure")
+export const READING_FIELDS = [
+  "title",
+  "company",
+  "location",
+  "category",
+  "type",
+  "workMode",
+  "deadline",
+  "apply",
+  "summary",
+  "requirements",
+] as const;
+export type ReadingField = (typeof READING_FIELDS)[number];
+
 // What the AI must return after reading a job poster. Kept to plain fields and fixed choices
 // (no defaults or limits) so it works as a structured-output schema.
 export const posterReadingSchema = z.object({
   isJobAdvert: z.boolean(),
+  // Everything printed on the poster, as plain text (the scam checks look at this)
+  rawText: z.string(),
+  // Fields that were hard to read (blurry, cut off, ambiguous) and need a person to check
+  unsureFields: z.array(z.enum(READING_FIELDS)),
   title: z.string(),
   company: z.string(),
   location: z.string(),
@@ -45,6 +64,8 @@ export function posterPrompt(today: string): string {
     "Write the summary as one or two plain sentences in your own words. List responsibilities and requirements one item each, as printed.",
     'Choose the closest category, job type and work setting; use "Unknown" for the category if none fits.',
     "For how to apply, pick the method the poster asks for. Put any special instructions (e.g. 'state your expected salary') in notes.",
+    "Put all the text printed on the poster, word for word, in rawText.",
+    "List in unsureFields any field you could not read confidently (blurry, cut off or ambiguous), so a person checks it.",
     "If the image is not a job advert, set isJobAdvert to false and leave the other fields empty.",
   ].join("\n");
 }
@@ -85,6 +106,8 @@ export function readingToJobInput(reading: PosterReading): JobInput {
 // so the button can be tried without spending tokens
 export const PRETEND_READING: PosterReading = {
   isJobAdvert: true,
+  rawText: "Kilimall is hiring I.T Specialist. Send CV to recruitment@kilimall.com subject I.T SPECIALIST.",
+  unsureFields: [],
   title: "I.T Specialist",
   company: "Kilimall",
   location: "Nairobi (Mombasa Road)",

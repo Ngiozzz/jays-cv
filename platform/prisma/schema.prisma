@@ -34,6 +34,7 @@ model Tenant {
   invites        Invite[]
   jobs           Job[]
   companies      Company[]
+  inboxItems     InboxItem[]
   orders         Order[]
   orderEvents    OrderEvent[]
   orderRevisions OrderRevision[]
@@ -187,6 +188,8 @@ model Membership {
   orderEvents    OrderEvent[]
   postsWritten   Post[]
   jobsCreated    Job[]
+  inboxAdded     InboxItem[]        @relation("InboxAddedBy")
+  inboxDecided   InboxItem[]        @relation("InboxDecidedBy")
   contentChanges ContentChange[]
   tokenEntries   TokenLedgerEntry[]
 
@@ -265,6 +268,7 @@ model Job {
 
   files        StoredFile[]
   tokenEntries TokenLedgerEntry[]
+  inboxItems   InboxItem[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status, postedAt])
@@ -691,4 +695,50 @@ model TokenLedgerEntry {
   createdAt    DateTime       @default(now())
 
   @@index([tenantId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Jobs inbox: posters dropped in bulk, read by the AI, then approved or discarded by a person
+// ---------------------------------------------------------------------------
+
+enum InboxState {
+  READING
+  CHECK
+  APPROVED
+  DISCARDED
+}
+
+model InboxItem {
+  id            String      @id @default(cuid())
+  tenantId      String
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  state         InboxState  @default(READING)
+  // The poster image (job-posters bucket); on approval it becomes the published job's poster
+  posterPath    String
+  posterName    String
+  posterType    String      @default("image/jpeg")
+  posterBytes   Int         @default(0)
+  source        String      @default("Uploaded")
+  // Text the AI read off the poster, used for the scam checks
+  rawText       String      @default("")
+  // The job as read (and corrected) so far; shape is JobInput (modules/jobs/jobs.schema.ts)
+  reading       Json?
+  // Fields the AI wasn't sure about, and those a person has since confirmed
+  unsure        String[]
+  checked       String[]
+  readError     String?
+  discardReason String?
+  jobId         String?
+  job           Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  inputTokens   Int?
+  outputTokens  Int?
+  addedById     String?
+  addedBy       Membership? @relation("InboxAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+  decidedById   String?
+  decidedBy     Membership? @relation("InboxDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+  readAt        DateTime?
+  decidedAt     DateTime?
+
+  @@index([tenantId, state, createdAt])
 }

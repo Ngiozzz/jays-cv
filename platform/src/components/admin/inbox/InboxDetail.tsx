@@ -1,0 +1,247 @@
+"use client";
+
+import { useState } from "react";
+import { Icon } from "@/components/icons/Icon";
+import type { Flag } from "@/modules/inbox/inbox.flags";
+import type { InboxCard } from "@/modules/inbox/inbox.view";
+import type { JobInput } from "@/modules/jobs/jobs.schema";
+import { QuickForm } from "./QuickForm";
+
+export const DISCARD_LABEL: Record<string, string> = {
+  scam: "Possible scam",
+  duplicate: "Duplicate",
+  expired: "Deadline passed",
+  "not-a-job": "Not a job advert",
+  other: "Other",
+};
+
+type Props = {
+  card: InboxCard;
+  job: JobInput | null;
+  flags: Flag[];
+  unsure: string[];
+  position: { index: number; total: number };
+  busy: boolean;
+  onStep: (step: 1 | -1) => void;
+  onChange: (job: JobInput) => void;
+  onConfirm: (field: string) => void;
+  onApprove: () => void;
+  onDiscard: (reason: string) => void;
+  onRestore: () => void;
+  discardOpen: boolean;
+  setDiscardOpen: (open: boolean) => void;
+};
+
+// The poster on one side, what the AI read on the other, and the decision
+export function InboxDetail(props: Props) {
+  const { card, job, flags, position } = props;
+  const clean = flags.every((flag) => flag.level === "info");
+  const nav = (
+    <div className="d-nav">
+      <button
+        type="button"
+        className="icon-btn"
+        aria-label="Previous poster"
+        disabled={position.index <= 0}
+        onClick={() => props.onStep(-1)}
+      >
+        ‹
+      </button>
+      <span>
+        {position.index + 1} of {position.total}
+      </span>
+      <button
+        type="button"
+        className="icon-btn"
+        aria-label="Next poster"
+        disabled={position.index >= position.total - 1}
+        onClick={() => props.onStep(1)}
+      >
+        ›
+      </button>
+    </div>
+  );
+  const poster = (
+    <figure className={card.state === "reading" ? "d-poster scanning" : "d-poster"}>
+      <img src={card.posterUrl} alt={`Job poster as received${job?.title ? `: ${job.title}` : ""}`} />
+      <figcaption>
+        {card.source} · {card.posterName} ·{" "}
+        <a href={card.posterUrl} target="_blank" rel="noopener">
+          Open full size
+        </a>
+      </figcaption>
+    </figure>
+  );
+
+  if (card.state === "reading") {
+    return (
+      <>
+        <div className="d-head">
+          <div>
+            <span className="ipill reading">Reading…</span>
+            <small>The AI is reading this poster. Usually a few seconds.</small>
+          </div>
+          {nav}
+        </div>
+        <div className="d-grid">
+          {poster}
+          <div className="d-skel">
+            {Array.from({ length: 7 }, (_, i) => (
+              <span key={i}></span>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (card.state === "approved") {
+    return (
+      <>
+        <div className="d-head">
+          <div>
+            <span className="ipill live">✓ Live on the website</span>
+            {card.jobSlug && (
+              <small>
+                <a href={`/jobs/${card.jobSlug}`} target="_blank" rel="noopener">
+                  View job page ↗
+                </a>
+              </small>
+            )}
+          </div>
+          {nav}
+        </div>
+        <div className="d-grid">
+          {poster}
+          <div className="d-gone">
+            <p>
+              <strong>{job?.title}</strong>
+              <br />
+              {job?.company}
+            </p>
+            <p>Edit it any time under Jobs. It&apos;s in today&apos;s channel post below.</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (card.state === "discarded") {
+    return (
+      <>
+        <div className="d-head">
+          <div>
+            <span className="ipill gone">Discarded: {DISCARD_LABEL[card.discardReason ?? "other"]}</span>
+          </div>
+          {nav}
+        </div>
+        <div className="d-grid">
+          {poster}
+          <div className="d-gone">
+            <p>This poster was not published. Discarded posters are kept for a week.</p>
+            <button type="button" className="btn btn-ghost" onClick={props.onRestore} disabled={props.busy}>
+              Restore to inbox
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="d-head">
+        <div>
+          <span className={clean ? "ipill ready" : "ipill flagged"}>
+            {clean ? "✓ Ready to approve" : "⚠ Needs a look"}
+          </span>
+          <small>{card.source}</small>
+        </div>
+        {nav}
+      </div>
+      {card.readError && (
+        <p className="d-note">
+          <Icon name="info" />
+          {card.readError}
+        </p>
+      )}
+      <div className="d-flags">
+        {flags.map((flag) => (
+          <div key={flag.key} className={`d-flag ${flag.level}`}>
+            <span className="d-flag-icon" aria-hidden="true">
+              {flag.level === "info" ? "⏱" : "⚠"}
+            </span>
+            <div>
+              <b>{flag.text}</b>
+              <span>{flag.more}</span>
+            </div>
+            {["scam", "duplicate", "expired"].includes(flag.key) && (
+              <div className="d-flag-acts">
+                <button
+                  type="button"
+                  className={flag.key === "scam" ? "btn btn-danger btn-sm" : "btn btn-ghost btn-sm"}
+                  onClick={() => props.onDiscard(flag.key)}
+                  disabled={props.busy}
+                >
+                  Discard {flag.key === "scam" ? "as scam" : flag.key === "duplicate" ? "duplicate" : ""}
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="d-grid">
+        {poster}
+        {job && <QuickForm job={job} unsure={props.unsure} onChange={props.onChange} onConfirm={props.onConfirm} />}
+      </div>
+      {props.discardOpen ? (
+        <DiscardChoice
+          flags={flags}
+          onCancel={() => props.setDiscardOpen(false)}
+          onDiscard={props.onDiscard}
+          busy={props.busy}
+        />
+      ) : (
+        <div className="d-actions">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => props.setDiscardOpen(true)}
+            disabled={props.busy}
+          >
+            <Icon name="trash" />
+            Discard <kbd>D</kbd>
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => props.onStep(1)}>
+            Skip for now
+          </button>
+          <button type="button" className="btn btn-primary" onClick={props.onApprove} disabled={props.busy}>
+            <Icon name="check" />
+            {props.busy ? "Publishing…" : "Approve & publish"} <kbd>A</kbd>
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function DiscardChoice(props: { flags: Flag[]; busy: boolean; onCancel: () => void; onDiscard: (r: string) => void }) {
+  const suggested = props.flags.find((flag) => flag.key in DISCARD_LABEL)?.key ?? "not-a-job";
+  const [reason, setReason] = useState<string>(suggested);
+  return (
+    <fieldset className="reason-pick d-actions">
+      <legend>Why discard it?</legend>
+      {Object.entries(DISCARD_LABEL).map(([key, label]) => (
+        <label key={key}>
+          <input type="radio" name="reason" checked={reason === key} onChange={() => setReason(key)} /> {label}
+        </label>
+      ))}
+      <button type="button" className="btn btn-ghost" onClick={props.onCancel}>
+        Cancel
+      </button>
+      <button type="button" className="btn btn-danger" onClick={() => props.onDiscard(reason)} disabled={props.busy}>
+        Discard
+      </button>
+    </fieldset>
+  );
+}

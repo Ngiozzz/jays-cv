@@ -1,6 +1,7 @@
 import "server-only";
 import { fileStore } from "@/lib/storage";
 import { findSettings } from "@/modules/content/content.repo";
+import { deleteInboxItems, findOldDiscarded } from "@/modules/inbox/inbox.repo";
 import { listTenantIds } from "@/modules/tenants/tenants.repo";
 import * as repo from "./jobs.repo";
 import { todayInNairobi } from "./jobs.rules";
@@ -34,7 +35,22 @@ export async function cleanUpOldPosters(now = new Date()): Promise<{ tenant: str
         tenant.id,
         expired.map((poster) => poster.id),
       );
-    results.push({ tenant: tenant.slug, deleted: expired.length });
+    const discarded = await deleteOldDiscardedPosters(tenant.id, now);
+    results.push({ tenant: tenant.slug, deleted: expired.length + discarded });
   }
   return results;
+}
+
+// Discarded inbox posters are kept a week (so they can be restored), then removed
+const DISCARD_KEEP_MS = 7 * 86_400_000;
+
+async function deleteOldDiscardedPosters(tenantId: string, now: Date): Promise<number> {
+  const old = await findOldDiscarded(tenantId, new Date(now.getTime() - DISCARD_KEEP_MS));
+  for (const item of old) await fileStore.remove("job-posters", item.posterPath);
+  if (old.length)
+    await deleteInboxItems(
+      tenantId,
+      old.map((item) => item.id),
+    );
+  return old.length;
 }
