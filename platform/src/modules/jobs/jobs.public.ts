@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { fileStore } from "@/lib/storage";
+import { logoUrl } from "./companies.service";
 import * as repo from "./jobs.repo";
 import { daysUntil, todayInNairobi } from "./jobs.rules";
 import { applySchema, type ApplyDetails } from "./jobs.schema";
@@ -27,15 +28,17 @@ export type PublicJob = {
   apply: ApplyDetails;
   source: string | null;
   posterUrl: string | null;
+  logoUrl: string | null;
 };
 
-function toPublicJob({ files, deadline, postedAt, apply, ...job }: repo.PublishedJobRow): PublicJob {
+function toPublicJob({ files, deadline, postedAt, apply, companyRef, ...job }: repo.PublishedJobRow): PublicJob {
   return {
     ...job,
     deadline: deadline ? deadline.toISOString().slice(0, 10) : null,
     postedDay: todayInNairobi(postedAt),
     apply: applySchema.catch(applySchema.parse({})).parse(apply),
     posterUrl: files[0] ? fileStore.publicUrl("job-posters", files[0].storagePath) : null,
+    logoUrl: logoUrl(companyRef?.logoPath ?? null),
   };
 }
 

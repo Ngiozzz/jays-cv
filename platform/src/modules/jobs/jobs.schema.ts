@@ -160,3 +160,11 @@ export const EMPTY_JOB: JobInput = {
   },
   source: "",
 };
+
+// What the live preview shows while the form is being filled in. A job needs a title to be saved,
+// but the preview should follow every field from the first keystroke, whatever order they're typed in.
+export function previewOf(form: FormData): JobInput | null {
+  const raw = jobFormToInput(form) as { title: string };
+  const parsed = jobDraftSchema.safeParse({ ...raw, title: "Preview" });
+  return parsed.success ? { ...parsed.data, title: raw.title.trim() } : null;
+}

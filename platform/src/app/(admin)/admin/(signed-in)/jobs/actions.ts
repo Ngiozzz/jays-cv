@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { jobsTag } from "@/modules/jobs/jobs.public";
 import { jobFormToInput } from "@/modules/jobs/jobs.schema";
 import { removeJob, saveJob, setPublished, type FieldErrors } from "@/modules/jobs/jobs.service";
+import { logoProblem } from "@/modules/jobs/companies";
+import { saveCompanyLogo } from "@/modules/jobs/companies.service";
 import { posterProblem } from "@/modules/jobs/poster";
 import { attachPoster, readPoster, removePoster, type ReadPosterResult } from "@/modules/jobs/poster.service";
 import { requirePermission } from "@/modules/team/current-member";
@@ -21,6 +23,9 @@ export async function saveJobAction(jobId: string | null, _previous: JobFormStat
   const poster = chosenFile(form.get("poster"));
   const problem = poster && posterProblem(poster);
   if (problem) return { fieldErrors: { poster: problem } };
+  const logo = chosenFile(form.get("companyLogo"));
+  const logoIssue = logo && logoProblem(logo);
+  if (logoIssue) return { fieldErrors: { companyLogo: logoIssue } };
 
   const intent = form.get("intent") === "publish" ? "publish" : "draft";
   const result = await saveJob(member, jobId, jobFormToInput(form), intent);
@@ -28,6 +33,7 @@ export async function saveJobAction(jobId: string | null, _previous: JobFormStat
 
   if (poster) await attachPoster(member, result.id, poster);
   else if (form.get("removePoster") === "on") await removePoster(member, result.id);
+  if (logo && result.companyId) await saveCompanyLogo(member, result.companyId, logo);
   // The public jobs board shows the change straight away
   updateTag(jobsTag(member.tenant.id));
   redirect(`/admin/jobs/${result.id}?saved=${result.published ? "published" : "draft"}`);

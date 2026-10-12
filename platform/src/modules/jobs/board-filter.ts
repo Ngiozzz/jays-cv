@@ -64,10 +64,11 @@ export type BoardListing = BoardJob & {
   slug: string;
   salary: string | null;
   applyMethod: ApplyMethod;
+  logoUrl: string | null;
 };
 
 export function toBoardListing(
-  job: BoardJob & { slug: string; salary: string | null; apply: { method: ApplyMethod } },
+  job: BoardJob & { slug: string; salary: string | null; logoUrl: string | null; apply: { method: ApplyMethod } },
 ): BoardListing {
   return {
     slug: job.slug,
@@ -81,5 +82,6 @@ export function toBoardListing(
     deadline: job.deadline,
     postedDay: job.postedDay,
     applyMethod: job.apply.method,
+    logoUrl: job.logoUrl,
   };
 }

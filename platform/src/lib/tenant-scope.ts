@@ -6,6 +6,7 @@ export const TENANT_MODELS = [
   "Membership",
   "Invite",
   "Job",
+  "Company",
   "Order",
   "OrderRevision",
   "OrderEvent",

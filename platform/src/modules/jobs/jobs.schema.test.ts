@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { jobDraftSchema, jobFormToInput, publishProblems } from "./jobs.schema";
+import { jobDraftSchema, jobFormToInput, previewOf, publishProblems } from "./jobs.schema";
 
 function form(fields: Record<string, string | string[]>) {
   const data = new FormData();
@@ -65,5 +65,12 @@ describe("publishProblems", () => {
       jobFormToInput(form({ ...complete, applyMethod: "link", applyUrl: "careers page" })),
     );
     expect(publishProblems(badLink)[0]?.path).toBe("apply.url");
+  });
+});
+
+describe("previewOf", () => {
+  it("follows the other fields even before a title is typed", () => {
+    const preview = previewOf(form({ company: "Kilimall", location: "Nairobi" }));
+    expect(preview).toMatchObject({ title: "", company: "Kilimall", location: "Nairobi" });
   });
 });

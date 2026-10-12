@@ -12,6 +12,7 @@ const listFields = {
   status: true,
   deadline: true,
   postedAt: true,
+  companyRef: { select: { logoPath: true } },
 } as const;
 
 export function findJobsForList(tenantId: string) {
@@ -80,6 +81,7 @@ const publicFields = {
   postedAt: true,
   apply: true,
   source: true,
+  companyRef: { select: { logoPath: true } },
   files: {
     where: { kind: "JOB_POSTER", deletedAt: null },
     orderBy: { createdAt: "desc" },
@@ -101,3 +103,10 @@ export function findPublishedJobBySlug(tenantId: string, slug: string) {
 }
 
 export type PublishedJobRow = Awaited<ReturnType<typeof findPublishedJobs>>[number];
+
+export function findPostersWithJobs(tenantId: string) {
+  return tenantDb(tenantId).storedFile.findMany({
+    where: { kind: "JOB_POSTER", deletedAt: null, jobId: { not: null } },
+    select: { id: true, storagePath: true, job: { select: { status: true, deadline: true, updatedAt: true } } },
+  });
+}

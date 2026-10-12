@@ -8,12 +8,13 @@ import {
   JOB_CATEGORIES,
   JOB_TYPES,
   WORK_MODES,
-  jobDraftSchema,
-  jobFormToInput,
+  previewOf,
   publishProblems,
   type JobInput,
 } from "@/modules/jobs/jobs.schema";
+import { companyKey } from "@/modules/jobs/companies";
 import { ApplyFields } from "./ApplyFields";
+import { CompanyLogoField, type KnownCompany } from "./CompanyLogoField";
 import { FormField } from "./FormField";
 import { JobStatusPill } from "./JobStatusPill";
 import { PosterSection } from "./PosterSection";
@@ -25,9 +26,10 @@ type Props = {
   today: string;
   posterUrl: string | null;
   aiPretend: boolean;
+  companies: KnownCompany[];
 };
 
-export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend }: Props) {
+export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend, companies }: Props) {
   const [state, save, saving] = useActionState(saveJobAction.bind(null, jobId), null);
   const [values, setValues] = useState(initial);
   const [live, setLive] = useState(initial);
@@ -53,9 +55,8 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend 
 
   // Live preview and checklist follow what's typed
   const readForm = (form: HTMLFormElement) => {
-    const parsed = jobDraftSchema.safeParse(jobFormToInput(new FormData(form)));
-    if (parsed.success) setLive(parsed.data);
-    else setLive((previous) => ({ ...previous, title: "" }));
+    const preview = previewOf(new FormData(form));
+    if (preview) setLive(preview);
   };
 
   // Submitted by hand (not through the form's action) so typed text stays if something needs fixing
@@ -80,7 +81,7 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend 
       <div className="post-form">
         <PosterSection existingUrl={posterUrl} error={errors.poster} aiPretend={aiPretend} onRead={fillFromPoster} />
         <div ref={fields} key={fillCount} className="post-fields">
-          <BasicsSection initial={values} errors={errors} />
+          <BasicsSection initial={values} errors={errors} company={live.company} companies={companies} />
           <DetailsSection initial={values} />
           <DeadlineSection initial={values} openEnded={live.openEnded} error={errors.deadline} />
           <section className="form-section">
@@ -112,7 +113,12 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend 
       <aside className="post-aside">
         <section className="panel panel-body">
           <p className="preview-label">Live preview</p>
-          <JobCard {...live} deadline={live.openEnded ? null : live.deadline} today={today} />
+          <JobCard
+            {...live}
+            deadline={live.openEnded ? null : live.deadline}
+            today={today}
+            logoUrl={companies.find((c) => companyKey(c.name) === companyKey(live.company))?.logoUrl}
+          />
         </section>
         <Checklist job={live} />
         <section className="panel panel-body publish-box">
@@ -138,7 +144,9 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend 
   );
 }
 
-function BasicsSection({ initial, errors }: { initial: JobInput; errors: Record<string, string> }) {
+type BasicsProps = { initial: JobInput; errors: Record<string, string>; company: string; companies: KnownCompany[] };
+
+function BasicsSection({ initial, errors, company, companies }: BasicsProps) {
   return (
     <section className="form-section">
       <h2>
@@ -156,7 +164,21 @@ function BasicsSection({ initial, errors }: { initial: JobInput; errors: Record<
           error={errors.company}
           hint='If the advert hides the name, describe it, e.g. "Private hospital, Nairobi".'
         >
-          <input type="text" id="f-company" name="company" defaultValue={initial.company} placeholder="e.g. Kilimall" />
+          <input
+            type="text"
+            id="f-company"
+            name="company"
+            defaultValue={initial.company}
+            placeholder="e.g. Kilimall"
+            list="known-companies"
+            autoComplete="off"
+          />
+          {/* Suggests companies already used, so their saved logo is picked up */}
+          <datalist id="known-companies">
+            {companies.map((c) => (
+              <option key={c.name} value={c.name} />
+            ))}
+          </datalist>
         </FormField>
         <FormField id="f-location" label="Location" required error={errors.location}>
           <input
@@ -167,6 +189,7 @@ function BasicsSection({ initial, errors }: { initial: JobInput; errors: Record<
             placeholder="e.g. Nairobi (Mombasa Road)"
           />
         </FormField>
+        <CompanyLogoField company={company} known={companies} error={errors.companyLogo} />
         <FormField id="f-category" label="Category">
           <select id="f-category" name="category" defaultValue={initial.category}>
             <option value="">Choose a category</option>

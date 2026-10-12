@@ -9,6 +9,7 @@ import { displayStatus, todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { getJob, toJobInput } from "@/modules/jobs/jobs.service";
 import { channelPost } from "@/modules/jobs/jobs.share";
 import { posterUrl } from "@/modules/jobs/poster.service";
+import { listCompanies } from "@/modules/jobs/companies.service";
 import { requireMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
 
@@ -23,7 +24,7 @@ export default async function EditJobPage({ params, searchParams }: PageProps<"/
   if (!job) notFound();
 
   const input = toJobInput(job);
-  const poster = await posterUrl(member.tenant.id, job.id);
+  const [poster, companies] = await Promise.all([posterUrl(member.tenant.id, job.id), listCompanies(member)]);
   const today = todayInNairobi();
   const status = displayStatus({ status: job.status, deadline: input.deadline }, today);
   const links = { job: `${env.APP_URL}/jobs/${job.slug}`, services: `${env.APP_URL}/services` };
@@ -41,6 +42,7 @@ export default async function EditJobPage({ params, searchParams }: PageProps<"/
         today={today}
         posterUrl={poster}
         aiPretend={aiPretendMode}
+        companies={companies.map(({ name, logoUrl }) => ({ name, logoUrl }))}
       />
     </>
   );

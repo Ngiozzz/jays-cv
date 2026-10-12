@@ -5068,3 +5068,16 @@ button.final-file {
   color: inherit;
   display: inline;
 }
+
+/* ---------- Company logos in the job square (real app) ---------- */
+/* Logos come in every shape: fit them inside the same square on white, so every card lines up */
+.job-logo.has-logo {
+  background: var(--white) !important;
+  padding: 6px;
+  overflow: hidden;
+}
+.job-logo.has-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

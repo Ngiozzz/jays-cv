@@ -49,3 +49,7 @@ export async function removeTestStaff() {
 export async function removeTestJobs(titlePrefix: string) {
   await db.job.deleteMany({ where: { title: { startsWith: titlePrefix } } });
 }
+
+export async function removeTestCompanies(namePrefix: string) {
+  await db.company.deleteMany({ where: { name: { startsWith: namePrefix } } });
+}

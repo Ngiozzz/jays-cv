@@ -16,3 +16,7 @@ export function findTenantSlugByDomain(domain: string) {
 export function listTenantSlugs() {
   return db.tenant.findMany({ select: { slug: true } });
 }
+
+export function listTenantIds() {
+  return db.tenant.findMany({ select: { id: true, slug: true } });
+}

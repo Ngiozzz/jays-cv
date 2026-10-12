@@ -33,6 +33,7 @@ model Tenant {
   memberships    Membership[]
   invites        Invite[]
   jobs           Job[]
+  companies      Company[]
   orders         Order[]
   orderEvents    OrderEvent[]
   orderRevisions OrderRevision[]
@@ -56,27 +57,29 @@ enum MpesaMode {
 
 // The owner edits these in Admin → Website content → Business settings
 model BusinessSettings {
-  id               String    @id @default(cuid())
-  tenantId         String    @unique
-  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  whatsapp         String
-  email            String
-  address          String
-  channelLink      String?
-  linkedinUrl      String?
-  facebookUrl      String?
-  instagramUrl     String?
-  xUrl             String?
-  unpaidHours      Int       @default(24)
-  reminderDays     Int       @default(2)
-  autoCompleteDays Int       @default(5)
-  revisionHours    Int       @default(24)
+  id                    String    @id @default(cuid())
+  tenantId              String    @unique
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  whatsapp              String
+  email                 String
+  address               String
+  channelLink           String?
+  linkedinUrl           String?
+  facebookUrl           String?
+  instagramUrl          String?
+  xUrl                  String?
+  unpaidHours           Int       @default(24)
+  reminderDays          Int       @default(2)
+  autoCompleteDays      Int       @default(5)
+  revisionHours         Int       @default(24)
   // Client files are deleted this many months after delivery
-  retentionMonths  Int       @default(6)
-  aiWarnPct        Int       @default(20)
-  paybill          String
-  mpesaMode        MpesaMode @default(TEST)
-  updatedAt        DateTime  @updatedAt
+  retentionMonths       Int       @default(6)
+  // Job posters are deleted this many months after the job closes
+  posterRetentionMonths Int       @default(3)
+  aiWarnPct             Int       @default(20)
+  paybill               String
+  mpesaMode             MpesaMode @default(TEST)
+  updatedAt             DateTime  @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -237,6 +240,9 @@ model Job {
   slug             String
   title            String
   company          String
+  // The remembered employer (for its logo); set from the company name when the job is saved
+  companyId        String?
+  companyRef       Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
   location         String
   workMode         String
   type             String
@@ -262,6 +268,24 @@ model Job {
 
   @@unique([tenantId, slug])
   @@index([tenantId, status, postedAt])
+  @@index([companyId])
+}
+
+// Hiring companies, remembered so each logo is added once and reused on every job they post
+model Company {
+  id            String    @id @default(cuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  // Lower-case, single-spaced name, so "Kilimall " and "kilimall" are the same company
+  nameKey       String
+  logoPath      String?
+  logoUpdatedAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  jobs Job[]
+
+  @@unique([tenantId, nameKey])
 }
 
 // ---------------------------------------------------------------------------

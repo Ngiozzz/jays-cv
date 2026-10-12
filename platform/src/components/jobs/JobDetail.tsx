@@ -41,7 +41,7 @@ export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, reportHr
       <div className="job-layout">
         <article className="job-article">
           <header className="job-header card">
-            <JobLogo company={job.company} />
+            <JobLogo company={job.company} logoUrl={job.logoUrl} />
             <div>
               {job.category && <span className="tag">{job.category}</span>}
               <h1>{job.title}</h1>

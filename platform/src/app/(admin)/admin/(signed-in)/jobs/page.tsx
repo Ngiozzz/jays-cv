@@ -100,7 +100,7 @@ function JobTableRow({ job, today }: { job: JobRow; today: string }) {
     <tr>
       <td>
         <div className="cell-job">
-          <JobLogo company={job.company || job.title} />
+          <JobLogo company={job.company || job.title} logoUrl={job.logoUrl} />
           <div>
             <Link href={`/admin/jobs/${job.id}`}>{job.title}</Link>
             <small>{[job.company, job.location].filter(Boolean).join(" · ") || "Details not added yet"}</small>

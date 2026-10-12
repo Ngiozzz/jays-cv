@@ -5,10 +5,12 @@ import { createClient } from "@supabase/supabase-js";
 import { env } from "./env";
 
 // File storage behind one interface, so the app runs without keys and the provider can be swapped.
-// Buckets: "job-posters" is public (posters are public job adverts). Client CVs will get a private
-// bucket with short-lived signed links only.
+// Buckets: "job-posters" and "company-logos" are public (they appear on public job adverts).
+// Client CVs will get a private bucket with short-lived signed links only.
 
-export type Bucket = "job-posters";
+export type Bucket = "job-posters" | "company-logos";
+
+const BUCKET_LIMITS: Record<Bucket, string> = { "job-posters": "6MB", "company-logos": "1MB" };
 
 export interface FileStore {
   put(bucket: Bucket, filePath: string, bytes: Uint8Array, contentType: string): Promise<void>;
@@ -30,7 +32,7 @@ function supabaseStore(url: string, serviceRoleKey: string): FileStore {
           if (existing.data) return;
           const created = await client.storage.createBucket(bucket, {
             public: true,
-            fileSizeLimit: "6MB",
+            fileSizeLimit: BUCKET_LIMITS[bucket],
             allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
           });
           if (created.error) throw created.error;

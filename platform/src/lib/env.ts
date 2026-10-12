@@ -22,6 +22,8 @@ const schema = z.object({
   // AI: without a key, AI features run in "pretend" mode and use no tokens
   ANTHROPIC_API_KEY: optional,
   ANTHROPIC_MODEL: z.string().trim().min(1).default("claude-opus-5-5"),
+  // Shared secret for the nightly tasks (Vercel Cron sends it automatically when set in Vercel)
+  CRON_SECRET: optional,
 });
 
 function parseEnv() {

@@ -5539,3 +5539,16 @@ kbd {
   border-color: #fecaca;
   color: #991b1b;
 }
+
+/* ---------- Company logo field (Post a job) ---------- */
+.logo-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-field-row .btn {
+  cursor: pointer;
+}
+.cell-actions label.btn {
+  cursor: pointer;
+}

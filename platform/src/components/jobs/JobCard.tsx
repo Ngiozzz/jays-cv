@@ -26,11 +26,13 @@ type Props = {
   salary?: string | null;
   applyMethod?: ApplyMethod;
   postedDay?: string;
+  logoUrl?: string | null;
 };
 
 // A job as it appears in the jobs board list (also the live preview while posting a job)
 export function JobCard(props: Props) {
-  const { title, company, location, type, category, deadline, today, href, salary, applyMethod, postedDay } = props;
+  const { title, company, location, type, category, deadline, today, href, salary, applyMethod, postedDay, logoUrl } =
+    props;
   const closes = deadlineLabel(deadline, today);
   const apply = applyMethod ? APPLY_LABEL[applyMethod] : null;
   const closesTag = (
@@ -41,7 +43,7 @@ export function JobCard(props: Props) {
   );
   return (
     <article className="job-card">
-      <JobLogo company={company || title} />
+      <JobLogo company={company || title} logoUrl={logoUrl} />
       <div className="job-main">
         <h3>{href ? <Link href={href}>{title}</Link> : <a>{title || "Job title"}</a>}</h3>
         <p className="job-company">{company || "Company"}</p>

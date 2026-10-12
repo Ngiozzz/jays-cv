@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { removeTestJobs, removeTestStaff, signInAs } from "./staff";
+import { removeTestCompanies, removeTestJobs, removeTestStaff, signInAs } from "./staff";
 
 test.afterAll(async () => {
   await removeTestJobs("Test Accountant ");
+  await removeTestCompanies("Savanna Foods");
   await removeTestStaff();
 });
 

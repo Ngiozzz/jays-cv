@@ -3,6 +3,7 @@ import type { Job } from "@/generated/prisma/client";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan } from "@/modules/team/permissions";
 import * as repo from "./jobs.repo";
+import { companyIdFor, logoUrl } from "./companies.service";
 import { removePoster } from "./poster.service";
 import { displayStatus, slugify, todayInNairobi, uniqueSlug, type JobDisplayStatus } from "./jobs.rules";
 import { applySchema, jobDraftSchema, publishProblems, type JobInput } from "./jobs.schema";
@@ -11,11 +12,13 @@ import { applySchema, jobDraftSchema, publishProblems, type JobInput } from "./j
 
 export type SaveIntent = "draft" | "publish";
 export type FieldErrors = Record<string, string>;
-export type SaveResult = { ok: true; id: string; published: boolean } | { ok: false; fieldErrors: FieldErrors };
+export type SaveResult =
+  { ok: true; id: string; published: boolean; companyId: string | null } | { ok: false; fieldErrors: FieldErrors };
 
 const isoDay = (date: Date | null) => (date ? date.toISOString().slice(0, 10) : null);
 
-export type JobRow = Omit<repo.JobListRow, "deadline" | "postedAt"> & {
+export type JobRow = Omit<repo.JobListRow, "deadline" | "postedAt" | "companyRef"> & {
+  logoUrl: string | null;
   deadline: string | null;
   postedDay: string;
   shownAs: JobDisplayStatus;
@@ -25,8 +28,13 @@ export async function listJobs(member: CurrentMember): Promise<JobRow[]> {
   assertCan(member, "postJobs");
   const today = todayInNairobi();
   const rows = await repo.findJobsForList(member.tenant.id);
-  return rows.map(({ deadline, postedAt, ...row }) => {
-    const job = { ...row, deadline: isoDay(deadline), postedDay: todayInNairobi(postedAt) };
+  return rows.map(({ deadline, postedAt, companyRef, ...row }) => {
+    const job = {
+      ...row,
+      deadline: isoDay(deadline),
+      postedDay: todayInNairobi(postedAt),
+      logoUrl: logoUrl(companyRef?.logoPath ?? null),
+    };
     return { ...job, shownAs: displayStatus(job, today) };
   });
 }
@@ -108,18 +116,26 @@ export async function saveJob(
   if (jobId && !existing) return { ok: false, fieldErrors: { title: "This job no longer exists" } };
 
   const status = intent === "publish" ? "PUBLISHED" : "DRAFT";
+  const companyId = await companyIdFor(tenantId, job.company);
   // A job counts as "posted" the first time it goes live, so the website lists it as new
   const firstPublish = intent === "publish" && existing?.status !== "PUBLISHED";
   const timing = firstPublish ? { postedAt: new Date() } : {};
 
   if (existing) {
-    await repo.updateJob(tenantId, existing.id, { ...columns(job), status, ...timing });
-    return { ok: true, id: existing.id, published: status === "PUBLISHED" };
+    await repo.updateJob(tenantId, existing.id, { ...columns(job), companyId, status, ...timing });
+    return { ok: true, id: existing.id, published: status === "PUBLISHED", companyId };
   }
   const base = slugify(job.title, job.company);
   const slug = uniqueSlug(base, await repo.findSlugsStartingWith(tenantId, base));
-  const created = await repo.createJob(tenantId, { ...columns(job), slug, status, createdById: member.id, ...timing });
-  return { ok: true, id: created.id, published: status === "PUBLISHED" };
+  const created = await repo.createJob(tenantId, {
+    ...columns(job),
+    companyId,
+    slug,
+    status,
+    createdById: member.id,
+    ...timing,
+  });
+  return { ok: true, id: created.id, published: status === "PUBLISHED", companyId };
 }
 
 // Publish or move back to drafts from the jobs list. Returns a problem to show, or null.

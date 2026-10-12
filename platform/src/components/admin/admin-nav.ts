@@ -16,6 +16,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/jobs", label: "Jobs", icon: "list", permission: "postJobs" },
   { href: "/admin/inbox", label: "Jobs inbox", icon: "inbox", permission: "postJobs", phase: 2 },
   { href: "/admin/jobs/new", label: "Post a job", icon: "plus", permission: "postJobs" },
+  { href: "/admin/companies", label: "Company logos", icon: "building", permission: "postJobs" },
   { href: "/admin/orders", label: "Orders", icon: "cart", phase: 3 },
   { href: "/admin/team", label: "Team", icon: "users", permission: "manageTeam", phase: 4 },
   { href: "/admin/finance", label: "Finance", icon: "cash", permission: "manageFinance", phase: 4 },
