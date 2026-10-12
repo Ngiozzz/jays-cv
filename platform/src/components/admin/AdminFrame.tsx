@@ -6,6 +6,8 @@ import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/Icon";
 import type { IconName } from "@/components/icons/IconSprite";
 import { SignOutButton } from "./SignOutButton";
+import { UserMenu } from "./UserMenu";
+import { PAGE_TITLES } from "./admin-nav";
 
 export type FrameNavItem = { href: string; label: string; icon: IconName; phase?: number };
 export type FrameUser = { name: string; roleLabel: string; initials: string };
@@ -30,7 +32,12 @@ export function AdminFrame({ nav, user, children }: Props) {
         </Link>
         <nav className="side-nav">
           {nav.map((item) => (
-            <SideLink key={item.href} item={item} active={item === current} onNavigate={() => setSideOpen(false)} />
+            <SideLink
+              key={item.href}
+              item={item}
+              active={item === current && !PAGE_TITLES[pathname]}
+              onNavigate={() => setSideOpen(false)}
+            />
           ))}
         </nav>
         <div className="side-foot">
@@ -56,16 +63,10 @@ export function AdminFrame({ nav, user, children }: Props) {
           </button>
           <div className="top-titles">
             <p className="crumb">Overview</p>
-            <h1>{current.label}</h1>
+            <h1>{PAGE_TITLES[pathname] ?? current.label}</h1>
           </div>
           <div className="admin-top-actions">
-            <div className="user-chip">
-              <span className="avatar">{user.initials}</span>
-              <div>
-                <strong>{user.name}</strong>
-                <span>{user.roleLabel}</span>
-              </div>
-            </div>
+            <UserMenu {...user} />
           </div>
         </header>
         <main className="admin-content" id="main">

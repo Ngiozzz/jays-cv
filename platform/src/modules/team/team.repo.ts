@@ -120,6 +120,8 @@ export function updateMembership(
     canPostJobs?: boolean;
     payPercent?: number;
     status?: "ACTIVE" | "PAUSED" | "REMOVED";
+    displayName?: string;
+    phone?: string | null;
   },
 ) {
   return tenantDb(tenantId).membership.update({ where: { id }, data });

@@ -22,3 +22,6 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/finance", label: "Finance", icon: "cash", permission: "manageFinance", phase: 4 },
   { href: "/admin/content", label: "Website content", icon: "layout", phase: 4 },
 ];
+
+// Pages reached from elsewhere than the menu, and the title the top bar shows for them
+export const PAGE_TITLES: Record<string, string> = { "/admin/profile": "Your profile" };

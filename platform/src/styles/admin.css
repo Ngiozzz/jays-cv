@@ -5586,3 +5586,132 @@ kbd {
   font-weight: 700;
   margin-bottom: 6px;
 }
+
+/* ---------- Top bar: name opens View profile / Sign out ---------- */
+.user-menu {
+  position: relative;
+}
+.user-menu .user-chip {
+  font: inherit;
+  text-align: left;
+  padding: 6px 10px 6px 6px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+}
+.user-menu .user-chip:hover,
+.user-menu .user-chip[aria-expanded="true"] {
+  border-color: var(--line);
+  background: #fff;
+}
+.user-chip-text {
+  display: grid;
+}
+.user-chip-caret {
+  width: 12px;
+  height: 12px;
+  color: var(--muted);
+}
+.user-menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  min-width: 200px;
+  display: grid;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.user-menu-list a,
+.user-menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.user-menu-list a:hover,
+.user-menu-list button:hover {
+  background: var(--primary-soft);
+}
+.user-menu-list svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ---------- Your profile ---------- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.profile-side {
+  display: grid;
+  gap: 20px;
+}
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.profile-head h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-head);
+  font-size: 1.4rem;
+}
+.profile-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.profile-avatar {
+  width: 64px !important;
+  height: 64px !important;
+  font-size: 1.3rem !important;
+}
+.profile-email {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+.profile-email svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gold-text);
+}
+.profile-side .side-signout,
+.profile-side button {
+  margin-top: 6px;
+}
+.profile-save {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 12px;
+}
+.saved-note {
+  color: #15803d;
+  font-weight: 700;
+}
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
