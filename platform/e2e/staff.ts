@@ -44,3 +44,8 @@ export async function removeTestStaff() {
   await db.user.deleteMany({ where: { id: { in: createdUserIds } } });
   await db.$disconnect();
 }
+
+// Deletes jobs a test created (by title prefix), even when the test failed before its own clean-up
+export async function removeTestJobs(titlePrefix: string) {
+  await db.job.deleteMany({ where: { title: { startsWith: titlePrefix } } });
+}

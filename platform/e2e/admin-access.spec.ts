@@ -37,7 +37,7 @@ test("pausing a member blocks them on their next request", async ({ page, contex
   await setMemberStatus(userId, "PAUSED");
   await page.reload();
   await expect(page).toHaveURL(/error=no_access/);
-  await expect(page.getByRole("alert")).toContainText("paused");
+  await expect(page.getByRole("alert").filter({ hasText: "paused" })).toBeVisible();
 });
 
 test("in development, 'Proceed for testing' signs in as the test owner", async ({ page }) => {

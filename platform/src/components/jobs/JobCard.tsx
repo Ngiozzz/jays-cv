@@ -1,6 +1,17 @@
+import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
-import { deadlineLabel } from "@/modules/jobs/jobs.rules";
+import type { IconName } from "@/components/icons/IconSprite";
+import { deadlineLabel, postedLabel } from "@/modules/jobs/jobs.rules";
+import type { ApplyMethod } from "@/modules/jobs/jobs.schema";
 import { JobLogo } from "./JobLogo";
+
+export const APPLY_LABEL: Record<ApplyMethod, { icon: IconName; text: string }> = {
+  email: { icon: "mail", text: "Apply by email" },
+  link: { icon: "link", text: "Apply online" },
+  whatsapp: { icon: "whatsapp", text: "Apply via WhatsApp" },
+  "in-person": { icon: "pin", text: "Apply in person" },
+  other: { icon: "doc", text: "See how to apply" },
+};
 
 type Props = {
   title: string;
@@ -10,18 +21,29 @@ type Props = {
   category: string;
   deadline: string | null;
   today: string;
+  // Only on the public board (the admin's live preview has no page to link to yet)
+  href?: string;
+  salary?: string | null;
+  applyMethod?: ApplyMethod;
+  postedDay?: string;
 };
 
-// A job as it appears in the jobs board list (also used for the live preview while posting)
-export function JobCard({ title, company, location, type, category, deadline, today }: Props) {
+// A job as it appears in the jobs board list (also the live preview while posting a job)
+export function JobCard(props: Props) {
+  const { title, company, location, type, category, deadline, today, href, salary, applyMethod, postedDay } = props;
   const closes = deadlineLabel(deadline, today);
+  const apply = applyMethod ? APPLY_LABEL[applyMethod] : null;
+  const closesTag = (
+    <span className={`deadline ${closes.tone}`}>
+      <Icon name="clock" />
+      {closes.text}
+    </span>
+  );
   return (
     <article className="job-card">
       <JobLogo company={company || title} />
       <div className="job-main">
-        <h3>
-          <a>{title || "Job title"}</a>
-        </h3>
+        <h3>{href ? <Link href={href}>{title}</Link> : <a>{title || "Job title"}</a>}</h3>
         <p className="job-company">{company || "Company"}</p>
         <ul className="job-meta">
           <li>
@@ -32,15 +54,31 @@ export function JobCard({ title, company, location, type, category, deadline, to
             <Icon name="briefcase" />
             {type}
           </li>
+          {salary && (
+            <li>
+              <Icon name="cash" />
+              {salary}
+            </li>
+          )}
         </ul>
         <div className="job-tags">
           {category && <span className="tag">{category}</span>}
-          <span className={`deadline ${closes.tone}`}>
-            <Icon name="clock" />
-            {closes.text}
-          </span>
+          {apply ? (
+            <span className="apply-tag">
+              <Icon name={apply.icon} />
+              {apply.text}
+            </span>
+          ) : (
+            closesTag
+          )}
         </div>
       </div>
+      {postedDay && (
+        <div className="job-side">
+          {closesTag}
+          <span className="posted">Posted {postedLabel(postedDay, today).toLowerCase()}</span>
+        </div>
+      )}
     </article>
   );
 }

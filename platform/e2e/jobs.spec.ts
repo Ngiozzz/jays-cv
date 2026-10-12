@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { removeTestStaff, signInAs } from "./staff";
+import { removeTestJobs, removeTestStaff, signInAs } from "./staff";
 
-test.afterAll(removeTestStaff);
+test.afterAll(async () => {
+  await removeTestJobs("Test Accountant ");
+  await removeTestStaff();
+});
 
 const title = `Test Accountant ${Date.now()}`;
 

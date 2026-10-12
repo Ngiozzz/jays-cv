@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { removeTestStaff, signInAs } from "./staff";
+import { removeTestJobs, removeTestStaff, signInAs } from "./staff";
 
-test.afterAll(removeTestStaff);
+test.afterAll(async () => {
+  await removeTestJobs("Poster test ");
+  await removeTestStaff();
+});
 
 // Runs with no Claude key, so the AI is in "pretend" mode and fills in the Kilimall sample
 test("a poster is read into the form, highlighted, and saved with the job", async ({ page, context }) => {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CopyButton } from "@/components/admin/CopyButton";
+import { CopyButton } from "@/components/CopyButton";
 
 // After publishing: the post for the Job Vacancies WhatsApp channel, ready to copy and paste
 export function PublishedNotice({ channelPost }: { channelPost: string }) {

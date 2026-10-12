@@ -1,7 +1,8 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { jobsTag } from "@/modules/jobs/jobs.public";
 import { jobFormToInput } from "@/modules/jobs/jobs.schema";
 import { removeJob, saveJob, setPublished, type FieldErrors } from "@/modules/jobs/jobs.service";
 import { posterProblem } from "@/modules/jobs/poster";
@@ -27,6 +28,8 @@ export async function saveJobAction(jobId: string | null, _previous: JobFormStat
 
   if (poster) await attachPoster(member, result.id, poster);
   else if (form.get("removePoster") === "on") await removePoster(member, result.id);
+  // The public jobs board shows the change straight away
+  updateTag(jobsTag(member.tenant.id));
   redirect(`/admin/jobs/${result.id}?saved=${result.published ? "published" : "draft"}`);
 }
 
@@ -47,6 +50,7 @@ export async function setPublishedAction(
   const member = await requirePermission("postJobs");
   const problem = await setPublished(member, jobId, publish);
   if (problem) return { error: problem };
+  updateTag(jobsTag(member.tenant.id));
   refresh();
   return null;
 }
@@ -54,6 +58,7 @@ export async function setPublishedAction(
 export async function deleteJobAction(jobId: string, from: "list" | "editor") {
   const member = await requirePermission("postJobs");
   await removeJob(member, jobId);
+  updateTag(jobsTag(member.tenant.id));
   if (from === "editor") redirect("/admin/jobs?deleted=1");
   refresh();
 }

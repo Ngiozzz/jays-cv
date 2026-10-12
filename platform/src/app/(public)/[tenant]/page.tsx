@@ -6,6 +6,7 @@ import { PostCard } from "@/components/content/PostCard";
 import { ReviewCards } from "@/components/content/ReviewCards";
 import { SampleFigure } from "@/components/content/SampleFigure";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomeJobs } from "@/components/home/HomeJobs";
 import { HomeServices } from "@/components/home/HomeServices";
 import { HomeSteps } from "@/components/home/HomeSteps";
 import { CtaBand } from "@/components/site/CtaBand";
@@ -14,6 +15,8 @@ import { whatsappLink } from "@/modules/content/contact";
 import * as content from "@/modules/content/content.service";
 import { draftTimeLabel } from "@/modules/content/packages";
 import { standardDraftHours } from "@/modules/content/pricing";
+import { toBoardListing } from "@/modules/jobs/board-filter";
+import { getJobBoard } from "@/modules/jobs/jobs.public";
 import { siteContext } from "./site-context";
 
 export const metadata: Metadata = {
@@ -24,13 +27,14 @@ export const metadata: Metadata = {
 
 export default async function HomePage({ params }: PageProps<"/[tenant]">) {
   const { tenant, settings, freeReviewHref } = await siteContext(params);
-  const [home, prices, samples, reviews, posts, faqs] = await Promise.all([
+  const [home, prices, samples, reviews, posts, faqs, board] = await Promise.all([
     content.getHomepage(tenant.id),
     content.getPriceList(tenant.id),
     content.getSamples(tenant.id),
     content.getFeaturedReviews(tenant.id),
     content.getPosts(tenant.id),
     content.getFaqs(tenant.id),
+    getJobBoard(tenant.id),
   ]);
   const wa = settings.whatsapp;
   const draftTime = draftTimeLabel(standardDraftHours(prices.packages));
@@ -38,6 +42,12 @@ export default async function HomePage({ params }: PageProps<"/[tenant]">) {
   return (
     <>
       <HomeHero {...home} draftTime={draftTime} />
+      <HomeJobs
+        latest={board.jobs.slice(0, 6).map(toBoardListing)}
+        openCount={board.jobs.length}
+        today={board.today}
+        channelLink={settings.channelLink}
+      />
       <HomeServices adviceHref={whatsappLink(wa, "Hi Jay CVS, I'm not sure which service I need")} />
       <HomeSteps draftTime={draftTime} />
 

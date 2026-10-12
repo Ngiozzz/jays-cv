@@ -62,3 +62,42 @@ export function createPosterRecord(
 export function deleteFileRecords(tenantId: string, ids: string[]) {
   return tenantDb(tenantId).storedFile.deleteMany({ where: { id: { in: ids } } });
 }
+
+// Published jobs for the public board, with their latest poster
+const publicFields = {
+  slug: true,
+  title: true,
+  company: true,
+  location: true,
+  workMode: true,
+  type: true,
+  category: true,
+  salary: true,
+  summary: true,
+  responsibilities: true,
+  requirements: true,
+  deadline: true,
+  postedAt: true,
+  apply: true,
+  source: true,
+  files: {
+    where: { kind: "JOB_POSTER", deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+    select: { storagePath: true },
+  },
+} as const;
+
+export function findPublishedJobs(tenantId: string) {
+  return tenantDb(tenantId).job.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: { postedAt: "desc" },
+    select: publicFields,
+  });
+}
+
+export function findPublishedJobBySlug(tenantId: string, slug: string) {
+  return tenantDb(tenantId).job.findFirst({ where: { status: "PUBLISHED", slug }, select: publicFields });
+}
+
+export type PublishedJobRow = Awaited<ReturnType<typeof findPublishedJobs>>[number];
