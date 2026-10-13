@@ -3,9 +3,32 @@
 import { useState, type FormEvent } from "react";
 import { updateProfileAction } from "@/app/(admin)/admin/(signed-in)/profile/actions";
 
-type Props = { name: string; phone: string };
+type Props = { firstName: string; lastName: string; nickname: string; email: string; phone: string };
 
-export function ProfileForm({ name, phone }: Props) {
+type FieldProps = {
+  id: string;
+  name: string;
+  label: string;
+  hint: string;
+  error?: string;
+} & React.InputHTMLAttributes<HTMLInputElement>;
+
+function Field({ id, name, label, hint, error, ...input }: FieldProps) {
+  return (
+    <div className={error ? "f invalid" : "f"}>
+      <label htmlFor={id}>{label}</label>
+      <input id={id} name={name} {...input} />
+      <small>{hint}</small>
+      {error && (
+        <small className="field-error" role="alert">
+          {error}
+        </small>
+      )}
+    </div>
+  );
+}
+
+export function ProfileForm({ firstName, lastName, nickname, email, phone }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -24,26 +47,56 @@ export function ProfileForm({ name, phone }: Props) {
 
   return (
     <form className="fgrid" noValidate onSubmit={submit}>
-      <div className={errors.displayName ? "f invalid" : "f"}>
-        <label htmlFor="pf-name">Your name</label>
-        <input id="pf-name" type="text" name="displayName" defaultValue={name} autoComplete="name" />
-        <small>Shown to the team, and in each order&apos;s history.</small>
-        {errors.displayName && (
-          <small className="field-error" role="alert">
-            {errors.displayName}
-          </small>
-        )}
-      </div>
-      <div className={errors.phone ? "f invalid" : "f"}>
-        <label htmlFor="pf-phone">WhatsApp number</label>
-        <input id="pf-phone" name="phone" type="tel" defaultValue={phone} placeholder="07XX XXX XXX" />
-        <small>So the team can reach you.</small>
-        {errors.phone && (
-          <small className="field-error" role="alert">
-            {errors.phone}
-          </small>
-        )}
-      </div>
+      <Field
+        id="pf-first"
+        name="firstName"
+        label="First name"
+        hint="As on your ID."
+        error={errors.firstName}
+        type="text"
+        defaultValue={firstName}
+        autoComplete="given-name"
+      />
+      <Field
+        id="pf-last"
+        name="lastName"
+        label="Last name"
+        hint="As on your ID."
+        error={errors.lastName}
+        type="text"
+        defaultValue={lastName}
+        autoComplete="family-name"
+      />
+      <Field
+        id="pf-nick"
+        name="nickname"
+        label="Nickname (optional)"
+        hint="Shown to the team instead of your full name."
+        error={errors.nickname}
+        type="text"
+        defaultValue={nickname}
+        autoComplete="nickname"
+      />
+      <Field
+        id="pf-email"
+        name="email"
+        label="Email"
+        hint="Your Google sign-in. Ask the owner to invite a different email to change it."
+        type="email"
+        defaultValue={email}
+        readOnly
+      />
+      <Field
+        id="pf-phone"
+        name="phone"
+        label="Phone number"
+        hint="Your WhatsApp number, so the team can reach you."
+        error={errors.phone}
+        type="tel"
+        defaultValue={phone}
+        placeholder="07XX XXX XXX"
+        autoComplete="tel"
+      />
       <div className="f full profile-save">
         <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? "Saving…" : "Save changes"}

@@ -121,6 +121,9 @@ export function updateMembership(
     payPercent?: number;
     status?: "ACTIVE" | "PAUSED" | "REMOVED";
     displayName?: string;
+    firstName?: string;
+    lastName?: string;
+    nickname?: string;
     phone?: string | null;
   },
 ) {

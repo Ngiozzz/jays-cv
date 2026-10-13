@@ -689,7 +689,8 @@
   border-color: var(--gold-text);
   box-shadow: 0 0 0 4px var(--primary-soft);
 }
-.f input:disabled {
+.f input:disabled,
+.f input[readonly] {
   background: var(--bg-alt);
   color: var(--muted);
 }

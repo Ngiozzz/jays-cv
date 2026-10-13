@@ -40,7 +40,13 @@ export default async function ProfilePage() {
           </div>
         </div>
         <div className="panel-body">
-          <ProfileForm name={profile.name} phone={profile.phone} />
+          <ProfileForm
+            firstName={profile.firstName}
+            lastName={profile.lastName}
+            nickname={profile.nickname}
+            email={profile.email}
+            phone={profile.phone}
+          />
         </div>
       </section>
 

@@ -7,7 +7,9 @@ import { updateProfile } from "@/modules/team/profile.service";
 export async function updateProfileAction(form: FormData) {
   const member = await requireMember();
   const result = await updateProfile(member, {
-    displayName: String(form.get("displayName") ?? ""),
+    firstName: String(form.get("firstName") ?? ""),
+    lastName: String(form.get("lastName") ?? ""),
+    nickname: String(form.get("nickname") ?? ""),
     phone: String(form.get("phone") ?? ""),
   });
   if (result.ok) refresh();

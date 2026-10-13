@@ -1,13 +1,18 @@
 import "server-only";
 import type { CurrentMember } from "./current-member";
-import { profileSchema } from "./profile";
+import { displayNameOf, profileSchema, splitName } from "./profile";
 import { findMembership, updateMembership } from "./team.repo";
 
-// Everyone can see and edit their own profile (name and WhatsApp number); the owner sets everything else
+// Everyone can see and edit their own profile (names and phone number); the owner sets everything else
 export async function loadProfile(member: CurrentMember) {
   const membership = await findMembership(member.tenant.id, member.userId);
+  const names = membership?.firstName
+    ? { firstName: membership.firstName, lastName: membership.lastName }
+    : splitName(member.name);
   return {
     name: member.name,
+    ...names,
+    nickname: membership?.nickname ?? "",
     email: member.email,
     phone: membership?.phone ?? "",
     role: member.role,
@@ -33,7 +38,10 @@ export async function updateProfile(
     };
   }
   await updateMembership(member.tenant.id, member.id, {
-    displayName: parsed.data.displayName,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    nickname: parsed.data.nickname,
+    displayName: displayNameOf(parsed.data),
     phone: parsed.data.phone || null,
   });
   return { ok: true };
