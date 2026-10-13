@@ -2961,7 +2961,8 @@ button.stat-card[aria-pressed="true"] strong::after {
   padding: 3px;
   background: var(--bg-alt);
 }
-.seg-toggle button {
+.seg-toggle button,
+.seg-toggle a {
   font: inherit;
   font-size: 0.82rem;
   font-weight: 700;
@@ -2972,7 +2973,11 @@ button.stat-card[aria-pressed="true"] strong::after {
   cursor: pointer;
   color: var(--muted);
 }
-.seg-toggle button[aria-pressed="true"] {
+.seg-toggle a {
+  text-decoration: none;
+}
+.seg-toggle button[aria-pressed="true"],
+.seg-toggle a[aria-current="page"] {
   background: #fff;
   color: var(--ink);
   box-shadow: var(--shadow-sm);
@@ -4806,6 +4811,10 @@ kbd {
   background: #fff4de;
   color: #7a4b00;
 }
+.mstatus.removed {
+  background: #efe9df;
+  color: #6e675c;
+}
 .mstatus.invited {
   background: var(--primary-soft);
   color: var(--gold-text);
@@ -5039,6 +5048,9 @@ kbd {
   color: var(--ink);
   white-space: nowrap;
 }
+.fin-table .order-id {
+  white-space: nowrap;
+}
 .fin-table .num,
 .fin-table th.num {
   text-align: right;
@@ -5063,6 +5075,36 @@ kbd {
 }
 .fin-unpaid .btn {
   margin-left: auto;
+}
+.fin-section {
+  margin-bottom: 20px;
+}
+.fin-payouts {
+  border-top: 1px solid var(--line);
+}
+.fin-payouts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.fin-payouts li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.fin-payouts li strong,
+.fin-payouts li b {
+  color: var(--ink);
+}
+@media (max-width: 760px) {
+  .fin-payouts li {
+    grid-template-columns: 1fr auto;
+  }
 }
 .fin-stats .stat-card strong {
   font-size: 1.3rem;

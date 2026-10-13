@@ -19,7 +19,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/companies", label: "Company logos", icon: "building", permission: "postJobs" },
   { href: "/admin/orders", label: "Orders", icon: "cart", phase: 3 },
   { href: "/admin/team", label: "Team", icon: "users", permission: "manageTeam" },
-  { href: "/admin/finance", label: "Finance", icon: "cash", permission: "manageFinance", phase: 4 },
+  { href: "/admin/finance", label: "Finance", icon: "cash", permission: "manageFinance" },
   { href: "/admin/content", label: "Website content", icon: "layout", phase: 4 },
 ];
 

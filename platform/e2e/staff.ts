@@ -70,3 +70,56 @@ export async function removeTestInvites() {
 }
 
 export const testEmail = (name: string) => `${name.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@${TEST_DOMAIN}`;
+
+// A writer who never signs in, with delivered orders already paid for: enough for the Finance screen
+export async function addTestWriterWithOrders(
+  name: string,
+  payPercent: number,
+  orders: { itemName: string; amount: number; clientName: string; receipt: string }[],
+) {
+  const tenant = await db.tenant.findUniqueOrThrow({ where: { slug: process.env.DEFAULT_TENANT_SLUG ?? "jaycvs" } });
+  const id = randomBytes(12).toString("hex");
+  const user = await db.user.create({ data: { id, name, email: `${id}@${TEST_DOMAIN}`, emailVerified: true } });
+  createdUserIds.push(user.id);
+  const writer = await db.membership.create({
+    data: { tenantId: tenant.id, userId: user.id, role: "WRITER", displayName: name, payPercent },
+  });
+  const now = new Date();
+  for (const order of orders) {
+    const created = await db.order.create({
+      data: {
+        tenantId: tenant.id,
+        // Far above real order numbers, so tests never take one
+        number: 900_000 + randomBytes(3).readUIntBE(0, 3),
+        status: "DELIVERED",
+        itemName: order.itemName,
+        amount: order.amount,
+        firstDraftHours: 48,
+        clientName: order.clientName,
+        clientPhone: "0712345678",
+        trackingTokenHash: randomBytes(16).toString("hex"),
+        source: "e2e",
+        writerId: writer.id,
+        paidAt: now,
+        deliveredAt: now,
+      },
+    });
+    await db.payment.create({
+      data: {
+        tenantId: tenant.id,
+        orderId: created.id,
+        channel: "MPESA_STK",
+        status: "CONFIRMED",
+        match: "ORDER_NUMBER",
+        amount: order.amount,
+        receipt: order.receipt,
+        confirmedAt: now,
+      },
+    });
+  }
+}
+
+export async function removeTestOrders() {
+  await db.payment.deleteMany({ where: { order: { source: "e2e" } } });
+  await db.order.deleteMany({ where: { source: "e2e" } });
+}
