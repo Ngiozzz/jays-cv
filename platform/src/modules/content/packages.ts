@@ -23,6 +23,7 @@ export function forWhomSentence(bestFor: string): string {
 }
 
 // Pre-filled WhatsApp message when a client picks a package before online ordering (phase 3) exists
-export function packageOrderMessage(shortName: string): string {
-  return `Hi Jay CVS, I'd like the ${shortName} package`;
+// The order card, starting on this package
+export function orderHref(shortName: string): string {
+  return `/order?pkg=${encodeURIComponent(shortName)}`;
 }

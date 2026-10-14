@@ -15,6 +15,8 @@ const TYPES: Record<string, string> = {
 export async function GET(_request: Request, { params }: RouteContext<"/api/dev-files/[...path]">) {
   if (env.NODE_ENV === "production" || !usingLocalStorage) return new Response("Not found", { status: 404 });
   const parts = (await params).path;
+  // Private client files are only served through the permission-checked order files route
+  if (parts[0] === "order-files") return new Response("Not found", { status: 404 });
   const target = path.resolve(LOCAL_UPLOAD_DIR, ...parts);
   // Refuse anything that would step outside the upload folder (e.g. "../")
   if (!target.startsWith(LOCAL_UPLOAD_DIR + path.sep)) return new Response("Not found", { status: 404 });

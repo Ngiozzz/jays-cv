@@ -5081,3 +5081,146 @@ button.final-file {
   height: 100%;
   object-fit: contain;
 }
+
+/* ---------- Track my order: menu button + homepage strip ---------- */
+.main-nav .nav-track {
+  margin-right: -14px;
+}
+.track-strip {
+  padding: 28px 0;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.track-strip-inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.track-strip .icon-box {
+  margin: 0;
+  flex: none;
+}
+.track-strip-inner > div {
+  flex: 1;
+}
+.track-strip strong {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+.track-strip p {
+  margin: 2px 0 0;
+  color: var(--text);
+}
+@media (max-width: 920px) {
+  .main-nav .nav-track {
+    margin: 16px 0 0;
+  }
+}
+@media (max-width: 640px) {
+  .track-strip-inner {
+    flex-wrap: wrap;
+  }
+  .track-strip-inner .btn {
+    width: 100%;
+  }
+}
+
+/* ---------- Tracking page: the order's files ---------- */
+.track-files .file-groups {
+  display: grid;
+  gap: 22px;
+}
+.track-files .file-group h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.98rem;
+  margin: 0;
+}
+.track-files .file-count {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--muted);
+}
+.track-files .file-group-hint {
+  margin: 4px 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.track-files .file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.track-files .file-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.track-files .file-list li:last-child {
+  border-bottom: 0;
+}
+.track-files .file-list li > svg {
+  width: 22px;
+  height: 22px;
+  color: var(--gold-text);
+  flex-shrink: 0;
+}
+.track-files .file-list li > div {
+  flex: 1;
+  min-width: 0;
+}
+.track-files .file-list strong {
+  display: block;
+  color: var(--ink);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.track-files .file-list small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.track-files .empty-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.file-note {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--gold-border);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.88rem;
+  color: var(--text);
+  white-space: pre-line;
+}
+.track-files .file-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.track-files .btn-sm svg {
+  width: 15px;
+  height: 15px;
+}
+@media (max-width: 640px) {
+  .track-files .file-list li {
+    flex-wrap: wrap;
+  }
+  .track-files .file-actions {
+    width: 100%;
+  }
+  .track-files .file-actions .btn {
+    flex: 1;
+  }
+}

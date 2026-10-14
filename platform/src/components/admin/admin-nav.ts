@@ -17,10 +17,11 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/inbox", label: "Jobs inbox", icon: "inbox", permission: "postJobs" },
   { href: "/admin/jobs/new", label: "Post a job", icon: "plus", permission: "postJobs" },
   { href: "/admin/companies", label: "Company logos", icon: "building", permission: "postJobs" },
-  { href: "/admin/orders", label: "Orders", icon: "cart", phase: 3 },
+  { href: "/admin/orders", label: "Orders", icon: "cart", permission: "acceptOrders" },
   { href: "/admin/team", label: "Team", icon: "users", permission: "manageTeam" },
   { href: "/admin/finance", label: "Finance", icon: "cash", permission: "manageFinance" },
-  { href: "/admin/content", label: "Website content", icon: "layout", phase: 4 },
+  // Writers see it too, for Career tips (the only tab they get)
+  { href: "/admin/content", label: "Website content", icon: "layout", permission: "draftCareerTips" },
 ];
 
 // Pages reached from elsewhere than the menu, and the title the top bar shows for them

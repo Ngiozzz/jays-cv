@@ -22,6 +22,7 @@ export const TENANT_MODELS = [
   "Faq",
   "ContentChange",
   "TokenLedgerEntry",
+  "TrackingAttempt",
 ] as const;
 
 export type TenantModel = (typeof TENANT_MODELS)[number];

@@ -59,3 +59,8 @@ export async function requirePermission(permission: Permission): Promise<Current
 export async function isSignedInMember(): Promise<boolean> {
   return Boolean((await lookupMember()).member);
 }
+
+// For routes that serve something other than a page (files): no redirect, just "who, if anyone"
+export async function currentMemberOrNull(): Promise<CurrentMember | null> {
+  return (await lookupMember()).member;
+}

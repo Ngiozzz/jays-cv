@@ -55,7 +55,7 @@ export default async function PricingPage({ params }: PageProps<"/[tenant]/prici
 
       <section className="section">
         <div className="container">
-          <PackageCards packages={prices.packages} whatsapp={settings.whatsapp} />
+          <PackageCards packages={prices.packages} />
         </div>
       </section>
 
@@ -81,6 +81,9 @@ export default async function PricingPage({ params }: PageProps<"/[tenant]/prici
                   <small>{service.note}</small>
                 </div>
                 <span className="amount">{formatKes(service.price)}</span>
+                <Link className="btn btn-ghost btn-sm" href={`/order?service=${service.id}`}>
+                  Order
+                </Link>
               </div>
             ))}
           </div>

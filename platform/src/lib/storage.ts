@@ -5,18 +5,33 @@ import { createClient } from "@supabase/supabase-js";
 import { env } from "./env";
 
 // File storage behind one interface, so the app runs without keys and the provider can be swapped.
-// Buckets: "job-posters" and "company-logos" are public (they appear on public job adverts).
-// Client CVs will get a private bucket with short-lived signed links only.
+// Buckets: "job-posters", "company-logos" and "sample-cvs" are public (they appear on the website).
+// "order-files" (client CVs, drafts, finals) is private: never given a public address, only read by
+// the server after checking who is asking (see modules/orders/order-files).
 
-export type Bucket = "job-posters" | "company-logos";
+export type Bucket = "job-posters" | "company-logos" | "sample-cvs" | "order-files";
+export type PublicBucket = Exclude<Bucket, "order-files">;
 
-const BUCKET_LIMITS: Record<Bucket, string> = { "job-posters": "6MB", "company-logos": "1MB" };
+const IMAGES = ["image/jpeg", "image/png", "image/webp"];
+export const DOCUMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ...IMAGES,
+];
+
+const BUCKETS: Record<Bucket, { public: boolean; limit: string; types: string[] }> = {
+  "job-posters": { public: true, limit: "6MB", types: IMAGES },
+  "company-logos": { public: true, limit: "1MB", types: IMAGES },
+  "sample-cvs": { public: true, limit: "4MB", types: IMAGES },
+  "order-files": { public: false, limit: "10MB", types: DOCUMENT_TYPES },
+};
 
 export interface FileStore {
   put(bucket: Bucket, filePath: string, bytes: Uint8Array, contentType: string): Promise<void>;
   get(bucket: Bucket, filePath: string): Promise<Uint8Array>;
   remove(bucket: Bucket, filePath: string): Promise<void>;
-  publicUrl(bucket: Bucket, filePath: string): string;
+  publicUrl(bucket: PublicBucket, filePath: string): string;
 }
 
 function supabaseStore(url: string, serviceRoleKey: string): FileStore {
@@ -32,9 +47,9 @@ function supabaseStore(url: string, serviceRoleKey: string): FileStore {
           const existing = await client.storage.getBucket(bucket);
           if (existing.data) return;
           const created = await client.storage.createBucket(bucket, {
-            public: true,
-            fileSizeLimit: BUCKET_LIMITS[bucket],
-            allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+            public: BUCKETS[bucket].public,
+            fileSizeLimit: BUCKETS[bucket].limit,
+            allowedMimeTypes: BUCKETS[bucket].types,
           });
           if (created.error) throw created.error;
         })(),

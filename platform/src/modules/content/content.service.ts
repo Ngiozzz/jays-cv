@@ -2,6 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { homepageStatsSchema } from "./content.schema";
 import * as repo from "./content.repo";
+import { sampleImageUrl } from "./sample-images";
 
 // Public pages are cached per business. When the owner edits content (phase 4),
 // the admin calls updateTag(contentTag(tenantId)) and the pages refresh.
@@ -54,7 +55,15 @@ export type SiteReview = Awaited<ReturnType<typeof getFeaturedReviews>>[number];
 export async function getSamples(tenantId: string) {
   "use cache";
   cacheContent(tenantId);
-  return repo.findPublishedSamples(tenantId);
+  const samples = await repo.findPublishedSamples(tenantId);
+  return samples.map((sample) => ({
+    id: sample.id,
+    role: sample.role,
+    tag: sample.tag,
+    caption: sample.caption,
+    beforeUrl: sampleImageUrl(sample, "before"),
+    afterUrl: sampleImageUrl(sample, "after"),
+  }));
 }
 
 export type SiteSample = Awaited<ReturnType<typeof getSamples>>[number];

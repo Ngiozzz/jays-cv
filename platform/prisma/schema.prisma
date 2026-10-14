@@ -49,6 +49,7 @@ model Tenant {
   contentChanges ContentChange[]
   tokenEntries   TokenLedgerEntry[]
   payouts        WriterPayout[]
+  trackingTries  TrackingAttempt[]
 }
 
 enum MpesaMode {
@@ -311,45 +312,49 @@ enum OrderStatus {
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  tenantId          String
-  tenant            Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                  String      @id @default(cuid())
+  tenantId            String
+  tenant              Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   // Shown as `${orderPrefix}-${number}`, e.g. JC-1048; also the M-Pesa account number
-  number            Int
-  status            OrderStatus @default(NEW)
+  number              Int
+  status              OrderStatus @default(NEW)
   // Name of what was bought, copied at order time so later price list edits don't change it
-  itemName          String
-  packageId         String?
-  package           Package?    @relation(fields: [packageId], references: [id], onDelete: SetNull)
-  serviceId         String?
-  service           Service?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  amount            Int
+  itemName            String
+  packageId           String?
+  package             Package?    @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  serviceId           String?
+  service             Service?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  amount              Int
   // Timing rules copied from the package at order time
-  firstDraftHours   Int
-  // null = unlimited rounds within revisionWindowDays
-  revisionRounds    Int?
-  extraHours        Int         @default(0)
-  clientName        String
-  clientPhone       String
-  clientEmail       String?
-  whatsappUpdates   Boolean     @default(true)
-  targetRole        String?
-  industry          String?
-  experience        String?
-  notes             String?
-  noCv              Boolean     @default(false)
-  source            String      @default("website")
+  firstDraftHours     Int
+  // null = unlimited rounds within revisionWindowDays (counted from payment)
+  revisionRounds      Int?
+  revisionWindowDays  Int?
+  extraHours          Int         @default(0)
+  clientName          String
+  clientPhone         String
+  clientEmail         String?
+  whatsappUpdates     Boolean     @default(true)
+  targetRole          String?
+  industry            String?
+  experience          String?
+  notes               String?
+  noCv                Boolean     @default(false)
+  source              String      @default("website")
   // Only a hash of the private tracking-link token is stored, so a database leak can't reveal links
-  trackingTokenHash String      @unique
-  writerId          String?
-  writer            Membership? @relation("OrderWriter", fields: [writerId], references: [id], onDelete: SetNull)
-  paidAt            DateTime?
-  acceptedAt        DateTime?
-  draftSentAt       DateTime?
-  remindedAt        DateTime?
-  deliveredAt       DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  trackingTokenHash   String      @unique
+  // The same code encrypted with the server's secret, so staff can copy the link to resend it
+  // (a database leak alone still can't reveal it)
+  trackingTokenSealed String?
+  writerId            String?
+  writer              Membership? @relation("OrderWriter", fields: [writerId], references: [id], onDelete: SetNull)
+  paidAt              DateTime?
+  acceptedAt          DateTime?
+  draftSentAt         DateTime?
+  remindedAt          DateTime?
+  deliveredAt         DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   events       OrderEvent[]
   revisions    OrderRevision[]
@@ -375,6 +380,20 @@ model OrderRevision {
   requestedAt DateTime @default(now())
 
   @@unique([orderId, round])
+}
+
+// Something a visitor did that's counted to stop abuse: a wrong "Track my order" try (too many
+// for one order, or from one visitor, and lookups pause for a while), or an order placed (too many
+// from one visitor in an hour and the order card pauses). Old rows are deleted nightly.
+model TrackingAttempt {
+  id       String   @id @default(cuid())
+  tenantId String
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // "order:1048" or "visitor:<hash of the IP address>" (the address itself is never stored)
+  key      String
+  at       DateTime @default(now())
+
+  @@index([tenantId, key, at])
 }
 
 enum ActorType {
@@ -497,6 +516,8 @@ model StoredFile {
   mimeType    String
   sizeBytes   Int
   storagePath String    @unique
+  // A short message with the file, e.g. what the writer changed in this draft
+  note        String?
   uploadedBy  String
   createdAt   DateTime  @default(now())
   // Set from the retention setting when the order is delivered
@@ -583,21 +604,27 @@ model Review {
 }
 
 model Sample {
-  id        String  @id @default(cuid())
-  tenantId  String
-  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  slug      String
-  role      String
-  tag       String
-  caption   String
-  published Boolean @default(true)
-  sortOrder Int     @default(0)
+  id          String  @id @default(cuid())
+  tenantId    String
+  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug        String
+  role        String
+  tag         String
+  caption     String
+  // Uploaded before/after images (storage paths in the "sample-cvs" bucket). The starting samples
+  // have none: theirs are in /public/img/samples, named after the slug.
+  beforeImage String?
+  afterImage  String?
+  published   Boolean @default(true)
+  sortOrder   Int     @default(0)
 
   @@unique([tenantId, slug])
 }
 
 enum PostStatus {
   DRAFT
+  // A writer sent it to the owner, who publishes it
+  REVIEW
   PUBLISHED
 }
 

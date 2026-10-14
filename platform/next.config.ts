@@ -5,8 +5,9 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   experimental: {
     serverActions: {
-      // Job posters are uploaded through a server action. Browsers shrink them first, so this is a safety margin.
-      bodySizeLimit: "6mb",
+      // Uploads go through server actions: job posters (shrunk by the browser first) and order drafts
+      // (Word/PDF, up to 10 MB, checked again on the server)
+      bodySizeLimit: "11mb",
     },
   },
 };

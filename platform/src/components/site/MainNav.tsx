@@ -27,6 +27,15 @@ export function MainNav({ whatsappHref }: Props) {
             </li>
           ))}
         </ul>
+        <Link
+          className="btn btn-ghost btn-sm nav-track"
+          href="/track"
+          onClick={close}
+          aria-current={isActive(pathname, "/track") ? "page" : undefined}
+        >
+          <Icon name="search" size={18} />
+          Track my order
+        </Link>
         <a className="btn btn-primary btn-sm nav-cta" href={whatsappHref} target="_blank" rel="noopener">
           <Icon name="whatsapp" size={18} />
           WhatsApp us

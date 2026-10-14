@@ -51,7 +51,7 @@ export default async function ServicesPage({ params }: PageProps<"/[tenant]/serv
               <Link href="/pricing#payment">How payment works</Link>.
             </p>
           </SectionHead>
-          <PackageTable packages={prices.packages} whatsapp={settings.whatsapp} />
+          <PackageTable packages={prices.packages} />
         </div>
       </section>
 

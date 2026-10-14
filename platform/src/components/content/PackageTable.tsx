@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { formatKes } from "@/lib/money";
-import { whatsappLink } from "@/modules/content/contact";
 import type { SitePackage } from "@/modules/content/content.service";
-import { draftTimeLabel, packageOrderMessage, revisionsLabel } from "@/modules/content/packages";
+import { draftTimeLabel, orderHref, revisionsLabel } from "@/modules/content/packages";
 
-type Props = { packages: SitePackage[]; whatsapp: string };
+type Props = { packages: SitePackage[] };
 
-export function PackageTable({ packages, whatsapp }: Props) {
+export function PackageTable({ packages }: Props) {
   return (
     <>
       <div className="table-wrap">
@@ -42,14 +41,9 @@ export function PackageTable({ packages, whatsapp }: Props) {
                   <strong>{formatKes(pkg.price)}</strong>
                 </td>
                 <td>
-                  <a
-                    className="btn btn-primary btn-sm"
-                    href={whatsappLink(whatsapp, packageOrderMessage(pkg.shortName))}
-                    target="_blank"
-                    rel="noopener"
-                  >
+                  <Link className="btn btn-primary btn-sm" href={orderHref(pkg.shortName)}>
                     Order
-                  </a>
+                  </Link>
                 </td>
               </tr>
             ))}
