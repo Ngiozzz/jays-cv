@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { IconSprite } from "@/components/icons/IconSprite";
 import { AnnouncementBar } from "@/components/site/AnnouncementBar";
 import { PageEffects } from "@/components/site/PageEffects";
@@ -30,10 +29,7 @@ export default async function PublicLayout({ children, params }: LayoutProps<"/[
       <SiteFooter contact={footerContact(settings)} businessName={tenant.name} />
       <WhatsAppFloat href={whatsappLink(settings.whatsapp, "Hi Jay CVS")} />
       <IconSprite />
-      {/* Reads the URL, which a tracking link only knows at request time */}
-      <Suspense fallback={null}>
-        <PageEffects />
-      </Suspense>
+      <PageEffects />
     </>
   );
 }

@@ -4477,16 +4477,24 @@ a:hover {
 }
 
 /* ---------- Scroll reveal ---------- */
-.js .reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  transition:
-    opacity 0.6s ease,
-    transform 0.6s ease;
+/* Pure CSS, driven by scrolling: no script touches the cards, so the page always matches what
+   React rendered. Browsers without scroll-driven animations simply show the cards. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
 }
-.js .reveal.visible {
-  opacity: 1;
-  transform: none;
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4498,10 +4506,6 @@ a:hover {
   *::after {
     animation: none !important;
     transition: none !important;
-  }
-  .js .reveal {
-    opacity: 1;
-    transform: none;
   }
 }
 
