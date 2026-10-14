@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState, type ComponentProps } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { NAV_ITEMS } from "./nav-items";
 
@@ -10,8 +10,24 @@ type Props = { whatsappHref: string };
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-export function MainNav({ whatsappHref }: Props) {
+type NavLinkProps = ComponentProps<typeof Link> & { href: string };
+
+// Only the links read the URL. On pages whose address isn't known at build time (a tracking link),
+// the link is first printed without the "current page" mark, so the rest of the page still prerenders
+function NavLink(props: NavLinkProps) {
+  return (
+    <Suspense fallback={<Link {...props} />}>
+      <MarkedNavLink {...props} />
+    </Suspense>
+  );
+}
+
+function MarkedNavLink(props: NavLinkProps) {
   const pathname = usePathname();
+  return <Link {...props} aria-current={isActive(pathname, props.href) ? "page" : undefined} />;
+}
+
+export function MainNav({ whatsappHref }: Props) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -21,21 +37,16 @@ export function MainNav({ whatsappHref }: Props) {
         <ul>
           {NAV_ITEMS.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} onClick={close} aria-current={isActive(pathname, item.href) ? "page" : undefined}>
+              <NavLink href={item.href} onClick={close}>
                 {item.label}
-              </Link>
+              </NavLink>
             </li>
           ))}
         </ul>
-        <Link
-          className="btn btn-ghost btn-sm nav-track"
-          href="/track"
-          onClick={close}
-          aria-current={isActive(pathname, "/track") ? "page" : undefined}
-        >
+        <NavLink className="btn btn-ghost btn-sm nav-track" href="/track" onClick={close}>
           <Icon name="search" size={18} />
           Track my order
-        </Link>
+        </NavLink>
         <a className="btn btn-primary btn-sm nav-cta" href={whatsappHref} target="_blank" rel="noopener">
           <Icon name="whatsapp" size={18} />
           WhatsApp us
