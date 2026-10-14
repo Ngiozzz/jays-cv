@@ -24,6 +24,7 @@ export type ListOrder = {
   receipt: string | null;
   createdAt: Date;
   paidAt: Date | null;
+  deliveredAt: Date | null;
   due: { text: string; tone: string };
   // The deadline the team is working to (null: none running)
   deadline: Date | null;

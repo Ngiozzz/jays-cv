@@ -30,6 +30,7 @@ const row = (ref: string, patch: Partial<ListOrder> = {}): ListOrder => ({
   receipt: null,
   createdAt: hoursAgo(10),
   paidAt: hoursAgo(9),
+  deliveredAt: null,
   due: { text: "", tone: "" },
   deadline: inHours(15),
   ...patch,

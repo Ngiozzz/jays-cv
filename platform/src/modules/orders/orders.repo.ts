@@ -20,6 +20,7 @@ export function findOrdersForList(tenantId: string) {
       paidAt: true,
       draftSentAt: true,
       remindedAt: true,
+      deliveredAt: true,
       writerId: true,
       firstDraftHours: true,
       extraHours: true,

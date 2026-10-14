@@ -1,74 +1,115 @@
 import type { Metadata } from "next";
-import { formatNumber } from "@/lib/money";
-import { getTokenBalance } from "@/modules/ai/tokens.service";
-import { requireMember, type CurrentMember } from "@/modules/team/current-member";
-import { can, type Permission } from "@/modules/team/permissions";
+import Link from "next/link";
+import { BusinessCards } from "@/components/admin/dashboard/BusinessCards";
+import {
+  AiUsagePanel,
+  AttentionPanel,
+  ClosingSoon,
+  JobStats,
+  OpenOrdersPanel,
+  QuickPost,
+  RecentJobs,
+} from "@/components/admin/dashboard/DashboardPanels";
+import { ProgressPanel, type ProgressCv } from "@/components/admin/dashboard/ProgressPanel";
+import { Icon } from "@/components/icons/Icon";
+import { greeting, isOpenOrder, waitingFor } from "@/modules/dashboard/dashboard";
+import { loadDashboard } from "@/modules/dashboard/dashboard.service";
+import { todayInNairobi } from "@/modules/jobs/jobs.rules";
+import { requireMember } from "@/modules/team/current-member";
+import { can } from "@/modules/team/permissions";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const ACCESS: { permission: Permission; label: string }[] = [
-  { permission: "acceptOrders", label: "Accept and write CV orders" },
-  { permission: "postJobs", label: "Post jobs to the jobs board" },
-  { permission: "draftCareerTips", label: "Draft career tips" },
-  { permission: "seeMoney", label: "See prices, takings and payouts" },
-  { permission: "manageTeam", label: "Invite, pause and remove team members" },
-  { permission: "editWebsiteContent", label: "Edit website content and settings" },
-];
-
+// Owner: the month's money, the team's progress, every order needing attention, jobs and AI tokens.
+// Writer: their own CVs, orders they can accept, and jobs if they post them. Never any money.
 export default async function DashboardPage() {
   const member = await requireMember();
+  const now = new Date();
+  const { owner, business, orders, jobs } = await loadDashboard(member, now);
   const firstName = member.name.split(" ")[0];
+  const open = orders?.open ?? [];
+
+  const mine: ProgressCv[] = (orders?.mine ?? []).map((order) => ({
+    ref: order.ref,
+    clientName: order.clientName,
+    itemName: order.packageName ?? order.itemName,
+    stage: order.status as ProgressCv["stage"],
+    due: order.due,
+  }));
+  const attention = orders && (
+    <AttentionPanel
+      orders={orders.attention.map((order) => ({ order, open: isOpenOrder(order), waiting: waitingFor(order, now) }))}
+    />
+  );
 
   return (
     <>
       <div className="welcome">
         <div>
-          <h2>Hello, {firstName} 👋</h2>
-          <p>
-            You&apos;re signed in to {member.tenant.name} as {member.role === "OWNER" ? "the owner" : "a writer"}.
-          </p>
+          <h2>
+            {greeting(now)}, {firstName} 👋
+          </h2>
+          <p>{owner ? "Here's your business today: money, team and orders." : "Here's your work today."}</p>
         </div>
+        {can(member, "postJobs") && (
+          <Link className="btn btn-primary" href="/admin/jobs/new">
+            <Icon name="plus" size={18} />
+            Post a job
+          </Link>
+        )}
       </div>
 
-      {member.role === "OWNER" && <OwnerSummary member={member} />}
+      {business && <BusinessCards business={business} notAccepted={open.length} />}
+      {orders && !owner && <OpenOrdersPanel open={open.map((order) => ({ order, waiting: waitingFor(order, now) }))} />}
+      {jobs && <JobStats jobs={jobs} />}
 
-      <section className="panel">
-        <div className="panel-head">
-          <h2>What you can do</h2>
+      {orders && (
+        <ProgressPanel
+          owner={owner}
+          me={member.id}
+          rows={orders.progress}
+          mine={mine}
+          // A writer already has "Orders you can accept" just above
+          open={
+            owner && open.length
+              ? {
+                  count: open.length,
+                  oldestRef: open[0].ref,
+                  oldestWaiting: waitingFor(open[0], now),
+                  refs: open.map((order) => `${order.ref} (${waitingFor(order, now)})`).join(", "),
+                }
+              : null
+          }
+        />
+      )}
+
+      {jobs ? (
+        <div className="dash-grid">
+          <div>
+            <QuickPost />
+            <RecentJobs jobs={jobs} />
+          </div>
+          <div style={{ display: "grid", gap: 20, alignContent: "start" }}>
+            <ClosingSoon jobs={jobs} today={todayInNairobi(now)} />
+            {attention}
+            {business && <AiUsagePanel business={business} />}
+          </div>
         </div>
-        <div className="panel-body">
-          <ul className="ticks">
-            {ACCESS.filter((item) => can(member, item.permission)).map((item) => (
-              <li key={item.permission}>{item.label}</li>
-            ))}
-          </ul>
-          <p className="hint-sm">
-            Orders, jobs, team and website screens arrive in the next build phases; they show as &ldquo;Soon&rdquo; in
-            the menu.
-          </p>
-        </div>
-      </section>
+      ) : (
+        // No job panels (a writer who doesn't post jobs): the orders list takes the full width
+        attention
+      )}
+
+      {!orders && !jobs && (
+        <section className="panel">
+          <div className="panel-body">
+            <p className="empty-note">
+              Your account can&apos;t take orders or post jobs yet. Ask {owner ? "your developer" : "the owner"} to
+              switch them on in Team.
+            </p>
+          </div>
+        </section>
+      )}
     </>
-  );
-}
-
-async function OwnerSummary({ member }: { member: CurrentMember }) {
-  const tokens = await getTokenBalance(member.tenant.id);
-  return (
-    <section className="biz">
-      <div className="biz-head">
-        <h2>Your business</h2>
-      </div>
-      <div className="biz-cards">
-        <div className={tokens.low ? "biz-card tokens alert" : "biz-card tokens"}>
-          <span>AI tokens</span>
-          <strong>{formatNumber(tokens.remaining)}</strong>
-          <small>
-            {tokens.percentLeft}% of {formatNumber(tokens.granted)} left
-            {tokens.low ? ": ask your developer for more" : ""}
-          </small>
-        </div>
-      </div>
-    </section>
   );
 }

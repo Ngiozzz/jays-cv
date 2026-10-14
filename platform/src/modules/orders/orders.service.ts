@@ -54,6 +54,7 @@ export async function listOrders(member: CurrentMember, now: Date) {
       receipt: money ? (payment?.receipt ?? null) : null,
       createdAt: order.createdAt,
       paidAt: order.paidAt,
+      deliveredAt: order.deliveredAt,
       due: dueClock(rules, settings, now),
       deadline: currentDeadline(rules, settings),
     };

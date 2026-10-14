@@ -39,3 +39,16 @@ export function recordUsage(
     },
   });
 }
+
+// What the AI was used for since a date: runs and tokens per feature, biggest first
+export async function sumUsageByFeature(tenantId: string, since: Date) {
+  const groups = await tenantDb(tenantId).tokenLedgerEntry.groupBy({
+    by: ["feature"],
+    where: { kind: "USAGE", createdAt: { gte: since } },
+    _count: true,
+    _sum: { delta: true },
+  });
+  return groups
+    .map((group) => ({ feature: group.feature ?? "Other", runs: group._count, tokens: -(group._sum.delta ?? 0) }))
+    .sort((a, b) => b.tokens - a.tokens);
+}
