@@ -1674,6 +1674,8 @@ img.avatar {
   position: relative;
   z-index: 2;
   margin-top: -40px;
+  /* Room under the card, so its rounded bottom corners show above the footer */
+  padding-bottom: 72px;
 }
 .order-card {
   background: #fff;
@@ -2160,6 +2162,8 @@ html:not(.js) .order-steps {
   color: var(--text);
 }
 .od-link small svg {
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 .od-actions {
@@ -3881,6 +3885,8 @@ body.embed .track-page {
   margin-top: 3px;
 }
 .od-pay small svg {
+  width: 15px;
+  height: 15px;
   vertical-align: -2px;
 }
 .od-paid {
@@ -5048,6 +5054,33 @@ button.final-file {
   color: #b91c1c;
   font-size: 0.82rem;
   font-weight: 600;
+}
+/* The pay box inside the order confirmation and the tracking page (the preview showed it as a pop-up) */
+.pay-box {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.pay-box .ps-amount {
+  margin-left: auto;
+  text-align: right;
+}
+.part-paid {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #ecfdf3;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+.part-paid svg {
+  width: 16px;
+  height: 16px;
+  color: #008a43;
+  flex-shrink: 0;
 }
 .paybill-box {
   margin: 12px 0 0;

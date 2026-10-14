@@ -5,6 +5,9 @@ import type { ActorType } from "@/generated/prisma/enums";
 
 export const EVENT_KINDS = [
   "placed",
+  "promptSent",
+  "paybillShown",
+  "partPaid",
   "paid",
   "accepted",
   "reassigned",
@@ -28,6 +31,7 @@ export type ClientEvent = {
   at: Date;
 };
 
+const kes = (amount: string) => `KES ${Number(amount).toLocaleString("en-KE")}`;
 const firstName = (name: string | null) => (name ?? "Your writer").trim().split(/\s+/)[0];
 const field = (data: unknown, name: string) =>
   data && typeof data === "object" && name in data ? String((data as Record<string, unknown>)[name]) : "";
@@ -55,6 +59,8 @@ export function clientEventText(event: ClientEvent): string | null {
       const receipt = field(event.data, "receipt");
       return receipt ? `Payment received (M-Pesa code ${receipt})` : "Payment received";
     }
+    case "partPaid":
+      return `Part payment received: ${kes(field(event.data, "amount"))} (M-Pesa code ${field(event.data, "receipt")})`;
     case "accepted":
       return "Accepted your order and started writing";
     case "reassigned":
@@ -78,8 +84,6 @@ export function clientEventText(event: ClientEvent): string | null {
 
 // ---------- The team's view ----------
 
-const kes = (amount: string) => `KES ${Number(amount).toLocaleString("en-KE")}`;
-
 // Who did it, as the team reads it
 export function teamActor(event: ClientEvent): string {
   switch (event.actorType) {
@@ -100,6 +104,12 @@ export function teamEventText(event: ClientEvent, money: boolean): string {
   switch (event.kind) {
     case "placed":
       return "Placed the order";
+    case "promptSent":
+      return `Asked for an M-Pesa prompt on ${get("phone")}`;
+    case "paybillShown":
+      return "Opened the Paybill account number (a Paybill payment may be on its way)";
+    case "partPaid":
+      return `Part payment received${money && get("amount") ? `: ${kes(get("amount"))}` : ""} (ref ${get("receipt")})`;
     case "paid": {
       const amount = money && get("amount") ? `: ${kes(get("amount"))}` : "";
       const how = get("manual") === "true" ? "Payment recorded by hand" : "Payment received";

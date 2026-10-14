@@ -7,6 +7,7 @@ import { placeOrderAction } from "@/app/(public)/[tenant]/order/actions";
 import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
 import { NEEDS, type NeedKey } from "@/modules/orders/place-order";
+import { PayBox } from "@/components/pay/PayBox";
 import type { PlaceOrderResult } from "@/modules/orders/place-order.service";
 
 export type CardPackage = {
@@ -430,16 +431,18 @@ function Done({ placed, businessName, waNumber }: { placed: Placed; businessName
       </div>
       <div className="od-pay">
         <strong>Next: pay to start your order</strong>
-        <div className="pay-cta">
-          <div>
-            <span>Amount</span>
-            <strong>{placed.amount}</strong>
-          </div>
-        </div>
+        <PayBox
+          info={{
+            ref: placed.ref,
+            amountDue: placed.amountDue,
+            phone: placed.payPhone,
+            paybill: placed.paybill,
+            businessName,
+            pretend: placed.pretendMpesa,
+          }}
+        />
         <small>
-          <Icon name="lock" /> On your phone: M-Pesa → Lipa na M-Pesa → <b>Pay Bill {placed.paybill}</b> · Account{" "}
-          <b>{placed.ref}</b>. Your writer starts as soon as the payment is confirmed. You can also pay later from your
-          tracking page.
+          Your writer starts as soon as the payment is confirmed. You can also pay later from your tracking page.
         </small>
       </div>
     </div>

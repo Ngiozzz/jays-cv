@@ -4,6 +4,8 @@ import { env } from "@/lib/env";
 import { formatKes } from "@/lib/money";
 import { fileStore } from "@/lib/storage";
 import { tenantDb } from "@/lib/tenant-db";
+import { mpesa } from "@/modules/payments/gateway";
+import { displayPhone } from "@/modules/payments/mpesa";
 import { takeOrderNumber } from "@/modules/tenants/tenants.repo";
 import type { CurrentTenant } from "@/modules/tenants/tenants.service";
 import { siteUrl } from "./order-detail.service";
@@ -24,6 +26,10 @@ export type PlaceOrderResult =
       firstName: string;
       itemName: string;
       amount: string;
+      // For the pay box
+      amountDue: number;
+      payPhone: string;
+      pretendMpesa: boolean;
       trackingUrl: string;
       paybill: string;
       cvName: string | null;
@@ -150,6 +156,9 @@ export async function placeOrder(
       firstName: details.name.split(/\s+/)[0],
       itemName: item.itemName,
       amount: formatKes(item.amount),
+      amountDue: item.amount,
+      payPhone: displayPhone(details.phone),
+      pretendMpesa: mpesa.pretend,
       trackingUrl: `${siteUrl(tenant)}/t/${token}`,
       paybill,
       cvName: file?.name ?? null,

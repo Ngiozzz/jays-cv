@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { OrderFileGroups } from "@/components/orders/OrderFileGroups";
+import { PayBox } from "@/components/pay/PayBox";
 import { formatKes } from "@/lib/money";
 import { whatsappLink } from "@/modules/content/contact";
 import type { OrderFileView } from "@/modules/orders/order-files";
@@ -55,7 +56,7 @@ export function TrackView({ order, businessName }: { order: TrackedOrder; busine
       </ol>
 
       <div className="track-card">
-        <Stage order={order} />
+        <Stage order={order} businessName={businessName} />
       </div>
 
       <section className="track-card track-files">
@@ -120,7 +121,7 @@ export function TrackView({ order, businessName }: { order: TrackedOrder; busine
   );
 }
 
-function Stage({ order }: { order: TrackedOrder }) {
+function Stage({ order, businessName }: { order: TrackedOrder; businessName: string }) {
   const writer = order.writer ?? "Your writer";
   switch (order.status) {
     case "NEW":
@@ -132,21 +133,23 @@ function Stage({ order }: { order: TrackedOrder }) {
             Complete your payment
           </h2>
           <p>Your writer starts as soon as your payment is confirmed.</p>
-          <div className="pay-cta">
-            <div>
-              <span>Amount</span>
-              <strong>{formatKes(order.amount)}</strong>
-            </div>
-          </div>
-          <div className="paybill-box">
-            <span>
-              On your phone: M-Pesa → Lipa na M-Pesa → <b>Pay Bill {order.paybill}</b> · Account <b>{order.ref}</b>
-            </span>
-          </div>
-          <p className="secure-note">
-            <Icon name="lock" />
-            Paid directly to us by M-Pesa. Use the order number as the account number so we match it automatically.
-          </p>
+          {order.amountDue < order.amount && (
+            <p className="part-paid">
+              <Icon name="check" />
+              {formatKes(order.amount - order.amountDue)} received, <strong>{formatKes(order.amountDue)} left</strong>{" "}
+              to pay.
+            </p>
+          )}
+          <PayBox
+            info={{
+              ref: order.ref,
+              amountDue: order.amountDue,
+              phone: order.payPhone,
+              paybill: order.paybill,
+              businessName,
+              pretend: order.pretendMpesa,
+            }}
+          />
         </div>
       );
     case "PAID":

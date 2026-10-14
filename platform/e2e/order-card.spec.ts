@@ -42,7 +42,7 @@ test("a client orders from the pricing page, uploads their CV and lands on their
   const ref = (await title.textContent())!.match(/[A-Z]+-\d+/)![0];
   placed.push(ref);
   await expect(page.locator(".od-link code")).toContainText("/t/");
-  await expect(page.locator(".od-pay")).toContainText(`Account ${ref}`);
+  await expect(page.locator(".od-pay .pay-box")).toContainText(`Order ${ref}`);
 
   // Straight into the tracking page: no need to type the details again
   await page.getByRole("link", { name: "Open my tracking page" }).click();

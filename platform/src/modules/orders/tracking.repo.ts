@@ -24,6 +24,7 @@ export function findTrackedOrder(tenantId: string, orderId: string) {
       itemName: true,
       amount: true,
       clientName: true,
+      clientPhone: true,
       createdAt: true,
       paidAt: true,
       draftSentAt: true,
@@ -34,6 +35,7 @@ export function findTrackedOrder(tenantId: string, orderId: string) {
       revisionRounds: true,
       revisionWindowDays: true,
       writer: { select: { displayName: true } },
+      payments: { where: { status: "CONFIRMED" }, select: { amount: true } },
       revisions: { orderBy: { round: "asc" }, select: { requestedAt: true, text: true } },
       files: {
         where: { deletedAt: null },

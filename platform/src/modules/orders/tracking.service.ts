@@ -1,6 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { findSettings } from "@/modules/content/content.repo";
+import { mpesa } from "@/modules/payments/gateway";
+import { amountDue, displayPhone } from "@/modules/payments/mpesa";
 import type { CurrentTenant } from "@/modules/tenants/tenants.service";
 import { clientActor, clientEventText } from "./order-events";
 import { groupFiles } from "./order-files";
@@ -97,6 +99,13 @@ export async function loadTrackedOrder(tenant: CurrentTenant, ref: string) {
     files: groupFiles(order.files),
     rounds: roundsLabel(rules),
     paybill: settings.paybill,
+    // For the pay box: what's still to pay (payments add up), and the number to send the prompt to
+    amountDue: amountDue(
+      order.amount,
+      order.payments.map((payment) => payment.amount),
+    ),
+    payPhone: displayPhone(order.clientPhone),
+    pretendMpesa: mpesa.pretend,
     whatsapp: settings.whatsapp,
     updates: order.events.flatMap((event) => {
       const view = { ...event, actorName: event.actor?.displayName ?? null };
