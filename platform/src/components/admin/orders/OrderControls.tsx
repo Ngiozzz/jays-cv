@@ -1,10 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type FormEvent } from "react";
 import {
   acceptOrderAction,
   addNoteAction,
   completeOrderAction,
+  deleteAllAbandonedAction,
+  deleteOrderAction,
   extendDeadlineAction,
   logChangesAction,
   reassignOrderAction,
@@ -166,6 +169,55 @@ export function CompleteButton({ orderId }: { orderId: string }) {
     >
       <Icon name="check" />
       {pending ? "Completing…" : "Client approved: complete"}
+    </button>
+  );
+}
+
+// Owner only: an abandoned order nobody paid for, with its files. The page is gone afterwards.
+export function DeleteOrderButton({ orderId, orderRef }: { orderId: string; orderRef: string }) {
+  const { pending, run } = useOrderAction();
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      className="btn btn-danger btn-sm"
+      disabled={pending}
+      onClick={() => {
+        if (
+          window.confirm(
+            `Delete ${orderRef}? This also deletes the client's uploaded CV and files. This can't be undone.`,
+          )
+        )
+          run(
+            () => deleteOrderAction(orderId),
+            (ok) => ok && router.push("/admin/orders?status=new"),
+          );
+      }}
+    >
+      <Icon name="trash" />
+      {pending ? "Deleting…" : "Delete order"}
+    </button>
+  );
+}
+
+export function DeleteAbandonedButton({ count }: { count: number }) {
+  const { pending, run } = useOrderAction();
+  return (
+    <button
+      type="button"
+      className="btn btn-danger btn-sm"
+      disabled={pending}
+      onClick={() => {
+        if (
+          window.confirm(
+            `Delete all ${count} abandoned unpaid ${count === 1 ? "order" : "orders"}? Their uploaded CVs and files are deleted too. This can't be undone.`,
+          )
+        )
+          run(() => deleteAllAbandonedAction());
+      }}
+    >
+      <Icon name="trash" />
+      {pending ? "Deleting…" : `Delete ${count} abandoned ${count === 1 ? "order" : "orders"}`}
     </button>
   );
 }

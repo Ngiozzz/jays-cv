@@ -138,12 +138,12 @@ export function QuickPost() {
       <div>
         <h3>Got a new job poster?</h3>
         <p>
-          Drop today&apos;s posters in the Jobs inbox. AI reads them, flags scams and duplicates, and you approve each
+          Drop today&apos;s posters in Bulk post jobs. AI reads them, flags scams and duplicates, and you approve each
           one in seconds.
         </p>
       </div>
       <Link className="btn btn-light" href="/admin/inbox">
-        Open jobs inbox
+        Open Bulk post jobs
       </Link>
     </div>
   );

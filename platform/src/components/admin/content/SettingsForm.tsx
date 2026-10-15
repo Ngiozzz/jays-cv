@@ -37,11 +37,11 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
     </div>
   );
 
-  const rule = (name: keyof AdminSettings, max: number) => (
+  const rule = (name: keyof AdminSettings, max: number, min = 1) => (
     <input
       type="number"
       name={name}
-      min={1}
+      min={min}
       max={max}
       defaultValue={String(settings[name])}
       aria-invalid={Boolean(save.errors[name])}
@@ -94,6 +94,11 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             Revised drafts are due within <span>{rule("revisionHours", 96)} hours</span>
           </label>
           {save.error("revisionHours")}
+          <label>
+            Delete abandoned (never paid) orders and their files <span>{rule("deleteAbandonedDays", 365, 7)} days</span>{" "}
+            after they were placed
+          </label>
+          {save.error("deleteAbandonedDays")}
         </div>
       </Panel>
 

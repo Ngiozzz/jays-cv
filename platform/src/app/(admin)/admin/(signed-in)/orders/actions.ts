@@ -5,6 +5,8 @@ import {
   acceptOrder,
   addNote,
   completeOrder,
+  deleteAllAbandoned,
+  deleteOrder,
   extendDeadline,
   logChanges,
   reassignOrder,
@@ -50,6 +52,15 @@ export async function extendDeadlineAction(orderId: string) {
 
 export async function recordPaymentAction(orderId: string, reference: string) {
   return done(await recordPayment(await requireMember(), orderId, reference));
+}
+
+// The page is gone afterwards, so the button takes the owner back to the list instead of refreshing
+export async function deleteOrderAction(orderId: string) {
+  return deleteOrder(await requireMember(), orderId);
+}
+
+export async function deleteAllAbandonedAction() {
+  return done(await deleteAllAbandoned(await requireMember()));
 }
 
 export async function addNoteAction(orderId: string, text: string) {

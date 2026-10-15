@@ -18,9 +18,9 @@ export function PageHero({ crumbs, title, lead, children }: Props) {
   );
 }
 
-export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
+export function Breadcrumb({ crumbs, left = false }: { crumbs: Crumb[]; left?: boolean }) {
   return (
-    <nav className="breadcrumb" aria-label="Breadcrumb">
+    <nav className={left ? "breadcrumb breadcrumb-left" : "breadcrumb"} aria-label="Breadcrumb">
       <Link href="/">Home</Link>
       {crumbs.map((crumb) => (
         <Fragment key={crumb.label}>

@@ -95,7 +95,7 @@ export function MemberDialog({ mode, member, onClose }: Props) {
               <input type="checkbox" name="canPostJobs" defaultChecked={mode === "edit" && member.canPostJobs} />
               <span>
                 <b>Post jobs</b>
-                <small>Jobs inbox, post and edit job adverts, company logos</small>
+                <small>Post and edit job adverts, Bulk post jobs, company logos</small>
               </span>
             </label>
             <p className="perm-note">

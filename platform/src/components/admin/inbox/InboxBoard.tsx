@@ -15,7 +15,9 @@ import { dailyDigest } from "@/modules/inbox/inbox.digest";
 import { NEEDS_CONFIRMING, flagsFor, isClean, type Flag } from "@/modules/inbox/inbox.flags";
 import type { InboxCard, InboxData } from "@/modules/inbox/inbox.view";
 import type { JobInput } from "@/modules/jobs/jobs.schema";
+import type { KnownCompany } from "@/components/admin/jobs/CompanyLogoField";
 import { DISCARD_LABEL, InboxDetail } from "./InboxDetail";
+import type { ChosenLogo } from "./QuickForm";
 import { IntakePanel } from "./IntakePanel";
 
 type View = "check" | "flagged" | "reading" | "approved" | "discarded";
@@ -36,15 +38,27 @@ const EMPTY: Record<View, string> = {
 // The AI reads a few posters at once: quick, without flooding the server
 const READ_AT_ONCE = 3;
 
-type Props = { data: InboxData; siteUrl: string; aiPretend: boolean; sampleFiles: string[] };
+type Props = {
+  data: InboxData;
+  companies: KnownCompany[];
+  siteUrl: string;
+  aiPretend: boolean;
+  sampleFiles: string[];
+};
 
 // Blank lines typed into "Requirements" are dropped before publishing
+const cleanLines = (list: string[]) => list.map((line) => line.trim()).filter(Boolean);
 const tidy = (job: JobInput): JobInput => ({
   ...job,
-  requirements: job.requirements.map((line) => line.trim()).filter(Boolean),
+  responsibilities: cleanLines(job.responsibilities),
+  requirements: cleanLines(job.requirements),
 });
 
-export function InboxBoard({ data, siteUrl, aiPretend, sampleFiles }: Props) {
+// "Where did you find this advert?" starts as where the poster came from (unless just "Uploaded")
+const withSource = (job: JobInput | null, source: string): JobInput | null =>
+  job && !job.source && source !== "Uploaded" ? { ...job, source } : job;
+
+export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }: Props) {
   const router = useRouter();
   const { cards, liveJobs, today } = data;
   const [chosenView, setView] = useState<View>("check");
@@ -52,12 +66,14 @@ export function InboxBoard({ data, siteUrl, aiPretend, sampleFiles }: Props) {
   // Corrections and "Looks right" ticks made on this screen, ahead of the next refresh
   const [edits, setEdits] = useState<Record<string, JobInput>>({});
   const [confirmed, setConfirmed] = useState<Record<string, string[]>>({});
+  // Logos added on this screen, saved to the company when the job is approved
+  const [logos, setLogos] = useState<Record<string, ChosenLogo>>({});
   const [busy, setBusy] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const reading = useRef(new Set<string>());
 
-  const jobOf = useCallback((card: InboxCard) => edits[card.id] ?? card.job, [edits]);
+  const jobOf = useCallback((card: InboxCard) => edits[card.id] ?? withSource(card.job, card.source), [edits]);
   const flagsOf = useCallback(
     (card: InboxCard): Flag[] => {
       const job = jobOf(card);
@@ -149,7 +165,10 @@ export function InboxBoard({ data, siteUrl, aiPretend, sampleFiles }: Props) {
         if (!window.confirm(question)) return false;
       }
       setBusy(true);
-      const result = await approveInboxItemAction(card.id, tidy(job));
+      const logo = logos[card.id];
+      const logoForm = logo ? new FormData() : null;
+      if (logo) logoForm?.set("companyLogo", logo.file);
+      const result = await approveInboxItemAction(card.id, tidy(job), logoForm);
       setBusy(false);
       if (!result.ok) {
         setNotice({ tone: "error", text: result.error });
@@ -162,7 +181,7 @@ export function InboxBoard({ data, siteUrl, aiPretend, sampleFiles }: Props) {
       return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- nextAfter reads the current list on purpose
-    [flagsOf, jobOf, list],
+    [flagsOf, jobOf, list, logos],
   );
 
   const discard = async (card: InboxCard, reason: string) => {
@@ -297,6 +316,10 @@ export function InboxBoard({ data, siteUrl, aiPretend, sampleFiles }: Props) {
               busy={busy}
               onStep={go}
               onChange={(job) => setEdits((current) => ({ ...current, [selected.id]: job }))}
+              companies={companies}
+              today={data.today}
+              logo={logos[selected.id] ?? null}
+              onLogo={(logo) => setLogos((current) => ({ ...current, [selected.id]: logo }))}
               onConfirm={(field) => {
                 setConfirmed((current) => ({ ...current, [selected.id]: [...(current[selected.id] ?? []), field] }));
                 void confirmInboxFieldAction(selected.id, field);

@@ -9,9 +9,11 @@ import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan, can } from "@/modules/team/permissions";
 import type { EventKind } from "./order-events";
 import { MAX_FILE_NOTE } from "./order-files";
+import { deleteAbandonedOrder, deleteAbandonedOrders } from "./order-upkeep.service";
 import {
   acceptStep,
   completeStep,
+  deleteStep,
   extendStep,
   payStep,
   reassignStep,
@@ -342,6 +344,32 @@ export async function recordPayment(member: CurrentMember, orderId: string, rawR
       return refuse("That reference was already used for another order.");
     throw error;
   }
+}
+
+// ---------- Deleting unpaid orders (owner only) ----------
+
+export async function deleteOrder(member: CurrentMember, orderId: string): Promise<ActionResult> {
+  assertCan(member, "deleteOrders");
+  const order = await tenantDb(member.tenant.id).order.findFirst({
+    where: { id: orderId },
+    select: { number: true, status: true, payments: { where: { status: "CONFIRMED" }, select: { amount: true } } },
+  });
+  if (!order) return refuse("This order no longer exists.");
+  const step = deleteStep(
+    order,
+    order.payments.reduce((sum, payment) => sum + payment.amount, 0),
+  );
+  if (!step.ok) return refuse(step.error);
+  if (!(await deleteAbandonedOrder(member.tenant.id, orderId))) return refuse(CHANGED);
+  return { ok: true, message: `Deleted ${member.tenant.orderPrefix}-${order.number} and its files.` };
+}
+
+// Every abandoned order nobody paid for, whatever its age
+export async function deleteAllAbandoned(member: CurrentMember): Promise<ActionResult> {
+  assertCan(member, "deleteOrders");
+  const deleted = await deleteAbandonedOrders(member.tenant.id, 0, new Date());
+  if (!deleted) return refuse("There are no abandoned unpaid orders to delete.");
+  return { ok: true, message: `Deleted ${deleted} abandoned ${deleted === 1 ? "order" : "orders"} and their files.` };
 }
 
 // ---------- Notes ----------

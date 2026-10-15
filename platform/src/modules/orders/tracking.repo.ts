@@ -15,6 +15,11 @@ export function findOrderIdByNumber(tenantId: string, number: number) {
   return tenantDb(tenantId).order.findFirst({ where: { number }, select: { id: true } });
 }
 
+// An unpaid order that was deleted: found by its number or its old tracking link
+export function findCancelledOrder(tenantId: string, where: { number: number } | { trackingTokenHash: string }) {
+  return tenantDb(tenantId).cancelledOrder.findFirst({ where, select: { number: true } });
+}
+
 export function findTrackedOrder(tenantId: string, orderId: string) {
   return tenantDb(tenantId).order.findFirst({
     where: { id: orderId },
@@ -28,6 +33,7 @@ export function findTrackedOrder(tenantId: string, orderId: string) {
       createdAt: true,
       paidAt: true,
       draftSentAt: true,
+      deliveredAt: true,
       remindedAt: true,
       writerId: true,
       firstDraftHours: true,
@@ -37,6 +43,7 @@ export function findTrackedOrder(tenantId: string, orderId: string) {
       writer: { select: { displayName: true } },
       payments: { where: { status: "CONFIRMED" }, select: { amount: true } },
       revisions: { orderBy: { round: "asc" }, select: { requestedAt: true, text: true } },
+      reviews: { take: 1, select: { rating: true } },
       files: {
         where: { deletedAt: null },
         select: { id: true, kind: true, version: true, name: true, sizeBytes: true, note: true, createdAt: true },

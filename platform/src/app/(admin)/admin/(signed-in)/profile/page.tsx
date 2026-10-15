@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Your profile" };
 
 const ABILITIES: { permission: Permission; label: string }[] = [
   { permission: "acceptOrders", label: "Accept and write CV orders" },
-  { permission: "postJobs", label: "Post jobs, use the Jobs inbox and company logos" },
+  { permission: "postJobs", label: "Post jobs, use Bulk post jobs and company logos" },
   { permission: "draftCareerTips", label: "Draft career tips" },
   { permission: "seeMoney", label: "See prices, takings and payouts" },
   { permission: "manageTeam", label: "Invite, pause and remove team members" },

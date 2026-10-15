@@ -83,8 +83,11 @@ async function SignInOptions({ searchParams }: Pick<PageProps<"/admin/login">, "
       {testSignInEnabled && (
         <div className="signin-test">
           <span className="signin-divider">For testing on this computer</span>
-          <TestSignInButton />
-          <p className="login-note">Signs you in as Jay (test owner). Only available while developing, never live.</p>
+          <TestSignInButton person="owner" label="Proceed as Jay (owner)" />
+          <TestSignInButton person="writer" label="Proceed as Mary (writer)" />
+          <p className="login-note">
+            Signs you in as a test owner or a test writer. Only available while developing, never live.
+          </p>
         </div>
       )}
     </div>

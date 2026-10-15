@@ -7,6 +7,7 @@ import {
   AcceptButton,
   CompleteButton,
   CopyLink,
+  DeleteOrderButton,
   ExtendButton,
   LogChanges,
   NoteForm,
@@ -33,6 +34,13 @@ const ago = (iso: string | null, now: Date) => {
   const ms = now.getTime() - new Date(iso).getTime();
   return ms < 60_000 ? "just now" : `${span(ms)} ago`;
 };
+const day = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    timeZone: "Africa/Nairobi",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 const STEPS = [
   ["PAID", "Paid"],
   ["WRITING", "Writing"],
@@ -104,6 +112,16 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
               <h2>Files</h2>
             </div>
             <div className="panel-body">
+              {order.filesDeleteOn && (
+                <p className="role-note">
+                  <Icon name="lock" />
+                  <span>
+                    {new Date(order.filesDeleteOn) <= now
+                      ? `The client's files were deleted on ${day(order.filesDeleteOn)} for privacy (Business settings → keep client files).`
+                      : `The client's files are deleted on ${day(order.filesDeleteOn)} for privacy (Business settings → keep client files).`}
+                  </span>
+                </p>
+              )}
               <OrderFileGroups
                 groups={[
                   {
@@ -234,6 +252,11 @@ function OrderHead({ order, now }: { order: TeamOrder; now: Date }) {
       {order.status === "REVISIONS" && order.lastChange && (
         <blockquote className="change-request">
           <strong>Changes requested ({order.lastChange.by}):</strong> &ldquo;{order.lastChange.text}&rdquo;
+          {order.lastChange.withFile && (
+            <small>
+              <Icon name="upload" /> The client attached a file: see Files → From the client.
+            </small>
+          )}
           <small>{order.roundsLabel}</small>
         </blockquote>
       )}
@@ -277,11 +300,20 @@ function HeadActions({ order }: { order: TeamOrder }) {
     );
   switch (order.status) {
     case "NEW":
-    case "ABANDONED":
       return (
         <p className="hint-sm">
           Waiting for payment. Send a reminder from the Client box, or record a payment that came another way.
         </p>
+      );
+    case "ABANDONED":
+      return (
+        <>
+          <p className="hint-sm">
+            Never paid. Send a reminder from the Client box, or record a payment that came another way.
+            {order.deletesOn && <> It will be deleted automatically on {day(order.deletesOn)}.</>}
+          </p>
+          {you.canDelete && <DeleteOrderButton orderId={order.id} orderRef={order.ref} />}
+        </>
       );
     case "PAID":
       return <AcceptButton orderId={order.id} label={`Accept this order (as ${you.name.split(/\s+/)[0]})`} />;

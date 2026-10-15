@@ -59,6 +59,30 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {business && business.lowReviews.length > 0 && (
+        <section className="low-reviews" role="alert">
+          <Icon name="alert" />
+          <div>
+            <strong>
+              {business.lowReviews.length === 1
+                ? "A client is unhappy"
+                : `${business.lowReviews.length} clients are unhappy`}
+            </strong>
+            <ul>
+              {business.lowReviews.map((review) => (
+                <li key={review.id}>
+                  {review.ref && <Link href={`/admin/orders/${review.ref}`}>{review.ref}</Link>} rated {review.rating}★
+                  ({review.name}): &ldquo;{review.text}&rdquo;
+                </li>
+              ))}
+            </ul>
+            <p>
+              Call them to put it right. This alert clears once you approve or hide the review in{" "}
+              <Link href="/admin/content?tab=reviews">Website content → Reviews</Link>.
+            </p>
+          </div>
+        </section>
+      )}
       {business && <BusinessCards business={business} notAccepted={open.length} />}
       {orders && !owner && <OpenOrdersPanel open={open.map((order) => ({ order, waiting: waitingFor(order, now) }))} />}
       {jobs && <JobStats jobs={jobs} />}

@@ -1,26 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NotAllowed } from "@/components/admin/NotAllowed";
+import { DeleteAbandonedButton } from "@/components/admin/orders/OrderControls";
 import { OrderFilterBar } from "@/components/admin/orders/OrderFilterBar";
 import { Icon } from "@/components/icons/Icon";
 import type { IconName } from "@/components/icons/IconSprite";
 import { formatKes } from "@/lib/money";
+import { pageCount, PAGE_SIZE, parsePage } from "@/modules/orders/orders-history";
 import {
-  countTabs,
   FILTER_OPTIONS,
-  filterOrders,
   filtersHref,
   parseOrderFilters,
   QUICK,
-  quickCounts,
   SORTS,
   TABS,
   type ListOrder,
   type OrderFilters,
   type QuickKey,
 } from "@/modules/orders/orders-list";
+import { countDeletableOrders } from "@/modules/orders/order-upkeep.service";
 import { span, STATUS_TEXT } from "@/modules/orders/orders.rules";
-import { listOrders } from "@/modules/orders/orders.service";
+import { listOrderPage } from "@/modules/orders/orders.service";
 import { requireMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
 
@@ -36,12 +36,23 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
   if (!can(member, "acceptOrders")) return <NotAllowed what="orders" />;
 
   const now = new Date();
-  const { orders, money, writers, packageNames } = await listOrders(member, now);
-  const filters = parseOrderFilters(await searchParams, money);
-  const shown = filterOrders(orders, filters, member.id, now);
-  const tabs = countTabs(orders, member.id);
-  const quick = quickCounts(orders, now);
+  const params = await searchParams;
+  const filters = parseOrderFilters(params, can(member, "seeMoney"));
+  const page = parsePage(params.page);
+  const {
+    orders: shown,
+    total,
+    tabs,
+    quick,
+    money,
+    writers,
+    packageNames,
+  } = await listOrderPage(member, now, filters, page);
+  const pages = pageCount(total);
   const chips = activeChips(filters, writers, member.name);
+  // Owner only, on "Awaiting payment": clear out every order that was never paid
+  const deletable =
+    filters.tab === "new" && can(member, "deleteOrders") ? await countDeletableOrders(member.tenant.id) : 0;
 
   const cards: { key: QuickKey; icon: IconName; tone: string; value: string }[] = [
     { key: "action", icon: "alert", tone: "warn", value: String(quick.action) },
@@ -125,7 +136,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
         </div>
         <div className="filter-summary">
           <span aria-live="polite">
-            {chips.length ? `Showing ${shown.length} of ${tabs.all} orders` : `${tabs.all} orders`}
+            {pages > 1
+              ? `Showing ${(page - 1) * PAGE_SIZE + 1}–${(page - 1) * PAGE_SIZE + shown.length} of ${total} orders`
+              : `${total} ${total === 1 ? "order" : "orders"}`}
           </span>
           <div className="chips">
             {chips.map((chip) => (
@@ -141,6 +154,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
               Clear all
             </Link>
           )}
+          {deletable > 0 && <DeleteAbandonedButton count={deletable} />}
         </div>
         <div className="table-wrap-admin">
           <table className="admin-table orders-table">
@@ -165,7 +179,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
               {shown.length === 0 && (
                 <tr>
                   <td colSpan={8} className="table-empty">
-                    {orders.length ? (
+                    {tabs.all + tabs.new > 0 ? (
                       <>
                         No orders match these filters. <Link href="/admin/orders">Clear all filters</Link>
                       </>
@@ -178,8 +192,50 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
             </tbody>
           </table>
         </div>
+        {pages > 1 && <Pager filters={filters} page={page} pages={pages} />}
       </section>
     </>
+  );
+}
+
+// Previous / next, and the page numbers around this one (with the first and last always shown)
+function Pager({ filters, page, pages }: { filters: OrderFilters; page: number; pages: number }) {
+  const href = (to: number) => {
+    const base = filtersHref(filters);
+    return to === 1 ? base : `${base}${base.includes("?") ? "&" : "?"}page=${to}`;
+  };
+  const near = [...new Set([1, page - 1, page, page + 1, pages])].filter((n) => n >= 1 && n <= pages);
+  return (
+    <nav className="pager" aria-label="Pages">
+      {page > 1 ? (
+        <Link className="btn btn-ghost btn-sm" href={href(page - 1)}>
+          ← Previous
+        </Link>
+      ) : (
+        <span />
+      )}
+      <ol>
+        {near.map((n, i) => (
+          <li key={n}>
+            {i > 0 && n - near[i - 1] > 1 && <span className="pager-gap">…</span>}
+            {n === page ? (
+              <span aria-current="page">{n}</span>
+            ) : (
+              <Link href={href(n)} aria-label={`Page ${n}`}>
+                {n}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+      {page < pages ? (
+        <Link className="btn btn-ghost btn-sm" href={href(page + 1)}>
+          Next →
+        </Link>
+      ) : (
+        <span />
+      )}
+    </nav>
   );
 }
 

@@ -1,5 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
+import { fileStore } from "@/lib/storage";
+import { storedAbout } from "./admin/about.service";
 import { homepageStatsSchema } from "./content.schema";
 import * as repo from "./content.repo";
 import { sampleImageUrl } from "./sample-images";
@@ -28,6 +30,13 @@ export async function getHomepage(tenantId: string) {
   cacheContent(tenantId);
   const homepage = await repo.findHomepage(tenantId);
   return { ...homepage, stats: homepageStatsSchema.parse(homepage.stats) };
+}
+
+export async function getAboutPage(tenantId: string) {
+  "use cache";
+  cacheContent(tenantId);
+  const about = await storedAbout(tenantId);
+  return { ...about, photoUrl: about.photo ? fileStore.publicUrl("about-photos", about.photo) : null };
 }
 
 export async function getPriceList(tenantId: string) {

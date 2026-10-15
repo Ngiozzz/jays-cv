@@ -11,6 +11,8 @@ import {
   restoreInboxItem,
   type DiscardReason,
 } from "@/modules/inbox/inbox.service";
+import { logoProblem } from "@/modules/jobs/companies";
+import { saveCompanyLogo } from "@/modules/jobs/companies.service";
 import { jobsTag } from "@/modules/jobs/jobs.public";
 import { requirePermission } from "@/modules/team/current-member";
 
@@ -37,9 +39,15 @@ export async function readInboxItemAction(id: string) {
   return readInboxItem(member, id);
 }
 
-export async function approveInboxItemAction(id: string, job: unknown) {
+// A logo added on the screen comes as a form, saved to the company once the job is published
+export async function approveInboxItemAction(id: string, job: unknown, logoForm: FormData | null) {
   const member = await requirePermission("postJobs");
+  const logo = logoForm?.get("companyLogo");
+  const file = logo instanceof File && logo.size > 0 ? logo : null;
+  const logoIssue = file && logoProblem(file);
+  if (logoIssue) return { ok: false as const, error: `Company logo: ${logoIssue}` };
   const result = await approveInboxItem(member, id, job);
+  if (result.ok && file && result.companyId) await saveCompanyLogo(member, result.companyId, file);
   if (result.ok) updateTag(jobsTag(member.tenant.id));
   return result;
 }

@@ -9,7 +9,6 @@ import { HomeHero } from "@/components/home/HomeHero";
 import { HomeJobs } from "@/components/home/HomeJobs";
 import { HomeServices } from "@/components/home/HomeServices";
 import { HomeSteps } from "@/components/home/HomeSteps";
-import { HomeTrack } from "@/components/home/HomeTrack";
 import { CtaBand } from "@/components/site/CtaBand";
 import { SectionHead } from "@/components/site/SectionHead";
 import { whatsappLink } from "@/modules/content/contact";
@@ -43,7 +42,6 @@ export default async function HomePage({ params }: PageProps<"/[tenant]">) {
   return (
     <>
       <HomeHero {...home} draftTime={draftTime} />
-      <HomeTrack />
       <HomeJobs
         latest={board.jobs.slice(0, 6).map(toBoardListing)}
         openCount={board.jobs.length}

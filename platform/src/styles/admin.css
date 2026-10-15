@@ -4042,7 +4042,7 @@ body.embed .admin-content {
   color: #b91c1c;
   font-style: normal;
 }
-.d-form input:not([type="checkbox"]),
+.d-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .d-form select,
 .d-form textarea {
   width: 100%;
@@ -5377,6 +5377,9 @@ kbd {
   margin-top: 22px;
   padding-top: 4px;
 }
+.signin-test form + form {
+  margin-top: 10px;
+}
 .signin-divider {
   display: flex;
   align-items: center;
@@ -5861,4 +5864,283 @@ kbd {
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ---------- Dashboard: 1–2 star reviews (owner only) ---------- */
+.low-reviews {
+  display: flex;
+  gap: 14px;
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+.low-reviews > svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+}
+.low-reviews strong {
+  display: block;
+  font-size: 1rem;
+}
+.low-reviews ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.low-reviews li {
+  margin: 4px 0;
+  color: #7f1d1d;
+}
+.low-reviews a {
+  color: #991b1b;
+  font-weight: 700;
+}
+.low-reviews p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ---------- Website content: About page ---------- */
+.about-photo-edit {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.about-photo-edit > div {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.about-photo-edit label.btn {
+  cursor: pointer;
+}
+.about-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+.about-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.about-prev {
+  display: grid;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.about-prev p {
+  margin: 0;
+}
+.about-prev-owner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.about-prev-owner .about-avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 1.05rem;
+}
+.about-prev-owner span:last-child {
+  display: grid;
+}
+.about-prev-owner small {
+  color: var(--muted);
+}
+/* The editor's photo: the same 4:5 shape as on the About page, so the crop looks as it will */
+.about-thumb {
+  width: 80px;
+  height: 100px;
+  border-radius: 12px;
+}
+
+/* ---------- Photo cropper ---------- */
+.cropper-dialog {
+  max-width: 420px;
+}
+.cropper-frame {
+  position: relative;
+  margin: 16px auto 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--black);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  display: grid;
+  place-items: center;
+}
+.cropper-frame:active {
+  cursor: grabbing;
+}
+.cropper-frame:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.cropper-frame img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.cropper-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px auto 0;
+  max-width: 300px;
+  color: var(--muted);
+}
+.cropper-zoom svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.cropper-zoom input {
+  flex: 1;
+  accent-color: var(--gold);
+}
+
+/* ---------- Job Board: Post a job and Bulk post jobs ---------- */
+.board-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+/* ---------- Bulk post jobs: the same numbered steps as Post a job ---------- */
+.d-form.d-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+.d-step {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.d-step:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.d-step h3,
+.d-step-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.d-step-label {
+  margin-bottom: 10px;
+}
+.d-step h3 .n,
+.d-step-label .n {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-body, inherit);
+  font-size: 0.75rem;
+}
+.d-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+}
+.d-step .method-picker {
+  margin-bottom: 0;
+}
+.d-side {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.d-side .d-poster {
+  position: static;
+}
+.d-preview .job-card {
+  margin: 0;
+}
+@media (max-width: 700px) {
+  .d-fields {
+    grid-template-columns: 1fr;
+  }
+  .d-step .method-picker {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .d-side {
+    position: static;
+  }
+}
+
+/* ---------- Orders: page links under the list ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+}
+.pager ol {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pager li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pager ol a,
+.pager ol [aria-current] {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.pager ol a:hover {
+  background: var(--bg-alt);
+}
+.pager ol [aria-current] {
+  background: var(--ink);
+  color: #fff;
+}
+.pager-gap {
+  color: var(--muted);
 }

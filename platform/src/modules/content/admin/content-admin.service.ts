@@ -13,6 +13,7 @@ import {
   type PackageTerms,
 } from "./prices";
 import * as pricesRepo from "./prices.repo";
+import { restoreAbout } from "./about.service";
 import { restoreFaqs } from "./faqs.service";
 import { restoreHomepage } from "./homepage.service";
 import { restoreSettings } from "./settings.service";
@@ -66,6 +67,7 @@ const RESTORE: Partial<Record<Section, (tx: history.Tx, before: unknown, tenantI
   posts: restorePost,
   faqs: restoreFaqs,
   home: restoreHomepage,
+  about: restoreAbout,
   settings: restoreSettings,
 };
 

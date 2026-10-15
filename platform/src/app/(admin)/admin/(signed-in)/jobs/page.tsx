@@ -10,7 +10,7 @@ import { countByStatus, listJobs, type JobRow } from "@/modules/jobs/jobs.servic
 import { requireMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
 
-export const metadata: Metadata = { title: "Jobs" };
+export const metadata: Metadata = { title: "Job Board" };
 
 const TABS = [
   { key: "all", label: "All" },
@@ -37,6 +37,16 @@ export default async function JobsPage({ searchParams }: PageProps<"/admin/jobs"
   return (
     <>
       {params.deleted && <p className="notice">Job deleted.</p>}
+      <div className="board-actions">
+        <Link className="btn btn-primary" href="/admin/jobs/new">
+          <Icon name="plus" size={18} />
+          Post a job
+        </Link>
+        <Link className="btn btn-ghost" href="/admin/inbox">
+          <Icon name="inbox" size={18} />
+          Bulk post jobs
+        </Link>
+      </div>
       <section className="panel">
         <div className="table-tools">
           <nav className="tabs" aria-label="Filter by status">

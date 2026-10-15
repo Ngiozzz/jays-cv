@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { OrderFileGroups } from "@/components/orders/OrderFileGroups";
 import { PayBox } from "@/components/pay/PayBox";
+import { Breadcrumb } from "@/components/site/PageHero";
+import { DraftReview } from "@/components/track/DraftReview";
+import { ReviewForm } from "@/components/track/ReviewForm";
 import { formatKes } from "@/lib/money";
 import { whatsappLink } from "@/modules/content/contact";
 import type { OrderFileView } from "@/modules/orders/order-files";
@@ -20,6 +23,22 @@ const when = (iso: string | null) =>
       })
     : "soon";
 
+const day = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    timeZone: "Africa/Nairobi",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+// The client's files were deleted for privacy (the order itself stays)
+const filesGone = (order: TrackedOrder) =>
+  order.status === "DELIVERED" &&
+  order.filesDeleteOn !== null &&
+  new Date(order.filesDeleteOn).getTime() <= Date.now() &&
+  order.files.fromUs.length === 0 &&
+  order.files.fromClient.length === 0;
+
 function ago(iso: string) {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
   if (minutes < 1) return "just now";
@@ -33,6 +52,7 @@ export function TrackView({ order, businessName }: { order: TrackedOrder; busine
   const done = order.status === "DELIVERED";
   return (
     <>
+      <Breadcrumb left crumbs={[{ label: "Track my order", href: "/track" }, { label: order.ref }]} />
       <div className="track-head">
         <p className="track-meta">
           Order {order.ref} · {order.itemName} · {formatKes(order.amount)}
@@ -59,27 +79,31 @@ export function TrackView({ order, businessName }: { order: TrackedOrder; busine
         <Stage order={order} businessName={businessName} />
       </div>
 
-      <section className="track-card track-files">
-        <h3>Your files</h3>
-        <OrderFileGroups
-          groups={[
-            {
-              title: `From ${businessName}`,
-              hint: "Your drafts and final version, with notes from your writer.",
-              files: order.files.fromUs,
-              empty: "Your draft will appear here as soon as it's ready.",
-              canOpen: true,
-            },
-            {
-              title: "From you",
-              hint: "What you sent with your order.",
-              files: order.files.fromClient,
-              empty: "You haven't sent any files.",
-              canOpen: true,
-            },
-          ]}
-        />
-      </section>
+      {done && !order.reviewed && <ReviewForm orderRef={order.ref} name={order.reviewName} />}
+
+      {!filesGone(order) && (
+        <section className="track-card track-files">
+          <h3>Your files</h3>
+          <OrderFileGroups
+            groups={[
+              {
+                title: `From ${businessName}`,
+                hint: "Your drafts and final version, with notes from your writer.",
+                files: order.files.fromUs,
+                empty: "Your draft will appear here as soon as it's ready.",
+                canOpen: true,
+              },
+              {
+                title: "From you",
+                hint: "What you sent with your order.",
+                files: order.files.fromClient,
+                empty: "You haven't sent any files.",
+                canOpen: true,
+              },
+            ]}
+          />
+        </section>
+      )}
 
       <div className="track-grid">
         <section className="track-card">
@@ -198,14 +222,16 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
             Your draft is ready
           </h2>
           {order.files.fromUs[0] && <FileCard file={order.files.fromUs[0]} />}
-          <p>
-            Please read it carefully, then tell us on WhatsApp if you&apos;re happy or what you&apos;d like changed.{" "}
-            {order.rounds}.
-          </p>
+          <p>Please read it carefully, then tell your writer if you&apos;re happy or what you&apos;d like changed.</p>
+          <DraftReview
+            orderRef={order.ref}
+            changes={order.changes}
+            whatsapp={order.whatsapp}
+            businessName={businessName}
+          />
           <p className="auto-note">
             <Icon name="clock" />
-            If we don&apos;t hear from you, we&apos;ll send a reminder and complete your order automatically on{" "}
-            {when(order.autoCompleteAt)}.
+            If we don&apos;t hear from you by {when(order.autoCompleteAt)}, we&apos;ll mark your order as complete.
           </p>
         </div>
       );
@@ -216,14 +242,68 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
             <Icon name="check" />
             Your order is complete 🎉
           </h2>
-          {order.files.fromUs[0] && <FileCard file={order.files.fromUs[0]} />}
+          {order.files.fromUs[0] ? (
+            <>
+              <FileCard file={order.files.fromUs[0]} />
+              {order.filesDeleteOn && (
+                <p className="auto-note">
+                  <Icon name="lock" />
+                  For your privacy, we keep your files until {day(order.filesDeleteOn)}. Download your CV now so you
+                  always have it.
+                </p>
+              )}
+            </>
+          ) : (
+            filesGone(order) && (
+              <p className="files-gone">
+                <Icon name="lock" />
+                <span>
+                  For your privacy, your files were deleted on {day(order.filesDeleteOn!)}. Need a copy?{" "}
+                  <a
+                    href={whatsappLink(
+                      order.whatsapp,
+                      `Hi ${businessName}, I need a copy of my CV from order ${order.ref}.`,
+                    )}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Message us on WhatsApp
+                  </a>
+                  .
+                </span>
+              </p>
+            )
+          )}
           <p>
             You have <strong>30 days of free minor updates</strong>. Just message us on WhatsApp.
           </p>
-          <Link className="btn btn-ghost" href="/jobs">
-            <Icon name="briefcase" />
-            Find jobs to apply for
-          </Link>
+          {order.reviewed && (
+            <p className="review-thanks">
+              <span className="stars" aria-label={`${order.reviewed.rating} stars`}>
+                {"★".repeat(order.reviewed.rating)}
+                {"☆".repeat(5 - order.reviewed.rating)}
+              </span>
+              Thank you for your review!
+            </p>
+          )}
+          <div className="order-again">
+            <h3>Need anything else?</h3>
+            <p>A cover letter for a job you&apos;re applying to, or your CV updated later: order it here.</p>
+            <div className="draft-answer-btns">
+              <Link className="btn btn-primary" href={order.coverLetterHref}>
+                <Icon name="mail" />
+                Order a cover letter
+              </Link>
+              <Link className="btn btn-ghost" href="/order">
+                <Icon name="refresh" />
+                Order again
+              </Link>
+              <Link className="btn btn-ghost" href="/jobs">
+                <Icon name="briefcase" />
+                Find jobs to apply for
+              </Link>
+            </div>
+          </div>
         </div>
       );
   }

@@ -48,11 +48,20 @@ test("pausing a member blocks them on their next request", async ({ page, contex
   await expect(page.getByRole("alert").filter({ hasText: "paused" })).toBeVisible();
 });
 
-test("in development, 'Proceed for testing' signs in as the test owner", async ({ page }) => {
+test("in development, the test buttons sign in as the test owner or the test writer", async ({ page, context }) => {
   await page.goto("/admin/login");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
-  await page.getByRole("button", { name: "Proceed for testing" }).click();
+  await page.getByRole("button", { name: "Proceed as Jay (owner)" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { name: /, Jay 👋$/ })).toBeVisible();
+
+  await context.clearCookies();
+  await page.goto("/admin/login");
+  await page.getByRole("button", { name: "Proceed as Mary (writer)" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("heading", { name: /, Mary 👋$/ })).toBeVisible();
+  // A writer never sees the owner's money or team
+  await expect(page.getByText("This month")).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "Admin menu" }).getByText("Finance")).toHaveCount(0);
 });

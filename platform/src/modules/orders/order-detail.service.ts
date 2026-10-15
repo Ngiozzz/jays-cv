@@ -8,7 +8,18 @@ import type { CurrentTenant } from "@/modules/tenants/tenants.service";
 import { nextStep } from "./next-step";
 import { teamActor, teamEventText } from "./order-events";
 import { groupFiles } from "./order-files";
-import { currentDeadline, dueClock, orderRef, roundsLabel, STATUS_TEXT, type RuleOrder } from "./orders.rules";
+import {
+  currentDeadline,
+  deleteAbandonedAt,
+  deleteStep,
+  filesDeleteOn,
+  dueClock,
+  orderRef,
+  roundsLabel,
+  STATUS_TEXT,
+  type RuleOrder,
+} from "./orders.rules";
+import { runAutoSteps } from "./order-upkeep.service";
 import * as repo from "./orders.repo";
 import type { OrderDetailRecord } from "./orders.repo";
 import { PAY_CHANNEL } from "./orders.service";
@@ -34,10 +45,11 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
   assertCan(member, "acceptOrders");
   const tenant = member.tenant;
   const number = parseOrderNumber(ref, tenant.orderPrefix);
-  const order = number === null ? null : await repo.findOrderDetail(tenant.id, number);
+  if (number === null) return null;
+  const settings = await findSettings(tenant.id);
+  await runAutoSteps(tenant.id, settings, now);
+  const [order, writers] = await Promise.all([repo.findOrderDetail(tenant.id, number), repo.findWriters(tenant.id)]);
   if (!order) return null;
-
-  const [settings, writers] = await Promise.all([findSettings(tenant.id), repo.findWriters(tenant.id)]);
   const money = can(member, "seeMoney");
   const owner = can(member, "reassignOrders");
   const works = canWorkOn(member, order);
@@ -56,6 +68,9 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
     statusText: STATUS_TEXT[order.status].team,
     statusTone: STATUS_TEXT[order.status].tone,
     due: dueClock(rules, settings, now),
+    // Abandoned orders are deleted automatically on this day
+    deletesOn:
+      order.status === "ABANDONED" ? deleteAbandonedAt(order, settings.deleteAbandonedDays).toISOString() : null,
     itemName: order.itemName,
     amount: money ? order.amount : null,
     createdAt: order.createdAt,
@@ -68,7 +83,12 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
       noCv: order.noCv,
     },
     revisions: order.revisions.length,
-    lastChange: lastChange && { text: lastChange.text, by: lastChange.requestedBy },
+    lastChange: lastChange && {
+      text: lastChange.text,
+      by: lastChange.requestedBy,
+      // The client attached a file to this request (it's under Files → From the client)
+      withFile: order.files.some((file) => file.kind === "CHANGES" && file.createdAt >= lastChange.requestedAt),
+    },
     roundsLabel: roundsLabel(rules),
     next: nextStep({
       status: order.status,
@@ -89,6 +109,12 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
       canAccept: order.status === "PAID" && !order.writerId,
       canExtend: owner && currentDeadline(rules, settings) !== null,
       canRecordPayment: can(member, "recordPayments") && (order.status === "NEW" || order.status === "ABANDONED"),
+      canDelete:
+        can(member, "deleteOrders") &&
+        deleteStep(
+          order,
+          order.payments.reduce((sum, payment) => sum + payment.amount, 0),
+        ).ok,
     },
     payment: {
       paid: order.paidAt !== null,
@@ -121,6 +147,11 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
       : { name: order.clientName, phone: null, email: null },
     trackingUrl: token ? `${siteUrl(tenant)}/t/${token}` : null,
     files: groupFiles(order.files),
+    // When the client's files are (or were) deleted for privacy, from Business settings
+    filesDeleteOn:
+      order.status === "DELIVERED"
+        ? (filesDeleteOn(order.deliveredAt, settings.retentionMonths)?.toISOString() ?? null)
+        : null,
     // The client's own files hold their details: only the order's writer and the owner open them
     canOpenClientFiles: works,
     events: order.events.map((event) => {

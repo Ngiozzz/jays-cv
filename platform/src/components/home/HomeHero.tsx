@@ -25,6 +25,10 @@ export function HomeHero({ headline, highlight, lead, draftTime, stats }: Props)
               <Link className="btn btn-ghost btn-lg" href="/samples">
                 See CV samples
               </Link>
+              <Link className="btn btn-primary btn-lg" href="/track">
+                <Icon name="search" />
+                Track my order
+              </Link>
             </div>
             <HeroFacts draftTime={draftTime} />
           </div>

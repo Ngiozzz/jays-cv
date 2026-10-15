@@ -6,8 +6,12 @@ import { getTenant } from "@/modules/tenants/tenants.service";
 export async function GET(request: NextRequest, { params }: RouteContext<"/[tenant]/t/[token]">) {
   const { tenant: slug, token } = await params;
   const opened = await openTrackingLink(await getTenant(slug), token);
-  const to = opened ? `/track/${opened.ref}` : "/track?link=invalid";
+  const to = !opened
+    ? "/track?link=invalid"
+    : opened.cancelled
+      ? `/track?cancelled=${opened.cancelled}`
+      : `/track/${opened.ref}`;
   const response = NextResponse.redirect(new URL(to, request.nextUrl.origin));
-  if (opened) response.cookies.set(opened.pass);
+  if (opened?.pass) response.cookies.set(opened.pass);
   return response;
 }

@@ -1,6 +1,8 @@
 "use server";
 
 import { refresh, updateTag } from "next/cache";
+import { aboutFormToInput } from "@/modules/content/admin/about";
+import { saveAbout } from "@/modules/content/admin/about.service";
 import { savePackage, saveServices, undoChange } from "@/modules/content/admin/content-admin.service";
 import { saveFaqs } from "@/modules/content/admin/faqs.service";
 import { homepageFormToInput } from "@/modules/content/admin/homepage";
@@ -91,6 +93,18 @@ export async function saveFaqsAction(rows: unknown) {
 export async function saveHomepageAction(form: FormData) {
   const member = await requireMember();
   return published(member.tenant.id, await saveHomepage(member, homepageFormToInput(form)));
+}
+
+export async function saveAboutAction(form: FormData) {
+  const member = await requireMember();
+  const photo = form.get("photo");
+  return published(
+    member.tenant.id,
+    await saveAbout(member, aboutFormToInput(form), {
+      file: photo instanceof File ? photo : null,
+      remove: form.get("removePhoto") === "on",
+    }),
+  );
 }
 
 export async function saveSettingsAction(form: FormData) {

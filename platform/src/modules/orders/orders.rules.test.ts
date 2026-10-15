@@ -3,6 +3,11 @@ import {
   acceptStep,
   completeStep,
   DAY,
+  autoStepCutoffs,
+  filesCutoff,
+  filesDeleteOn,
+  deleteAbandonedAt,
+  deleteStep,
   dueAutoSteps,
   dueClock,
   extendStep,
@@ -153,5 +158,47 @@ describe("dueAutoSteps", () => {
     const reminded = { ...sent, remindedAt: new Date(at(10).getTime() + 2 * DAY) };
     expect(dueAutoSteps(reminded, timings, new Date(at(10).getTime() + 3 * DAY))).toEqual([]);
     expect(dueAutoSteps(reminded, timings, new Date(at(10).getTime() + 5 * DAY))).toEqual(["autoComplete"]);
+  });
+});
+
+describe("deleting unpaid orders", () => {
+  it("allows only abandoned orders with nothing paid", () => {
+    expect(deleteStep(order({ status: "ABANDONED" }), 0).ok).toBe(true);
+    expect(deleteStep(order({ status: "NEW" }), 0)).toMatchObject({ ok: false });
+    expect(deleteStep(order({ status: "PAID" }), 0)).toMatchObject({ ok: false });
+    expect(deleteStep(order({ status: "ABANDONED" }), 500)).toEqual({
+      ok: false,
+      error: "Part of this order was paid, so it can't be deleted.",
+    });
+  });
+
+  it("deletes abandoned orders the set number of days after they were placed", () => {
+    expect(deleteAbandonedAt(order(), 30)).toEqual(new Date(start.getTime() + 30 * DAY));
+  });
+});
+
+describe("autoStepCutoffs", () => {
+  it("looks back far enough for the earliest reminder or auto-complete", () => {
+    const now = at(100);
+    expect(autoStepCutoffs(timings, now)).toEqual({
+      unpaidBefore: at(76),
+      draftSentBefore: new Date(now.getTime() - 2 * DAY),
+    });
+    expect(autoStepCutoffs({ ...timings, reminderDays: 7 }, now).draftSentBefore).toEqual(
+      new Date(now.getTime() - 5 * DAY),
+    );
+  });
+});
+
+describe("client files after delivery", () => {
+  it("are deleted the set number of calendar months after delivery", () => {
+    expect(filesDeleteOn(new Date("2026-10-15T08:00:00Z"), 6)).toEqual(new Date("2027-04-15T08:00:00Z"));
+    expect(filesDeleteOn(new Date("2026-10-15T08:00:00Z"), 0)).toBeNull();
+    expect(filesDeleteOn(null, 6)).toBeNull();
+  });
+
+  it("finds orders delivered long enough ago", () => {
+    expect(filesCutoff(new Date("2027-04-15T08:00:00Z"), 6)).toEqual(new Date("2026-10-15T08:00:00Z"));
+    expect(filesCutoff(new Date("2027-04-15T08:00:00Z"), 0)).toBeNull();
   });
 });

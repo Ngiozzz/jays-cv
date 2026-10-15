@@ -29,6 +29,7 @@ const LABEL: Record<FileKind, string> = {
   DRAFT: "Draft",
   FINAL: "Final version",
   JOB_POSTER: "Poster",
+  CHANGES: "File with change request",
   OTHER: "Other file",
 };
 

@@ -270,6 +270,7 @@ ol {
   color: var(--ink);
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 .main-nav ul a:hover {
   color: var(--gold-text);
@@ -407,6 +408,14 @@ ol {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
+}
+/* Homepage: the three buttons share one line on wider screens */
+.hero .hero-ctas {
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+.hero .hero-ctas .btn-lg {
+  padding: 15px 20px;
 }
 .hero-facts {
   display: flex;
@@ -3760,6 +3769,16 @@ html:not(.js) .order-steps {
   display: grid;
   gap: 6px;
 }
+/* An old link to an unpaid order that was deleted */
+.lookup-cancelled {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  margin-top: 18px;
+}
+.lookup-cancelled p {
+  margin: 0;
+}
 .lookup-form label {
   font-weight: 700;
   color: var(--ink);
@@ -4534,7 +4553,8 @@ a:hover {
   }
 }
 
-@media (max-width: 920px) {
+/* The full menu needs about 1140px on one line; below that it folds into the menu button */
+@media (max-width: 1140px) {
   .nav-toggle {
     display: flex;
   }
@@ -4567,7 +4587,9 @@ a:hover {
   .nav-cta {
     margin-top: 16px;
   }
+}
 
+@media (max-width: 920px) {
   .hero {
     padding: 48px 0 72px;
   }
@@ -4642,6 +4664,10 @@ a:hover {
   }
   .stat:nth-child(3) {
     border-left: 0;
+  }
+  .hero-ctas,
+  .hero .hero-ctas {
+    flex-wrap: wrap;
   }
   .hero-ctas .btn {
     flex: 1 1 100%;
@@ -5119,48 +5145,194 @@ button.final-file {
   object-fit: contain;
 }
 
-/* ---------- Track my order: menu button + homepage strip ---------- */
+/* ---------- Track my order: menu button ---------- */
 .main-nav .nav-track {
   margin-right: -14px;
 }
-.track-strip {
-  padding: 28px 0;
-  background: #fff;
-  border-bottom: 1px solid var(--line);
-}
-.track-strip-inner {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.track-strip .icon-box {
-  margin: 0;
-  flex: none;
-}
-.track-strip-inner > div {
-  flex: 1;
-}
-.track-strip strong {
-  display: block;
-  font-family: var(--font-head);
-  font-size: 1.2rem;
-  color: var(--ink);
-}
-.track-strip p {
-  margin: 2px 0 0;
-  color: var(--text);
-}
-@media (max-width: 920px) {
+@media (max-width: 1140px) {
   .main-nav .nav-track {
     margin: 16px 0 0;
   }
 }
-@media (max-width: 640px) {
-  .track-strip-inner {
-    flex-wrap: wrap;
+
+/* ---------- About page ---------- */
+.about-story {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 56px;
+  align-items: start;
+}
+.about-owner {
+  margin: 0;
+  text-align: center;
+}
+.about-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.about-initials {
+  display: grid;
+  place-items: center;
+  background: var(--black);
+  color: var(--gold);
+  font-family: var(--font-head);
+  font-size: 4.5rem;
+}
+.about-owner figcaption {
+  display: grid;
+  gap: 2px;
+  margin-top: 16px;
+}
+.about-owner figcaption strong {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  color: var(--ink);
+}
+.about-owner figcaption span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.about-text {
+  max-width: 680px;
+}
+.about-text .eyebrow {
+  margin-bottom: 6px;
+}
+.about-promises {
+  grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 920px) {
+  .about-story {
+    grid-template-columns: 1fr;
+    gap: 32px;
   }
-  .track-strip-inner .btn {
-    width: 100%;
+  .about-owner {
+    max-width: 260px;
+    margin: 0 auto;
+  }
+  .about-promises {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .about-promises {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Tracking page: answering a draft, and the review ---------- */
+.draft-answer {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 6px;
+}
+.draft-answer-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.changes-form,
+.client-review-form {
+  display: grid;
+  gap: 14px;
+}
+.changes-form textarea,
+.client-review-form textarea {
+  font: inherit;
+  padding: 11px 14px;
+  border: 1px solid #d5dbe6;
+  border-radius: 10px;
+  color: var(--ink);
+  resize: vertical;
+}
+.changes-form textarea:focus,
+.client-review-form textarea:focus {
+  outline: none;
+  border-color: var(--gold-text);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+.rounds-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.track-dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: 28px;
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+.track-dialog::backdrop {
+  background: rgba(15, 15, 15, 0.55);
+}
+.track-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+}
+.track-dialog p {
+  margin: 0 0 18px;
+  color: var(--text);
+}
+.review-box > p {
+  margin: 4px 0 16px;
+  color: var(--text);
+}
+.star-pick {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.star-pick label {
+  font-size: 2.1rem;
+  line-height: 1;
+  color: #d5dbe6;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.star-pick label.on {
+  color: var(--gold);
+}
+.star-pick label:hover {
+  transform: scale(1.12);
+}
+.star-pick label:focus-within {
+  outline: 2px solid var(--gold-text);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.star-word {
+  margin-left: 10px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.client-review-form > .btn {
+  justify-self: start;
+}
+.review-thanks {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.review-thanks .stars {
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+@media (max-width: 600px) {
+  .draft-answer-btns .btn {
+    flex: 1 1 100%;
+  }
+  .client-review-form .od-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -5260,4 +5432,34 @@ button.final-file {
   .track-files .file-actions .btn {
     flex: 1;
   }
+}
+
+/* ---------- Tracking page: after the order is complete ---------- */
+.files-gone {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-alt);
+  color: var(--text);
+}
+.files-gone svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--gold-text);
+}
+.order-again {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.order-again h3 {
+  margin: 0 0 4px;
+}
+.order-again > p {
+  margin: 0 0 12px;
+  color: var(--text);
 }

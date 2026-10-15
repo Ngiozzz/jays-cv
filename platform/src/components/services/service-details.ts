@@ -1,17 +1,20 @@
 import type { ServiceDetailProps } from "./ServiceDetail";
 import { formatKes } from "@/lib/money";
-import { whatsappLink } from "@/modules/content/contact";
 import type { PriceList } from "@/modules/content/content.service";
 import { draftTimeLabel, revisionsLabel } from "@/modules/content/packages";
 import { lowestPrice, priceByName } from "@/modules/content/pricing";
 
-// "From" prices come from the live price list; copy is the preview's Services page
-export function serviceDetails(prices: PriceList, whatsapp: string): ServiceDetailProps[] {
+// "From" prices come from the live price list; copy is the preview's Services page.
+// Each button opens the order card: CV writing on "Choose a service", the others with their service picked.
+export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
   const from = (amount: number | null, unit = "") => (amount === null ? "Ask us" : `${formatKes(amount)}${unit}`);
   const service = (name: string) => priceByName(prices.services, name);
   const draftTimes = prices.packages.map((p) => p.firstDraftHours);
   const revisionRange = prices.packages.map(revisionsLabel);
-  const order = (text: string) => whatsappLink(whatsapp, text);
+  const order = (name?: string) => {
+    const picked = name && prices.services.find((item) => item.name === name);
+    return picked ? `/order?service=${picked.id}` : "/order";
+  };
 
   return [
     {
@@ -34,7 +37,7 @@ export function serviceDetails(prices: PriceList, whatsapp: string): ServiceDeta
           value: revisionRange.length ? `${revisionRange[0]} – ${revisionRange.at(-1)}` : "Included",
         },
       ],
-      action: { label: "Order a CV", href: order("Hi, I'd like a professional CV") },
+      action: { label: "Order a CV", href: order() },
       showSamples: true,
       image: { src: "/img/photos/service-cv-writing.jpg", alt: "Professional writing notes beside a laptop" },
     },
@@ -54,7 +57,7 @@ export function serviceDetails(prices: PriceList, whatsapp: string): ServiceDeta
         { label: "From", value: from(service("Cover letter")), href: "/pricing" },
         { label: "Turnaround", value: "24 hours" },
       ],
-      action: { label: "Order a letter", href: order("Hi, I'd like a cover letter") },
+      action: { label: "Order a letter", href: order("Cover letter") },
       image: { src: "/img/photos/service-cover-letters.jpg", alt: "Writing a letter in a notebook" },
       flip: true,
     },
@@ -74,7 +77,7 @@ export function serviceDetails(prices: PriceList, whatsapp: string): ServiceDeta
         { label: "From", value: from(service("LinkedIn profile revamp")), href: "/pricing" },
         { label: "Turnaround", value: "3 days" },
       ],
-      action: { label: "Revamp my LinkedIn", href: order("Hi, I'd like a LinkedIn profile revamp") },
+      action: { label: "Revamp my LinkedIn", href: order("LinkedIn profile revamp") },
       image: { src: "/img/photos/service-linkedin.jpg", alt: "Professional updating an online profile at his desk" },
     },
     {
@@ -93,7 +96,7 @@ export function serviceDetails(prices: PriceList, whatsapp: string): ServiceDeta
         { label: "From", value: from(service("Career coaching session"), " / session") },
         { label: "Session length", value: "60 minutes" },
       ],
-      action: { label: "Book a session", href: order("Hi, I'd like to book a career coaching session") },
+      action: { label: "Book a session", href: order("Career coaching session") },
       image: { src: "/img/photos/service-coaching.jpg", alt: "Career coach in a one-on-one session with a client" },
       flip: true,
     },
@@ -110,7 +113,7 @@ export function serviceDetails(prices: PriceList, whatsapp: string): ServiceDeta
         "Applications for local, NGO, UN and overseas roles",
       ],
       meta: [{ label: "From", value: from(service("Job application support"), " / application") }],
-      action: { label: "Get application help", href: order("Hi, I'd like help with a job application") },
+      action: { label: "Get application help", href: order("Job application support") },
       image: {
         src: "/img/photos/service-job-applications.jpg",
         alt: "Filling in an online job application on a laptop",

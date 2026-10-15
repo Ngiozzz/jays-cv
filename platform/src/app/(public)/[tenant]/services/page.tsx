@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage({ params }: PageProps<"/[tenant]/services">) {
-  const { tenant, settings, freeReviewHref } = await siteContext(params);
+  const { tenant, freeReviewHref } = await siteContext(params);
   const prices = await getPriceList(tenant.id);
-  const details = serviceDetails(prices, settings.whatsapp);
+  const details = serviceDetails(prices);
 
   return (
     <>

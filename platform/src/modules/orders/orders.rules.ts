@@ -216,3 +216,44 @@ export function dueAutoSteps(order: RuleOrder, timings: OrderTimings, now: Date)
   if (!order.remindedAt && t >= reminderAt(order, timings)!.getTime()) return ["remind"];
   return [];
 }
+
+// The earliest moment an automatic step can be due, so the nightly job only loads orders worth checking
+export function autoStepCutoffs(timings: OrderTimings, now: Date) {
+  return {
+    unpaidBefore: new Date(now.getTime() - timings.unpaidHours * HOUR),
+    draftSentBefore: new Date(now.getTime() - Math.min(timings.reminderDays, timings.autoCompleteDays) * DAY),
+  };
+}
+
+// ---------- Deleting unpaid orders (owner only, checked by the caller) ----------
+
+// Only an abandoned order that nobody paid anything towards can be deleted, so money never
+// disappears with an order
+export function deleteStep(order: Pick<RuleOrder, "status">, paidSoFar: number): Step<null> {
+  if (order.status !== "ABANDONED") return refuse("Only abandoned (unpaid) orders can be deleted.");
+  if (paidSoFar > 0) return refuse("Part of this order was paid, so it can't be deleted.");
+  return { ok: true, change: null };
+}
+
+// Abandoned orders are deleted automatically this long after they were placed
+export const deleteAbandonedAt = (order: Pick<RuleOrder, "createdAt">, days: number) =>
+  plus(order.createdAt, days * DAY);
+
+// ---------- Client files after delivery ----------
+
+// The client's CV, drafts and final files are deleted this long after delivery (Business settings);
+// 0 months means "keep until I delete them". Calendar months, so 15 Oct + 6 months is 15 Apr.
+export function filesDeleteOn(deliveredAt: Date | null, retentionMonths: number): Date | null {
+  if (!deliveredAt || retentionMonths <= 0) return null;
+  const date = new Date(deliveredAt);
+  date.setUTCMonth(date.getUTCMonth() + retentionMonths);
+  return date;
+}
+
+// The latest delivery whose files are now due for deletion
+export function filesCutoff(now: Date, retentionMonths: number): Date | null {
+  if (retentionMonths <= 0) return null;
+  const date = new Date(now);
+  date.setUTCMonth(date.getUTCMonth() - retentionMonths);
+  return date;
+}

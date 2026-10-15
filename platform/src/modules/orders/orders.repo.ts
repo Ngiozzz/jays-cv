@@ -1,13 +1,20 @@
 import "server-only";
+import type { Prisma } from "@/generated/prisma/client";
 import { tenantDb } from "@/lib/tenant-db";
 
 // Orders as the team sees them. Privacy (money, contact details) is applied by the service.
 
-export function findOrdersForList(tenantId: string) {
+// Orders for the list. Unfinished orders are always few, so they're loaded whole; delivered ones pile up
+// over the years, so callers pass a filter, order and page for those (see orders-history.ts).
+export function findOrdersForList(
+  tenantId: string,
+  where: Prisma.OrderWhereInput,
+  page: { orderBy?: Prisma.OrderOrderByWithRelationInput; take?: number } = {},
+) {
   return tenantDb(tenantId).order.findMany({
-    orderBy: { createdAt: "desc" },
-    // Plenty for a CV business; older orders stay reachable from Finance and search later
-    take: 1000,
+    where,
+    orderBy: page.orderBy ?? { createdAt: "desc" },
+    take: page.take,
     select: {
       id: true,
       number: true,
@@ -40,6 +47,19 @@ export function findOrdersForList(tenantId: string) {
 }
 
 export type OrderListRecord = Awaited<ReturnType<typeof findOrdersForList>>[number];
+
+export function countOrders(tenantId: string, where: Prisma.OrderWhereInput) {
+  return tenantDb(tenantId).order.count({ where });
+}
+
+// Money taken this month on delivered orders (the unfinished ones are counted from the list itself)
+export async function sumDeliveredPaidSince(tenantId: string, since: Date) {
+  const result = await tenantDb(tenantId).order.aggregate({
+    where: { status: "DELIVERED", paidAt: { gte: since } },
+    _sum: { amount: true },
+  });
+  return result._sum.amount ?? 0;
+}
 
 // Everyone who can take orders: the owner and active members allowed to write
 export function findWriters(tenantId: string) {

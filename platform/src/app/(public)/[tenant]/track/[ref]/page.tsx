@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { TrackView } from "@/components/track/TrackView";
-import { loadTrackedOrder } from "@/modules/orders/tracking.service";
+import { loadTrackedOrder, wasCancelled } from "@/modules/orders/tracking.service";
 import { getTenant } from "@/modules/tenants/tenants.service";
 
 // Private to the client: never indexed
@@ -24,7 +24,10 @@ async function TrackedOrder({ params }: { params: PageProps<"/[tenant]/track/[re
   const { tenant: slug, ref } = await params;
   const tenant = await getTenant(slug);
   const order = await loadTrackedOrder(tenant, decodeURIComponent(ref));
-  // No pass for this order in this browser: ask for the order number and phone first
-  if (!order) redirect(`/track?order=${encodeURIComponent(ref)}`);
+  if (!order) {
+    if (await wasCancelled(tenant, decodeURIComponent(ref))) redirect(`/track?cancelled=${encodeURIComponent(ref)}`);
+    // No pass for this order in this browser: ask for the order number and phone first
+    redirect(`/track?order=${encodeURIComponent(ref)}`);
+  }
   return <TrackView order={order} businessName={tenant.name} />;
 }

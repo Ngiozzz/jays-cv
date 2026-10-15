@@ -39,9 +39,9 @@ export function ServiceDetail(props: ServiceDetailProps) {
             </div>
           ))}
         </div>
-        <a className="btn btn-primary" href={props.action.href} target="_blank" rel="noopener">
+        <Link className="btn btn-primary" href={props.action.href}>
           {props.action.label}
-        </a>
+        </Link>
         {props.showSamples && (
           <>
             {" "}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Icon } from "@/components/icons/Icon";
+import { Breadcrumb } from "@/components/site/PageHero";
 import { LookupForm } from "@/components/track/LookupForm";
 import { whatsappLink } from "@/modules/content/contact";
 import { siteContext } from "../site-context";
@@ -15,6 +16,7 @@ export default async function TrackLookupPage({ params }: PageProps<"/[tenant]/t
   return (
     <div className="track-page">
       <div className="container track-wrap">
+        <Breadcrumb crumbs={[{ label: "Track my order" }]} />
         <div className="track-card lookup">
           <span className="icon-box">
             <Icon name="search" />

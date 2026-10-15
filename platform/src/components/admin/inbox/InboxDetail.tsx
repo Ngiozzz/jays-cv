@@ -5,7 +5,10 @@ import { Icon } from "@/components/icons/Icon";
 import type { Flag } from "@/modules/inbox/inbox.flags";
 import type { InboxCard } from "@/modules/inbox/inbox.view";
 import type { JobInput } from "@/modules/jobs/jobs.schema";
-import { QuickForm } from "./QuickForm";
+import type { KnownCompany } from "@/components/admin/jobs/CompanyLogoField";
+import { JobCard } from "@/components/jobs/JobCard";
+import { companyKey } from "@/modules/jobs/companies";
+import { QuickForm, type ChosenLogo } from "./QuickForm";
 
 export const DISCARD_LABEL: Record<string, string> = {
   scam: "Possible scam",
@@ -25,6 +28,10 @@ type Props = {
   onStep: (step: 1 | -1) => void;
   onChange: (job: JobInput) => void;
   onConfirm: (field: string) => void;
+  companies: KnownCompany[];
+  today: string;
+  logo: ChosenLogo | null;
+  onLogo: (logo: ChosenLogo) => void;
   onApprove: () => void;
   onDiscard: (reason: string) => void;
   onRestore: () => void;
@@ -191,8 +198,38 @@ export function InboxDetail(props: Props) {
         ))}
       </div>
       <div className="d-grid">
-        {poster}
-        {job && <QuickForm job={job} unsure={props.unsure} onChange={props.onChange} onConfirm={props.onConfirm} />}
+        <div className="d-side">
+          <p className="d-step-label">
+            <span className="n">1</span>The poster
+          </p>
+          {poster}
+          {job && (
+            <div className="d-preview">
+              <p className="preview-label">Live preview</p>
+              <JobCard
+                {...job}
+                deadline={job.openEnded ? null : job.deadline}
+                applyMethod={job.apply.method}
+                today={props.today}
+                logoUrl={
+                  props.logo?.url ??
+                  props.companies.find((c) => companyKey(c.name) === companyKey(job.company))?.logoUrl
+                }
+              />
+            </div>
+          )}
+        </div>
+        {job && (
+          <QuickForm
+            job={job}
+            unsure={props.unsure}
+            companies={props.companies}
+            logo={props.logo}
+            onChange={props.onChange}
+            onConfirm={props.onConfirm}
+            onLogo={props.onLogo}
+          />
+        )}
       </div>
       {props.discardOpen ? (
         <DiscardChoice

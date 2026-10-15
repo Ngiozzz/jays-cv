@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CONTENT_TAB_LABELS } from "@/components/admin/admin-nav";
+import { AboutForm } from "@/components/admin/content/AboutForm";
 import { FaqsForm } from "@/components/admin/content/FaqsForm";
 import { HomepageForm } from "@/components/admin/content/HomepageForm";
 import { PackageEditor } from "@/components/admin/content/PackageEditor";
@@ -25,6 +27,7 @@ import type { StoredFaq } from "@/modules/content/admin/faqs";
 import { loadFaqs } from "@/modules/content/admin/faqs.service";
 import type { StoredHomepage } from "@/modules/content/admin/homepage";
 import { loadHomepage } from "@/modules/content/admin/homepage.service";
+import { loadAbout, type AdminAbout } from "@/modules/content/admin/about.service";
 import { STATUS_LABEL } from "@/modules/content/admin/posts";
 import { loadPost, loadPosts, type AdminPost, type AdminPostRow } from "@/modules/content/admin/posts.service";
 import { loadReviews } from "@/modules/content/admin/reviews.service";
@@ -35,15 +38,21 @@ import { requireMember } from "@/modules/team/current-member";
 
 export const metadata: Metadata = { title: "Website content" };
 
-const TABS: { key: Section; label: string; icon: IconName }[] = [
-  { key: "packages", label: "Packages & prices", icon: "cash" },
-  { key: "reviews", label: "Reviews", icon: "sparkle" },
-  { key: "samples", label: "Sample CVs", icon: "image" },
-  { key: "posts", label: "Career tips", icon: "edit" },
-  { key: "faqs", label: "FAQs", icon: "info" },
-  { key: "home", label: "Homepage", icon: "layout" },
-  { key: "settings", label: "Business settings", icon: "lock" },
-];
+const TAB_ICONS: Record<Section, IconName> = {
+  packages: "cash",
+  services: "cash",
+  reviews: "sparkle",
+  samples: "image",
+  posts: "edit",
+  faqs: "info",
+  home: "layout",
+  about: "users",
+  settings: "lock",
+};
+// The tabs, in order (services are edited inside Packages & prices)
+const TABS: { key: Section; label: string; icon: IconName }[] = (
+  ["packages", "reviews", "samples", "posts", "faqs", "home", "about", "settings"] as const
+).map((key) => ({ key, label: CONTENT_TAB_LABELS[key], icon: TAB_ICONS[key] }));
 
 export default async function ContentPage({ searchParams }: PageProps<"/admin/content">) {
   const member = await requireMember();
@@ -98,6 +107,8 @@ export default async function ContentPage({ searchParams }: PageProps<"/admin/co
               <FaqsTab faqs={await loadFaqs(member)} />
             ) : tab.key === "home" ? (
               <HomeTab homepage={await loadHomepage(member)} />
+            ) : tab.key === "about" ? (
+              <AboutTab about={await loadAbout(member)} businessName={member.tenant.name} />
             ) : tab.key === "samples" ? (
               <SamplesTab samples={await loadSamples(member)} />
             ) : (
@@ -292,6 +303,11 @@ function FaqsTab({ faqs }: { faqs: StoredFaq[] }) {
 // key: fresh values after each save (and after an undo)
 function HomeTab({ homepage }: { homepage: StoredHomepage }) {
   return <HomepageForm key={JSON.stringify(homepage)} homepage={homepage} />;
+}
+
+// key: fresh values after each save (and after an undo)
+function AboutTab({ about, businessName }: { about: AdminAbout; businessName: string }) {
+  return <AboutForm key={JSON.stringify(about)} about={about} businessName={businessName} />;
 }
 
 // key: fresh values after each save (and after an undo)

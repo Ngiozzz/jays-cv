@@ -13,7 +13,7 @@ type Context = {
   // Shown to the owner only
   amount: string | null;
   roundsLabel: string;
-  timings: OrderTimings;
+  timings: OrderTimings & { deleteAbandonedDays: number };
 };
 
 export function nextStep(order: Context): NextStep {
@@ -31,7 +31,7 @@ export function nextStep(order: Context): NextStep {
       return {
         who: "Owner",
         what: "Send a friendly payment reminder, or record the payment if the client paid another way.",
-        how: `Automatic: marked abandoned after ${timings.unpaidHours}h without payment.`,
+        how: `Automatic: marked abandoned after ${timings.unpaidHours}h without payment, and deleted ${timings.deleteAbandonedDays} days after it was placed. The owner can delete it sooner.`,
         automatic: "yes",
       };
     case "PAID":

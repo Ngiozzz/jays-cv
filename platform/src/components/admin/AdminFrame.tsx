@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/Icon";
 import type { IconName } from "@/components/icons/IconSprite";
 import { SignOutButton } from "./SignOutButton";
 import { UserMenu } from "./UserMenu";
-import { PAGE_TITLES } from "./admin-nav";
+import { adminTrail, SUB_PAGES } from "./admin-nav";
 
 export type FrameNavItem = { href: string; label: string; icon: IconName; phase?: number };
 export type FrameUser = { name: string; roleLabel: string; initials: string };
@@ -18,7 +18,8 @@ type Props = { nav: FrameNavItem[]; user: FrameUser; children: ReactNode };
 export function AdminFrame({ nav, user, children }: Props) {
   const pathname = usePathname();
   const [sideOpen, setSideOpen] = useState(false);
-  const current = currentItem(nav, pathname);
+  const sub = SUB_PAGES[pathname];
+  const current = (sub?.under && nav.find((item) => item.href === sub.under)) || currentItem(nav, pathname);
 
   return (
     <div className="admin-shell">
@@ -35,7 +36,7 @@ export function AdminFrame({ nav, user, children }: Props) {
             <SideLink
               key={item.href}
               item={item}
-              active={item === current && !PAGE_TITLES[pathname]}
+              active={item === current && !(sub && !sub.under)}
               onNavigate={() => setSideOpen(false)}
             />
           ))}
@@ -62,8 +63,11 @@ export function AdminFrame({ nav, user, children }: Props) {
             <Icon name="menu" />
           </button>
           <div className="top-titles">
-            <p className="crumb">Overview</p>
-            <h1>{PAGE_TITLES[pathname] ?? current.label}</h1>
+            {/* Only the Website content tab name needs the address's ?tab=, so the rest shows straight away */}
+            <Suspense fallback={<Crumbs pathname={pathname} params={new URLSearchParams()} />}>
+              <CrumbsWithTab pathname={pathname} />
+            </Suspense>
+            <h1>{sub?.title ?? current.label}</h1>
           </div>
           <div className="admin-top-actions">
             <UserMenu {...user} />
@@ -77,14 +81,40 @@ export function AdminFrame({ nav, user, children }: Props) {
   );
 }
 
-// The menu item for this page: the longest matching address, so /admin/jobs/abc highlights "Jobs"
-// and /admin/jobs/new highlights "Post a job"
+// The menu item for this page: the longest matching address, so /admin/jobs/abc highlights "Job Board"
+// and /admin/team/… highlights "Team"
 function currentItem(nav: FrameNavItem[], pathname: string): FrameNavItem {
   const matches = nav.filter(
     (item) =>
       !item.phase && (item.href === pathname || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`))),
   );
   return matches.sort((a, b) => b.href.length - a.href.length)[0] ?? nav[0];
+}
+
+function CrumbsWithTab({ pathname }: { pathname: string }) {
+  return <Crumbs pathname={pathname} params={useSearchParams()} />;
+}
+
+// Dashboard › Job Board › Post a job: every level but the last links back up
+function Crumbs({ pathname, params }: { pathname: string; params: { get(name: string): string | null } }) {
+  const trail = adminTrail(pathname, params);
+  return (
+    <nav className="crumbs" aria-label="Breadcrumb">
+      <ol>
+        {trail.map((crumb, i) =>
+          i === trail.length - 1 ? (
+            <li key={crumb.href}>
+              <span aria-current="page">{crumb.label}</span>
+            </li>
+          ) : (
+            <li key={crumb.href}>
+              <Link href={crumb.href}>{crumb.label}</Link>
+            </li>
+          ),
+        )}
+      </ol>
+    </nav>
+  );
 }
 
 function SideLink({ item, active, onNavigate }: { item: FrameNavItem; active: boolean; onNavigate: () => void }) {

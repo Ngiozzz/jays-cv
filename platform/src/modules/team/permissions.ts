@@ -10,6 +10,7 @@ export type Permission =
   | "draftCareerTips"
   | "recordPayments"
   | "reassignOrders"
+  | "deleteOrders"
   | "workOnAnyOrder"
   | "acceptOrders"
   | "postJobs";
@@ -30,6 +31,7 @@ const WRITER_PERMISSIONS: Record<Permission, (m: MemberAccess) => boolean> = {
   draftCareerTips: () => true,
   recordPayments: () => false,
   reassignOrders: () => false,
+  deleteOrders: () => false,
   workOnAnyOrder: () => false,
   acceptOrders: (m) => m.canWrite,
   postJobs: (m) => m.canPostJobs,

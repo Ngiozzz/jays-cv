@@ -28,28 +28,30 @@ model Tenant {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  settings       BusinessSettings?
-  homepage       Homepage?
-  memberships    Membership[]
-  invites        Invite[]
-  jobs           Job[]
-  companies      Company[]
-  inboxItems     InboxItem[]
-  orders         Order[]
-  orderEvents    OrderEvent[]
-  orderRevisions OrderRevision[]
-  payments       Payment[]
-  files          StoredFile[]
-  packages       Package[]
-  services       Service[]
-  reviews        Review[]
-  samples        Sample[]
-  posts          Post[]
-  faqs           Faq[]
-  contentChanges ContentChange[]
-  tokenEntries   TokenLedgerEntry[]
-  payouts        WriterPayout[]
-  trackingTries  TrackingAttempt[]
+  settings        BusinessSettings?
+  homepage        Homepage?
+  memberships     Membership[]
+  invites         Invite[]
+  jobs            Job[]
+  companies       Company[]
+  inboxItems      InboxItem[]
+  orders          Order[]
+  orderEvents     OrderEvent[]
+  orderRevisions  OrderRevision[]
+  payments        Payment[]
+  files           StoredFile[]
+  packages        Package[]
+  services        Service[]
+  reviews         Review[]
+  samples         Sample[]
+  posts           Post[]
+  faqs            Faq[]
+  contentChanges  ContentChange[]
+  tokenEntries    TokenLedgerEntry[]
+  payouts         WriterPayout[]
+  trackingTries   TrackingAttempt[]
+  cancelledOrders CancelledOrder[]
+  about           AboutPage?
 }
 
 enum MpesaMode {
@@ -78,6 +80,8 @@ model BusinessSettings {
   retentionMonths       Int       @default(6)
   // Job posters are deleted this many months after the job closes
   posterRetentionMonths Int       @default(3)
+  // Abandoned (never paid) orders are deleted this many days after they were placed
+  deleteAbandonedDays   Int       @default(30)
   aiWarnPct             Int       @default(20)
   paybill               String
   mpesaMode             MpesaMode @default(TEST)
@@ -396,6 +400,19 @@ model TrackingAttempt {
   @@index([tenantId, key, at])
 }
 
+// What's left of an unpaid order after it was deleted: only its number and the hash of its tracking
+// link, so an old link can say "cancelled" instead of "not found". No client details are kept.
+model CancelledOrder {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  number            Int
+  trackingTokenHash String   @unique
+  deletedAt         DateTime @default(now())
+
+  @@unique([tenantId, number])
+}
+
 enum ActorType {
   CLIENT
   STAFF
@@ -498,6 +515,8 @@ enum FileKind {
   DRAFT
   FINAL
   JOB_POSTER
+  // A file the client sent with a change request (e.g. their marked-up copy)
+  CHANGES
   OTHER
 }
 
@@ -520,7 +539,7 @@ model StoredFile {
   note        String?
   uploadedBy  String
   createdAt   DateTime  @default(now())
-  // Set from the retention setting when the order is delivered
+  // Not used: client files are deleted by delivery date + the retention setting (order-upkeep.service)
   deleteAfter DateTime?
   deletedAt   DateTime?
 
@@ -600,6 +619,8 @@ model Review {
   sortOrder Int          @default(0)
   createdAt DateTime     @default(now())
 
+  // One review per order (reviews typed in by the owner have no order)
+  @@unique([orderId])
   @@index([tenantId, status])
 }
 
@@ -677,6 +698,24 @@ model Homepage {
   announcementText String   @default("")
   announcementLink String   @default("")
   updatedAt        DateTime @updatedAt
+}
+
+// The About page. The owner edits it in Admin → Website content → About page.
+model AboutPage {
+  id        String   @id @default(cuid())
+  tenantId  String   @unique
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // Shown under "About Jay CVS"
+  lead      String
+  ownerName String
+  ownerRole String
+  // Storage path of the owner's photo ("about-photos" bucket); null shows initials
+  photo     String?
+  // Markdown, a few short paragraphs
+  story     String
+  // [{ value, label }], validated by modules/content/content.schema.ts
+  stats     Json
+  updatedAt DateTime @updatedAt
 }
 
 // Every content edit is recorded with who made it, so it can be undone

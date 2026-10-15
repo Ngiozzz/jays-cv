@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { lookupOrderAction } from "@/app/(public)/[tenant]/track/actions";
 import { Icon } from "@/components/icons/Icon";
@@ -15,6 +16,12 @@ export function LookupForm({ prefix }: { prefix: string }) {
   const failed = result && !result.ok ? result : null;
   const notice =
     params.get("link") === "invalid" ? "That tracking link isn't valid. Enter your details instead." : null;
+  const cancelled = params.get("cancelled");
+
+  // The client's old link to an unpaid order that was since deleted
+  if (cancelled && !result)
+    return <Cancelled text={`Order ${cancelled} was cancelled because it wasn't paid in time.`} />;
+  if (failed?.cancelled) return <Cancelled text={failed.error} />;
 
   return (
     <form className="lookup-form" action={action} noValidate>
@@ -58,5 +65,20 @@ export function LookupForm({ prefix }: { prefix: string }) {
         {pending ? "Checking…" : "Find my order"}
       </button>
     </form>
+  );
+}
+
+function Cancelled({ text }: { text: string }) {
+  return (
+    <div className="lookup-cancelled" role="alert">
+      <p className="track-error">
+        <Icon name="info" />
+        {text}
+      </p>
+      <p>Place a new order and your writer starts as soon as it&apos;s paid.</p>
+      <Link className="btn btn-primary btn-lg" href="/order">
+        Place a new order
+      </Link>
+    </div>
   );
 }

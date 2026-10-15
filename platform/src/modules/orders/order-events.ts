@@ -15,6 +15,7 @@ export const EVENT_KINDS = [
   "changesRequested",
   "completed",
   "autoCompleted",
+  "reviewed",
   "reminded",
   "abandoned",
   "extended",
@@ -70,9 +71,11 @@ export function clientEventText(event: ClientEvent): string | null {
       return version ? `Sent you draft ${version}` : "Sent you a draft";
     }
     case "changesRequested":
-      return `Asked for changes: "${field(event.data, "text")}"`;
+      return `Asked for changes: "${field(event.data, "text")}"${field(event.data, "file") ? " (with a file)" : ""}`;
     case "completed":
       return "Approved the draft. Order completed";
+    case "reviewed":
+      return "Left a review. Thank you!";
     case "autoCompleted":
       return "No reply for a few days, so your order was completed automatically";
     case "reminded":
@@ -124,14 +127,19 @@ export function teamEventText(event: ClientEvent, money: boolean): string {
     case "changesRequested": {
       // The client asked on their tracking page, or the team logged what they said on a call or chat
       const how = event.actorType === "CLIENT" ? "Asked for changes" : "Logged change request";
-      return `${how} (round ${get("round")}${get("via") ? `, ${get("via")}` : ""}): "${get("text")}"`;
+      const file = get("file") ? ` + file "${get("file")}"` : "";
+      return `${how} (round ${get("round")}${get("via") ? `, ${get("via")}` : ""}): "${get("text")}"${file}`;
     }
     case "completed":
-      return "Marked the order complete (client approved)";
+      return event.actorType === "CLIENT"
+        ? "Approved the draft on their tracking page: order complete"
+        : "Marked the order complete (client approved)";
+    case "reviewed":
+      return `Left a ${get("rating")}★ review (waiting in Website content → Reviews)`;
     case "autoCompleted":
       return "No reply from the client: completed automatically";
     case "reminded":
-      return "Reminded the client to review their draft";
+      return "The client hasn't replied about their draft: send them a reminder";
     case "abandoned":
       return "No payment in time: marked abandoned";
     case "extended":

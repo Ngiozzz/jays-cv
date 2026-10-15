@@ -21,6 +21,15 @@ export function findAllReviews(tenantId: string) {
   });
 }
 
+// 1–2 star reviews from clients that the owner hasn't dealt with yet (approved or hidden)
+export function findLowPendingReviews(tenantId: string) {
+  return tenantDb(tenantId).review.findMany({
+    where: { status: "PENDING", rating: { lte: 2 }, orderId: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, rating: true, text: true, name: true, order: { select: { number: true } } },
+  });
+}
+
 export function findReview(tenantId: string, id: string) {
   return tenantDb(tenantId).review.findFirst({ where: { id } });
 }

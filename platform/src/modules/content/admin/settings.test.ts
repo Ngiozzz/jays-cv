@@ -14,6 +14,7 @@ const before: StoredSettings = {
   reminderDays: 2,
   autoCompleteDays: 5,
   revisionHours: 24,
+  deleteAbandonedDays: 30,
   retentionMonths: 6,
   posterRetentionMonths: 3,
   aiWarnPct: 20,

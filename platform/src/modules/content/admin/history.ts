@@ -12,6 +12,7 @@ export const SECTIONS = {
   posts: "Career tips",
   faqs: "FAQs",
   home: "Homepage",
+  about: "About page",
   settings: "Business settings",
 } as const;
 

@@ -3,6 +3,7 @@
 export const TENANT_MODELS = [
   "BusinessSettings",
   "Homepage",
+  "AboutPage",
   "Membership",
   "Invite",
   "Job",
@@ -23,6 +24,7 @@ export const TENANT_MODELS = [
   "ContentChange",
   "TokenLedgerEntry",
   "TrackingAttempt",
+  "CancelledOrder",
 ] as const;
 
 export type TenantModel = (typeof TENANT_MODELS)[number];

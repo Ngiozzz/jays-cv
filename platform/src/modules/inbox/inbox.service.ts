@@ -99,7 +99,7 @@ export async function approveInboxItem(
   member: CurrentMember,
   id: string,
   edited: unknown,
-): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; slug: string; companyId: string | null } | { ok: false; error: string }> {
   assertCan(member, "postJobs");
   const tenantId = member.tenant.id;
   const item = await repo.findInboxItem(tenantId, id);
@@ -107,7 +107,11 @@ export async function approveInboxItem(
 
   const parsed = jobDraftSchema.safeParse(edited);
   if (!parsed.success) return { ok: false, error: "Add the job title." };
-  const job: JobInput = { ...parsed.data, source: item.source === "Uploaded" ? "" : item.source };
+  // Where the advert was found: as typed on the screen, else where the poster came from
+  const job: JobInput = {
+    ...parsed.data,
+    source: parsed.data.source || (item.source === "Uploaded" ? "" : item.source),
+  };
   const problems = publishProblems(job);
   if (problems.length) return { ok: false, error: problems.map((p) => p.message).join(". ") + "." };
 
@@ -130,7 +134,7 @@ export async function approveInboxItem(
     decidedAt: new Date(),
   });
   const published = await findJob(tenantId, saved.id);
-  return { ok: true, slug: published?.slug ?? "" };
+  return { ok: true, slug: published?.slug ?? "", companyId: saved.companyId ?? null };
 }
 
 export async function discardInboxItem(
