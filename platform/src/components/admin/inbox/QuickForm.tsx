@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { LOGO_SIZE, shrinkImage } from "@/components/admin/jobs/shrink-image";
 import type { KnownCompany } from "@/components/admin/jobs/CompanyLogoField";
 import { JobLogo } from "@/components/jobs/JobLogo";
@@ -10,7 +10,9 @@ import {
   ATTACH_OPTIONS,
   JOB_CATEGORIES,
   JOB_TYPES,
+  MAX_TAGS,
   WORK_MODES,
+  cleanTags,
   type ApplyDetails,
   type ApplyMethod,
   type JobInput,
@@ -212,6 +214,12 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
               onChange={(e) => set({ requirements: lines(e.target.value) })}
             />,
           )}
+          {field(
+            "tags",
+            `Search tags (commas, up to ${MAX_TAGS}; each gets its own page people find on Google)`,
+            <TagsInput tags={job.tags} onChange={(tags) => set({ tags })} />,
+            true,
+          )}
         </div>
       </section>
 
@@ -386,5 +394,23 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
         </div>
       </section>
     </form>
+  );
+}
+
+// Typed as one line ("CPA, Nairobi"); kept as text while typing so commas and spaces aren't eaten,
+// and refilled when the job's tags change from outside (another poster chosen, the AI's reading)
+function TagsInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const [text, setText] = useState(tags.join(", "));
+  if (cleanTags(text.split(",")).join("|") !== cleanTags(tags).join("|")) setText(tags.join(", "));
+  return (
+    <input
+      id="q-tags"
+      value={text}
+      placeholder="e.g. CPA, Accounting, Nairobi, Entry level"
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value.split(","));
+      }}
+    />
   );
 }

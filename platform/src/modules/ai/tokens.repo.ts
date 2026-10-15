@@ -24,6 +24,7 @@ export function recordUsage(
     // null: used by a website visitor, e.g. a "Check it yourself" CV check
     memberId: string | null;
     jobId?: string;
+    orderId?: string;
   },
 ) {
   return tenantDb(tenantId).tokenLedgerEntry.create({
@@ -37,6 +38,7 @@ export function recordUsage(
       outputTokens: usage.outputTokens,
       memberId: usage.memberId,
       jobId: usage.jobId,
+      orderId: usage.orderId,
     },
   });
 }

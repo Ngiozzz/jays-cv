@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_JOB, type JobInput } from "@/modules/jobs/jobs.schema";
-import { flagsFor, isClean, missingDetails, scamSigns, similar, type FlagContext } from "./inbox.flags";
+import { flagsFor, isClean, missingDetails, scamFlag, scamSigns, similar, type FlagContext } from "./inbox.flags";
 
 const today = "2026-10-12";
 const context: FlagContext = { today, rawText: "", unsure: [], checked: [], liveJobs: [], earlierPosters: [] };
@@ -30,6 +30,24 @@ describe("scam checks", () => {
     expect(scamSigns(scamText, "KES 85,000").length).toBeGreaterThanOrEqual(2);
     expect(keys(job({ salary: "KES 85,000" }), { rawText: scamText })).toContain("scam");
     expect(keys(job(), { rawText: "Urgent hiring! Send CV to careers@savannafresh.co.ke" })).not.toContain("scam");
+  });
+
+  it("adds the AI's opinion: high raises 'Possible scam' on its own, medium a softer warning", () => {
+    const high = scamFlag("Send CV to hr.kenyaairways@gmail.com", "", { risk: "high", reason: "A big employer using a Gmail address." });
+    expect(high).toMatchObject({ level: "critical", text: "Possible scam" });
+    expect(high?.more).toContain("AI: A big employer using a Gmail address.");
+
+    const medium = scamFlag("Send CV to jobs@company.co.ke", "", { risk: "medium", reason: "The salary is unusually high." });
+    expect(medium).toMatchObject({ level: "warning", text: "May be a scam" });
+
+    expect(scamFlag("Send CV to jobs@company.co.ke", "", { risk: "low", reason: "" })).toBeNull();
+    expect(keys(job(), { aiScam: { risk: "medium", reason: "Odd." } })).toContain("scam");
+  });
+
+  it("keeps the fixed rules when the AI says low", () => {
+    const flag = scamFlag(scamText, "KES 85,000", { risk: "low", reason: "" });
+    expect(flag).toMatchObject({ level: "critical" });
+    expect(flag?.more).not.toContain("AI:");
   });
 });
 

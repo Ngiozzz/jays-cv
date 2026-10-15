@@ -1,8 +1,12 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { after } from "next/server";
 import { Prisma } from "@/generated/prisma/client";
 import { fileStore } from "@/lib/storage";
 import { tenantDb } from "@/lib/tenant-db";
+import { screenReview } from "@/modules/ai/claude";
+import { getTokenBalance } from "@/modules/ai/tokens.service";
+import { recordUsage } from "@/modules/ai/tokens.repo";
 import type { CurrentTenant } from "@/modules/tenants/tenants.service";
 import { changeRequestSchema, changesFileProblem, clientRounds, reviewSchema } from "./client-feedback";
 import type { EventKind } from "./order-events";
@@ -172,9 +176,10 @@ export async function leaveReview(tenant: CurrentTenant, ref: string, raw: unkno
     return refuse("Please check the highlighted fields.", fieldErrors);
   }
   const review = parsed.data;
+  let reviewId = "";
   try {
     await tenantDb(tenant.id).$transaction(async (tx) => {
-      await tx.review.create({
+      ({ id: reviewId } = await tx.review.create({
         data: {
           tenantId: tenant.id,
           orderId: order.id,
@@ -187,7 +192,8 @@ export async function leaveReview(tenant: CurrentTenant, ref: string, raw: unkno
           status: "PENDING",
           source: `Order ${tenant.orderPrefix}-${order.number}`,
         },
-      });
+        select: { id: true },
+      }));
       await clientEvent(tx, tenant.id, order.id, "reviewed", { rating: review.rating });
     }, TX);
   } catch (error) {
@@ -196,5 +202,31 @@ export async function leaveReview(tenant: CurrentTenant, ref: string, raw: unkno
       return refuse("You've already sent a review for this order. Thank you!");
     throw error;
   }
+  // The AI screens it for the owner once the client has their answer, so they don't wait for it
+  after(() => screenNewReview(tenant.id, order.id, reviewId, review));
   return { ok: true, message: "Thank you for your review!" };
+}
+
+// "✓ Looks genuine" or "⚠ Check this: …" beside the waiting review in Website content → Reviews.
+// Best effort: without tokens or the AI, the review simply waits without a note.
+async function screenNewReview(
+  tenantId: string,
+  orderId: string,
+  reviewId: string,
+  review: { rating: number; name: string; role: string | null; text: string },
+) {
+  try {
+    if ((await getTokenBalance(tenantId)).remaining <= 0) return;
+    const screened = await screenReview({ ...review, role: review.role ?? "" });
+    if (!screened) return;
+    if (screened.usage) {
+      await recordUsage(tenantId, { feature: "Review screening", memberId: null, orderId, ...screened.usage });
+    }
+    await tenantDb(tenantId).review.updateMany({
+      where: { id: reviewId },
+      data: { aiFlag: screened.data.verdict, aiReason: screened.data.reason.slice(0, 500) },
+    });
+  } catch (error) {
+    console.error("[ai] review screening failed", error);
+  }
 }

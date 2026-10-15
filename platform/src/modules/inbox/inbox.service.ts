@@ -74,6 +74,8 @@ export async function readInboxItem(member: CurrentMember, id: string): Promise<
     await repo.updateInboxItem(tenantId, id, {
       state: "CHECK",
       rawText: data.rawText,
+      scamRisk: data.isJobAdvert ? data.scamRisk : null,
+      scamReason: data.isJobAdvert ? data.scamReason : null,
       reading: data.isJobAdvert ? readingToJobInput(data) : { ...EMPTY_JOB, title: "" },
       unsure: data.unsureFields,
       readError: data.isJobAdvert ? null : "This doesn't look like a job advert.",

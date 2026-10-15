@@ -23,6 +23,7 @@ export type PublicJob = {
   summary: string;
   responsibilities: string[];
   requirements: string[];
+  tags: string[];
   deadline: string | null;
   postedDay: string;
   apply: ApplyDetails;

@@ -5,6 +5,7 @@ import { AiUnavailableError, readJobPoster } from "@/modules/ai/claude";
 import { readingToJobInput } from "@/modules/ai/poster-reading";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
+import { scamFlag, type Flag } from "@/modules/inbox/inbox.flags";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan } from "@/modules/team/permissions";
 import * as repo from "./jobs.repo";
@@ -12,7 +13,9 @@ import { todayInNairobi } from "./jobs.rules";
 import type { JobInput } from "./jobs.schema";
 import { isPosterType, posterPath, posterProblem } from "./poster";
 
-export type ReadPosterResult = { ok: true; job: JobInput; pretend: boolean } | { ok: false; error: string };
+export type ReadPosterResult =
+  | { ok: true; job: JobInput; pretend: boolean; scam: Pick<Flag, "level" | "text" | "more"> | null }
+  | { ok: false; error: string };
 
 // "Read poster & fill in details": the AI reads the image; the person checks the result before publishing
 export async function readPoster(member: CurrentMember, file: File): Promise<ReadPosterResult> {
@@ -38,7 +41,9 @@ export async function readPoster(member: CurrentMember, file: File): Promise<Rea
     if (!data.isJobAdvert) {
       return { ok: false, error: "This image doesn't look like a job advert. Please check you chose the right one." };
     }
-    return { ok: true, job: readingToJobInput(data), pretend: !usage };
+    const job = readingToJobInput(data);
+    const scam = scamFlag(data.rawText, job.salary, { risk: data.scamRisk, reason: data.scamReason });
+    return { ok: true, job, pretend: !usage, scam: scam && { level: scam.level, text: scam.text, more: scam.more } };
   } catch (error) {
     if (error instanceof AiUnavailableError) return { ok: false, error: error.message };
     throw error;

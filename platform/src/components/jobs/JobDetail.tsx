@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
 import type { PublicJob } from "@/modules/jobs/jobs.public";
 import { daysUntil, deadlineLabel, formatDay, postedLabel } from "@/modules/jobs/jobs.rules";
+import { tagSlug } from "@/modules/jobs/jobs.schema";
 import { HowToApply } from "./HowToApply";
 import { JobLogo } from "./JobLogo";
 
@@ -84,6 +85,16 @@ export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, check, t
             )}
             <JobList title="Responsibilities" items={job.responsibilities} />
             <JobList title="Requirements" items={job.requirements} />
+            {job.tags.length > 0 && (
+              <nav className="job-tags" aria-label="Similar jobs by tag">
+                <span>More jobs like this:</span>
+                {job.tags.map((tag) => (
+                  <Link key={tag} className="tag" href={`/jobs/tag/${tagSlug(tag)}`}>
+                    {tag}
+                  </Link>
+                ))}
+              </nav>
+            )}
           </div>
 
           <HowToApply apply={job.apply} jobTitle={job.title} deadlineLine={deadlineLine} />

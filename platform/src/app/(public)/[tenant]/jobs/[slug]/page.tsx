@@ -10,7 +10,8 @@ import { getPriceList } from "@/modules/content/content.service";
 import { draftTimeLabel } from "@/modules/content/packages";
 import { standardDraftHours } from "@/modules/content/pricing";
 import { jobPostingSchema, jsonLd } from "@/modules/jobs/job-posting-schema";
-import { getJobBoard, getPublicJob, getPublishedJobSlugs } from "@/modules/jobs/jobs.public";
+import { sharedTags } from "@/modules/jobs/job-tags";
+import { getJobBoard, getPublicJob, getPublishedJobSlugs, type PublicJob } from "@/modules/jobs/jobs.public";
 import { allTenantSlugs, getTenant } from "@/modules/tenants/tenants.service";
 import { siteContext } from "../../site-context";
 
@@ -52,10 +53,11 @@ export default async function JobPage({ params }: PageProps<"/[tenant]/jobs/[slu
 
   const pageUrl = `${env.APP_URL}/jobs/${job.slug}`;
   const tailoring = prices.services.find((service) => service.needsJobAdvert);
-  // Same category first, then the newest
+  // Most shared tags first, then the same category, then the newest
+  const closeness = (other: PublicJob) => sharedTags(job, other) * 2 + Number(other.category === job.category);
   const similar = board.jobs
     .filter((other) => other.slug !== job.slug)
-    .sort((a, b) => Number(b.category === job.category) - Number(a.category === job.category))
+    .sort((a, b) => closeness(b) - closeness(a))
     .slice(0, 3);
 
   return (

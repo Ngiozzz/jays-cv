@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Icon } from "@/components/icons/Icon";
 import {
   addReviewAction,
   changeReviewAction,
@@ -127,6 +128,15 @@ function ReviewCard({ review }: { review: AdminReview }) {
         {review.role && ` · ${review.role}`}
         <small>{review.source}</small>
       </p>
+      {/* The AI's screening of a client's review, shown while the owner decides */}
+      {review.status === "PENDING" && review.aiFlag && (
+        <p className={review.aiFlag === "check" ? "review-ai check" : "review-ai ok"}>
+          <Icon name={review.aiFlag === "check" ? "alert" : "check"} size={16} />
+          <span>
+            <strong>{review.aiFlag === "check" ? "AI: check this." : "AI: looks genuine."}</strong> {review.aiReason}
+          </span>
+        </p>
+      )}
       <div className="review-actions">
         {review.status === "PENDING" && (
           <>

@@ -82,6 +82,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
       return flagsFor(job, {
         today,
         rawText: card.rawText,
+        aiScam: card.aiScam,
         unsure: card.unsure,
         checked: [...card.checked, ...(confirmed[card.id] ?? [])],
         liveJobs,

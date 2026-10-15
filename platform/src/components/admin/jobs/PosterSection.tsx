@@ -21,6 +21,8 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
   const [dragging, setDragging] = useState(false);
   const [reading, startReading] = useTransition();
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  // The scam check's warning after a reading (the fixed rules and the AI's opinion)
+  const [scam, setScam] = useState<{ level: string; text: string; more: string } | null>(null);
 
   // Shrink the chosen image and put the smaller copy back into the form's file field
   const takeFile = async (file: File | undefined) => {
@@ -36,6 +38,7 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
     setPreview(URL.createObjectURL(small));
     setRemoved(false);
     setMessage(null);
+    setScam(null);
   };
 
   // A file chosen in the moment before the page became interactive would otherwise be ignored
@@ -49,6 +52,7 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
     setPreview(null);
     setRemoved(Boolean(existingUrl));
     setMessage(null);
+    setScam(null);
   };
 
   const read = () => {
@@ -66,6 +70,7 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
         return;
       }
       onRead(result.job);
+      setScam(result.scam);
       setMessage({
         tone: "ok",
         text: result.pretend
@@ -131,6 +136,13 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead }: Props) 
             {message && (
               <div className={message.tone === "ok" ? "ai-result" : "ai-result error"} role="status">
                 <span>{message.text}</span>
+              </div>
+            )}
+            {scam && (
+              <div className={scam.level === "critical" ? "ai-result error" : "ai-result"} role="alert">
+                <span>
+                  <strong>{scam.text}.</strong> {scam.more}
+                </span>
               </div>
             )}
             <button type="button" className="btn btn-danger btn-sm" onClick={remove}>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContentToasts } from "@/components/admin/content/useSave";
 import { NotAllowed } from "@/components/admin/NotAllowed";
+import { AiHelper } from "@/components/admin/orders/AiHelper";
 import {
   AcceptButton,
   CompleteButton,
@@ -18,7 +19,9 @@ import {
 import { Icon } from "@/components/icons/Icon";
 import { OrderFileGroups } from "@/components/orders/OrderFileGroups";
 import { formatKes } from "@/lib/money";
+import { aiPretendMode } from "@/modules/ai/claude";
 import { whatsappLink } from "@/modules/content/contact";
+import { latestAiResults } from "@/modules/orders/ai-helper.service";
 import { loadOrderForTeam, type TeamOrder } from "@/modules/orders/order-detail.service";
 import { span } from "@/modules/orders/orders.rules";
 import { greetingName } from "@/modules/orders/tracking";
@@ -65,6 +68,9 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
   const order = await loadOrderForTeam(member, decodeURIComponent((await params).ref), now);
   if (!order) notFound();
   const { you } = order;
+  // The AI helper: for the order's writer and the owner, while the order is being written
+  const helper = you.works && ["WRITING", "REVISIONS", "DRAFT_SENT"].includes(order.status);
+  const aiResults = helper ? await latestAiResults(member.tenant.id, order.id) : [];
 
   return (
     <ContentToasts>
@@ -156,6 +162,16 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
               />
             </div>
           </section>
+
+          {helper && (
+            <AiHelper
+              orderId={order.id}
+              results={aiResults}
+              clientCvName={order.files.fromClient.find((file) => file.label === "Current CV")?.name ?? null}
+              latestDraftName={order.files.fromUs[0]?.name ?? null}
+              aiPretend={aiPretendMode}
+            />
+          )}
         </div>
 
         <aside className="order-aside">

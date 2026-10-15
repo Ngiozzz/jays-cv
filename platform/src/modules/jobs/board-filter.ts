@@ -10,6 +10,7 @@ export type BoardJob = {
   type: string;
   category: string;
   summary: string;
+  tags: string[];
   deadline: string | null;
   postedDay: string;
 };
@@ -46,7 +47,7 @@ export function filterJobs<T extends BoardJob>(jobs: T[], filters: BoardFilters,
   const list = jobs.filter(
     (job) =>
       (!term ||
-        [job.title, job.company, job.category, job.location, job.summary].join(" ").toLowerCase().includes(term)) &&
+        [job.title, job.company, job.category, job.location, job.summary, ...job.tags].join(" ").toLowerCase().includes(term)) &&
       (!filters.loc || job.location.includes(filters.loc)) &&
       (!filters.cat || job.category === filters.cat) &&
       (!filters.types.length || filters.types.includes(job.type)) &&
@@ -79,6 +80,7 @@ export function toBoardListing(
     category: job.category,
     salary: job.salary,
     summary: job.summary,
+    tags: job.tags,
     deadline: job.deadline,
     postedDay: job.postedDay,
     applyMethod: job.apply.method,

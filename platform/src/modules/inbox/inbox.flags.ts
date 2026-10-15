@@ -1,4 +1,4 @@
-import type { ReadingField } from "@/modules/ai/poster-reading";
+import type { ReadingField, ScamRisk } from "@/modules/ai/poster-reading";
 import { daysUntil, formatDay } from "@/modules/jobs/jobs.rules";
 import type { ApplyMethod, JobInput } from "@/modules/jobs/jobs.schema";
 
@@ -34,6 +34,8 @@ export const APPLY_TARGET: Record<ApplyMethod, "email" | "url" | "phone" | "addr
 export type FlagContext = {
   today: string;
   rawText: string;
+  // The AI's scam opinion from reading the poster (null when it wasn't read by the AI)
+  aiScam?: AiScamOpinion | null;
   unsure: string[];
   checked: string[];
   // Jobs on the website, and other posters in the inbox that came in earlier
@@ -92,6 +94,33 @@ export function scamSigns(rawText: string, salary: string): string[] {
   return signs;
 }
 
+export type AiScamOpinion = { risk: ScamRisk; reason: string };
+
+// The fixed rules and the AI's opinion together. Either one can raise "Possible scam"; the AI alone
+// raises a softer "may be a scam" when it's unsure. Nothing is blocked: a person decides.
+export function scamFlag(rawText: string, salary: string, ai: AiScamOpinion | null): Flag | null {
+  const signs = scamSigns(rawText, salary);
+  const aiReason = ai && ai.risk !== "low" && ai.reason.trim() ? `AI: ${ai.reason.trim()}` : "";
+  if (signs.length >= 2 || ai?.risk === "high") {
+    const rules = signs.length ? `This advert ${signs.join("; ")}.` : "";
+    return {
+      key: "scam",
+      level: "critical",
+      text: "Possible scam",
+      more: [rules, aiReason, "Real employers never charge people to apply."].filter(Boolean).join(" "),
+    };
+  }
+  if (ai?.risk === "medium") {
+    return {
+      key: "scam",
+      level: "warning",
+      text: "May be a scam",
+      more: [aiReason || "The AI found something unusual in this advert.", "Check it before publishing."].join(" "),
+    };
+  }
+  return null;
+}
+
 // ---------- missing details ----------
 
 export function missingDetails(job: JobInput): string[] {
@@ -135,15 +164,8 @@ function deadlineFlag(job: JobInput, today: string): Flag | null {
 
 export function flagsFor(job: JobInput, context: FlagContext): Flag[] {
   const flags: Flag[] = [];
-  const scam = scamSigns(context.rawText, job.salary);
-  if (scam.length >= 2) {
-    flags.push({
-      key: "scam",
-      level: "critical",
-      text: "Possible scam",
-      more: `This advert ${scam.join("; ")}. Real employers never charge people to apply.`,
-    });
-  }
+  const scam = scamFlag(context.rawText, job.salary, context.aiScam ?? null);
+  if (scam) flags.push(scam);
 
   const onSite = context.liveJobs.find((live) => sameJob(live, job));
   const inInbox = !onSite && context.earlierPosters.find((other) => sameJob(other, job));

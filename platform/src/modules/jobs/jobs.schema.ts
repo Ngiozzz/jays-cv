@@ -47,6 +47,32 @@ export const applySchema = z.object({
 
 export type ApplyDetails = z.infer<typeof applySchema>;
 
+// Search tags ("CPA", "Nairobi", "Entry level"): each gets its own page on the website, so people
+// searching Google for "CPA jobs" can land on Jay CVS. Tidied here: trimmed, no repeats, at most 8.
+export const MAX_TAGS = 8;
+
+export function cleanTags(tags: string[]): string[] {
+  const seen = new Set<string>();
+  const kept: string[] = [];
+  for (const raw of tags) {
+    const tag = raw.replace(/^#/, "").replace(/\s+/g, " ").trim().slice(0, 40);
+    const slug = tagSlug(tag);
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    kept.push(tag);
+  }
+  return kept.slice(0, MAX_TAGS);
+}
+
+// "Entry level" → "entry-level": the tag's web address
+export function tagSlug(tag: string): string {
+  return tag
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 // A draft only needs a title
 export const jobDraftSchema = z.object({
   title: z.string().trim().min(2, "Add the job title").max(160),
@@ -59,6 +85,7 @@ export const jobDraftSchema = z.object({
   summary: text(1500),
   responsibilities: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
   requirements: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
+  tags: z.array(z.string()).default([]).transform(cleanTags),
   deadline: isoDate.nullable().default(null),
   openEnded: z.boolean().default(false),
   apply: applySchema,
@@ -116,6 +143,7 @@ export function jobFormToInput(form: FormData): unknown {
     summary: field(form, "summary"),
     responsibilities: lines(form.get("responsibilities")),
     requirements: lines(form.get("requirements")),
+    tags: field(form, "tags").split(","),
     deadline: openEnded ? null : field(form, "deadline") || null,
     openEnded,
     apply: {
@@ -145,6 +173,7 @@ export const EMPTY_JOB: JobInput = {
   summary: "",
   responsibilities: [],
   requirements: [],
+  tags: [],
   deadline: null,
   openEnded: false,
   apply: {

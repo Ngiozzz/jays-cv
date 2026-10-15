@@ -3003,6 +3003,28 @@ html:not(.js) .order-steps {
 .job-list li {
   margin-bottom: 8px;
 }
+/* "More jobs like this": the job's search tags, each linking to its tag page */
+.job-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.job-tags > span {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.job-tags .tag {
+  text-decoration: none;
+}
+.job-tags .tag:hover,
+.job-tags .tag:focus-visible {
+  text-decoration: underline;
+}
 .apply-box {
   padding: 28px;
   border: 2px solid var(--primary);

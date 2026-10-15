@@ -77,6 +77,7 @@ const publicFields = {
   summary: true,
   responsibilities: true,
   requirements: true,
+  tags: true,
   deadline: true,
   postedAt: true,
   apply: true,

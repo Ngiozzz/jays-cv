@@ -21,7 +21,11 @@ const schema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: optional,
   // AI: without a key, AI features run in "pretend" mode and use no tokens
   ANTHROPIC_API_KEY: optional,
-  ANTHROPIC_MODEL: z.string().trim().min(1).default("claude-opus-5-5"),
+  // Each AI task uses the cheapest model that does it well (compared on real posters and CVs)
+  ANTHROPIC_POSTER_MODEL: z.string().trim().min(1).default("claude-haiku-5-5"),
+  ANTHROPIC_CV_CHECK_MODEL: z.string().trim().min(1).default("claude-sonnet-5-5"),
+  ANTHROPIC_WRITER_MODEL: z.string().trim().min(1).default("claude-sonnet-5-5"),
+  ANTHROPIC_REVIEW_MODEL: z.string().trim().min(1).default("claude-haiku-5-5"),
   // Shared secret for the nightly tasks (Vercel Cron sends it automatically when set in Vercel)
   CRON_SECRET: optional,
 });

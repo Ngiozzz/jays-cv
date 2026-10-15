@@ -17,6 +17,8 @@ export function findAllReviews(tenantId: string) {
       featured: true,
       consent: true,
       source: true,
+      aiFlag: true,
+      aiReason: true,
     },
   });
 }

@@ -9,6 +9,7 @@ const job = (patch: Partial<BoardJob>): BoardJob => ({
   type: "Full-time",
   category: "IT & Tech",
   summary: "",
+  tags: [],
   deadline: null,
   postedDay: "2026-10-10",
   ...patch,
@@ -61,5 +62,12 @@ describe("filterJobs", () => {
       "Developer",
       "Intern",
     ]);
+  });
+});
+
+describe("search by tag", () => {
+  it("finds a job by one of its search tags", () => {
+    const cpa = job({ title: "Accounts Assistant", tags: ["CPA", "Entry level"] });
+    expect(filterJobs([cpa, job({ title: "Driver" })], { ...NO_FILTERS, q: "cpa" }, today)).toEqual([cpa]);
   });
 });

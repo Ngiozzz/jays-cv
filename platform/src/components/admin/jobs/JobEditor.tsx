@@ -8,6 +8,7 @@ import type { JobDisplayStatus } from "@/modules/jobs/jobs.rules";
 import {
   JOB_CATEGORIES,
   JOB_TYPES,
+  MAX_TAGS,
   WORK_MODES,
   previewOf,
   publishProblems,
@@ -260,6 +261,20 @@ function DetailsSection({ initial }: { initial: JobInput }) {
             rows={6}
             defaultValue={initial.requirements.join("\n")}
             placeholder="One per line"
+          />
+        </FormField>
+        <FormField
+          id="f-tags"
+          label="Search tags"
+          full
+          hint={`Separate with commas, up to ${MAX_TAGS}. Each tag gets its own page (e.g. "CPA jobs in Kenya") that people can find on Google.`}
+        >
+          <input
+            type="text"
+            id="f-tags"
+            name="tags"
+            defaultValue={initial.tags.join(", ")}
+            placeholder="e.g. CPA, Accounting, Nairobi, Entry level"
           />
         </FormField>
       </div>

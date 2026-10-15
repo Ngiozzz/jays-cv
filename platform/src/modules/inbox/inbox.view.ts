@@ -1,11 +1,13 @@
 import "server-only";
 import { fileStore } from "@/lib/storage";
+import { SCAM_RISKS, type ScamRisk } from "@/modules/ai/poster-reading";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { getJobBoard } from "@/modules/jobs/jobs.public";
 import { todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { jobDraftSchema, type JobInput } from "@/modules/jobs/jobs.schema";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan, can } from "@/modules/team/permissions";
+import type { AiScamOpinion } from "./inbox.flags";
 import * as repo from "./inbox.repo";
 
 // Everything the inbox screen needs, in plain data the browser can use
@@ -19,6 +21,7 @@ export type InboxCard = {
   posterName: string;
   source: string;
   rawText: string;
+  aiScam: AiScamOpinion | null;
   job: JobInput | null;
   unsure: string[];
   checked: string[];
@@ -52,6 +55,9 @@ export async function loadInbox(member: CurrentMember) {
       posterName: row.posterName,
       source: row.source,
       rawText: row.rawText,
+      aiScam: (SCAM_RISKS as readonly string[]).includes(row.scamRisk ?? "")
+        ? { risk: row.scamRisk as ScamRisk, reason: row.scamReason ?? "" }
+        : null,
       // A poster the AI couldn't read has an untitled job; the team types it in
       job: reading?.success ? reading.data : row.reading ? (row.reading as JobInput) : null,
       unsure: row.unsure,

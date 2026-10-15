@@ -52,6 +52,7 @@ model Tenant {
   trackingTries   TrackingAttempt[]
   cancelledOrders CancelledOrder[]
   cvChecks        CvCheck[]
+  orderAiResults  OrderAiResult[]
   about           AboutPage?
 }
 
@@ -204,6 +205,7 @@ model Membership {
   inboxDecided   InboxItem[]        @relation("InboxDecidedBy")
   contentChanges ContentChange[]
   tokenEntries   TokenLedgerEntry[]
+  orderAiResults OrderAiResult[]
 
   @@unique([tenantId, userId])
 }
@@ -265,6 +267,8 @@ model Job {
   summary          String
   responsibilities String[]
   requirements     String[]
+  // Search tags; each has its own page on the website (modules/jobs/jobs.schema.ts cleanTags)
+  tags             String[]    @default([])
   salary           String?
   postedAt         DateTime    @default(now())
   // null = open until filled
@@ -376,6 +380,7 @@ model Order {
   files        StoredFile[]
   reviews      Review[]
   tokenEntries TokenLedgerEntry[]
+  aiResults    OrderAiResult[]
 
   @@unique([tenantId, number])
   @@index([tenantId, status])
@@ -670,6 +675,9 @@ model Review {
   featured  Boolean      @default(false)
   // The client agreed to their review being shown on the website
   consent   Boolean      @default(false)
+  // The AI's screening when a client sent it: "ok" or "check" (rude, spam, fake-looking…), and why
+  aiFlag    String?
+  aiReason  String?
   source    String
   sortOrder Int          @default(0)
   createdAt DateTime     @default(now())
@@ -846,6 +854,9 @@ model InboxItem {
   source        String      @default("Uploaded")
   // Text the AI read off the poster, used for the scam checks
   rawText       String      @default("")
+  // The AI's second opinion on whether the advert is a scam: "low" | "medium" | "high", and why
+  scamRisk      String?
+  scamReason    String?
   // The job as read (and corrected) so far; shape is JobInput (modules/jobs/jobs.schema.ts)
   reading       Json?
   // Fields the AI wasn't sure about, and those a person has since confirmed
@@ -866,4 +877,24 @@ model InboxItem {
   decidedAt     DateTime?
 
   @@index([tenantId, state, createdAt])
+}
+
+// The writer's AI helper on an order: CV analysis, summary drafts and the final check. Kept so the
+// team sees the latest result without paying for it again. result's shape: modules/ai/writer-tools.ts
+model OrderAiResult {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // "analysis" | "summary" | "final-check"
+  kind        String
+  // The file the AI read
+  fileName    String
+  result      Json
+  createdById String?
+  createdBy   Membership? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+
+  @@index([tenantId, orderId, kind, createdAt])
 }

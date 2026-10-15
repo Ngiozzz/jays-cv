@@ -12,6 +12,9 @@ const blank: Pick<
   | "unsureFields"
   | "salary"
   | "responsibilities"
+  | "tags"
+  | "scamRisk"
+  | "scamReason"
   | "applyEmail"
   | "applySubject"
   | "applyUrl"
@@ -25,6 +28,9 @@ const blank: Pick<
   unsureFields: [],
   salary: "",
   responsibilities: [],
+  tags: [],
+  scamRisk: "low",
+  scamReason: "",
   applyEmail: "",
   applySubject: "",
   applyUrl: "",
@@ -78,6 +84,8 @@ const SAMPLES: Record<string, Sample> = {
     rawText:
       "URGENT!!! AIRPORT JOBS 2026. Cleaners, Drivers, Loaders, Cashiers. SALARY KES 85,000. NO EXPERIENCE NEEDED!! 300 SLOTS ONLY. Pay registration fee of KES 1,500 via M-Pesa to 0700 000 000 (Mr. James) then send your name & ID on WhatsApp. Hurry!",
     unsureFields: ["company"],
+    scamRisk: "high",
+    scamReason: "It asks applicants to pay a KES 1,500 registration fee and offers KES 85,000 with no experience needed.",
     title: "Airport jobs: cleaners, drivers, loaders, cashiers",
     company: "Not stated",
     location: "Nairobi",

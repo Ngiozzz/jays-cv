@@ -166,6 +166,8 @@ export async function deleteExpiredClientFiles(tenantId: string, retentionMonths
     await fileStore.remove("order-files", file.storagePath).catch(() => {});
     await db.storedFile.updateMany({ where: { id: file.id }, data: { deletedAt: now } });
   }
+  // The AI helper's notes describe the client's CV, so they go with the files
+  await db.orderAiResult.deleteMany({ where: { order: { status: "DELIVERED", deliveredAt: { lte: cutoff } } } });
   return files.length;
 }
 

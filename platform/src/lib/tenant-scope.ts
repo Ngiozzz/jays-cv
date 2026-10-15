@@ -26,6 +26,7 @@ export const TENANT_MODELS = [
   "TrackingAttempt",
   "CancelledOrder",
   "CvCheck",
+  "OrderAiResult",
 ] as const;
 
 export type TenantModel = (typeof TENANT_MODELS)[number];

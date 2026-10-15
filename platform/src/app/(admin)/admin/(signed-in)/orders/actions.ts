@@ -14,6 +14,8 @@ import {
   sendDraft,
   type ActionResult,
 } from "@/modules/orders/order-actions.service";
+import { WRITER_TOOLS, type WriterTool } from "@/modules/ai/writer-tools";
+import { runWriterTool, type AiHelperOutcome } from "@/modules/orders/ai-helper.service";
 import { requireMember } from "@/modules/team/current-member";
 
 // Thin wrappers: who's asking, then the order service; a successful step refreshes the page
@@ -65,4 +67,11 @@ export async function deleteAllAbandonedAction() {
 
 export async function addNoteAction(orderId: string, text: string) {
   return done(await addNote(await requireMember(), orderId, text));
+}
+
+// The writer's AI helper: the result shows in place, so the page isn't refreshed
+export async function runWriterToolAction(orderId: string, tool: WriterTool, form: FormData): Promise<AiHelperOutcome> {
+  if (!WRITER_TOOLS.includes(tool)) return { ok: false, error: "Unknown AI tool." };
+  const file = form.get("file");
+  return runWriterTool(await requireMember(), orderId, tool, file instanceof File && file.size > 0 ? file : null);
 }
