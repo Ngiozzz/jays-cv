@@ -91,6 +91,8 @@ export function findOrderDetail(tenantId: string, number: number) {
       industry: true,
       experience: true,
       notes: true,
+      jobAdvert: true,
+      job: { select: { slug: true, title: true, company: true } },
       noCv: true,
       source: true,
       trackingTokenSealed: true,

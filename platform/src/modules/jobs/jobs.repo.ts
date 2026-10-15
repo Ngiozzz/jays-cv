@@ -102,6 +102,14 @@ export function findPublishedJobBySlug(tenantId: string, slug: string) {
   return tenantDb(tenantId).job.findFirst({ where: { status: "PUBLISHED", slug }, select: publicFields });
 }
 
+// A live job a client is ordering a tailored CV for
+export function findJobForOrder(tenantId: string, slug: string) {
+  return tenantDb(tenantId).job.findFirst({
+    where: { status: "PUBLISHED", slug },
+    select: { id: true, slug: true, title: true, company: true },
+  });
+}
+
 export type PublishedJobRow = Awaited<ReturnType<typeof findPublishedJobs>>[number];
 
 export function findPostersWithJobs(tenantId: string) {

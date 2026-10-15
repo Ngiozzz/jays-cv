@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { cvProblem, kenyanMobile, orderDetailsSchema, orderFormToInput, parseItem } from "./place-order";
+import {
+  cvProblem,
+  kenyanMobile,
+  orderDetailsSchema,
+  orderFormToInput,
+  parseItem,
+  tailoringProblems,
+} from "./place-order";
 
 const form = (fields: Record<string, string>) => {
   const data = new FormData();
@@ -68,5 +75,27 @@ describe("cvProblem", () => {
     expect(cvProblem({ size: 2000, type: "application/pdf" }, false)).toBeNull();
     expect(cvProblem({ size: 2000, type: "application/zip" }, false)).toContain("PDF, Word document or photo");
     expect(cvProblem({ size: 11 * 1024 * 1024, type: "image/jpeg" }, false)).toContain("over 10 MB");
+  });
+});
+
+describe("tailoringProblems", () => {
+  const order = { hasCv: true, fromJobPage: false, jobAdvert: "", hasAdvertFile: false };
+
+  it("is ready from a job page with a CV", () => {
+    expect(tailoringProblems({ ...order, fromJobPage: true })).toEqual({});
+  });
+
+  it("takes the advert pasted in, a link, or a photo of it", () => {
+    expect(tailoringProblems({ ...order, jobAdvert: "https://careers.kengen.co.ke/jobs/123" })).toEqual({});
+    expect(tailoringProblems({ ...order, hasAdvertFile: true })).toEqual({});
+    expect(tailoringProblems(order)).toEqual({
+      jobAdvert: "Paste the job advert or a link to it, or upload a photo of it.",
+    });
+  });
+
+  it("needs the CV to tailor", () => {
+    expect(tailoringProblems({ ...order, hasCv: false, fromJobPage: true })).toEqual({
+      cv: "Please upload the CV you'd like tailored.",
+    });
   });
 });

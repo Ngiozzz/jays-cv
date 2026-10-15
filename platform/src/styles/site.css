@@ -5463,3 +5463,269 @@ button.final-file {
   margin: 0 0 12px;
   color: var(--text);
 }
+
+/* ---------- Order card: a CV tailored to a job ---------- */
+.od-job {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--gold-border, var(--line));
+  border-radius: 12px;
+  background: var(--primary-soft);
+}
+.od-job > svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--gold-text);
+}
+.od-job span {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.od-job small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.od-job strong {
+  color: var(--ink);
+}
+.od-job a {
+  flex: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gold-text);
+}
+.od-advert {
+  display: grid;
+  gap: 12px;
+}
+.od-field textarea,
+.od-advert textarea {
+  width: 100%;
+  font: inherit;
+  padding: 11px 14px;
+  border: 1px solid #d5dbe6;
+  border-radius: 10px;
+  color: var(--ink);
+  resize: vertical;
+}
+@media (max-width: 600px) {
+  .od-job {
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------- Job page: the two ways to get a CV ready ---------- */
+.cv-choice {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+.cv-choice small {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+/* ---------- "Check it yourself": the check page and the feedback ---------- */
+.check-wrap {
+  max-width: 760px;
+}
+.check-card {
+  display: grid;
+  gap: 14px;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+.check-card h1 {
+  margin: 0;
+  font-size: 1.9rem;
+}
+.check-card .cv-cta-eyebrow {
+  color: var(--gold-text);
+}
+.check-job {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+.check-job svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold-text);
+}
+.check-gets {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text);
+}
+.check-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.check-note svg,
+.check-privacy svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+.check-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 6px;
+}
+.check-form .od-field input {
+  max-width: 260px;
+}
+.check-privacy {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.check-alt {
+  margin: 18px 0 0;
+  text-align: center;
+  color: var(--text);
+}
+.check-alt a {
+  font-weight: 700;
+  color: var(--gold-text);
+}
+.check-reading {
+  text-align: center;
+}
+.check-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--primary-soft);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: check-spin 0.9s linear infinite;
+}
+@keyframes check-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.match {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 14px;
+}
+.match strong {
+  font-family: var(--font-head);
+  font-size: 2.8rem;
+  line-height: 1;
+}
+.match span {
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+}
+.match b {
+  color: var(--ink);
+}
+.match-good {
+  background: #ecfdf5;
+}
+.match-good strong {
+  color: #047857;
+}
+.match-fair {
+  background: var(--primary-soft);
+}
+.match-fair strong {
+  color: var(--gold-text);
+}
+.match-low {
+  background: #fef2f2;
+}
+.match-low strong {
+  color: #b91c1c;
+}
+.feedback section h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 8px;
+  font-size: 1.05rem;
+}
+.feedback section h2 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold-text);
+}
+.feedback ul,
+.feedback ol {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+}
+.feedback-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.keyword-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.keyword-chips span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.check-upsell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  background: var(--black);
+  color: #fff;
+}
+.check-upsell p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+}
+@media (max-width: 700px) {
+  .check-card {
+    padding: 22px;
+  }
+  .feedback-grid {
+    grid-template-columns: 1fr;
+  }
+  .check-upsell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

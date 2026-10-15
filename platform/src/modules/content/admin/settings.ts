@@ -64,6 +64,7 @@ export const settingsSchema = z.object({
   autoCompleteDays: whole(1, 30, "days"),
   revisionHours: whole(1, 96, "hours"),
   deleteAbandonedDays: whole(7, 365, "days"),
+  cvCheckPrice: whole(1, 1000, "shillings"),
   retentionMonths: oneOf(
     RETENTION_CHOICES.map((choice) => choice.months),
     "Pick how long to keep client files",
@@ -99,6 +100,7 @@ const LABELS: Record<keyof SettingsInput, string> = {
   autoCompleteDays: "auto-complete (days)",
   revisionHours: "revision time (hours)",
   deleteAbandonedDays: "delete abandoned orders after (days)",
+  cvCheckPrice: "CV check price (KES)",
   retentionMonths: "keep client files (months)",
   posterRetentionMonths: "keep job posters (months)",
   aiWarnPct: "AI token warning (%)",

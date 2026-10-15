@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { Icon } from "@/components/icons/Icon";
+import { formatKes } from "@/lib/money";
 import type { PublicJob } from "@/modules/jobs/jobs.public";
 import { daysUntil, deadlineLabel, formatDay, postedLabel } from "@/modules/jobs/jobs.rules";
 import { HowToApply } from "./HowToApply";
@@ -12,6 +13,10 @@ type Props = {
   pageUrl: string;
   draftTime: string;
   cvHelpHref: string;
+  // The two ways to get a CV ready for this job: AI feedback to fix it yourself, or a writer tailors it
+  // (null when the business doesn't offer that one)
+  check: { href: string; price: number } | null;
+  tailor: { href: string; price: number } | null;
   reportHref: string;
 };
 
@@ -22,7 +27,7 @@ const daysLeftText = (deadline: string, today: string) => {
   return days === 1 ? "1 day left" : `${days} days left`;
 };
 
-export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, reportHref }: Props) {
+export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, check, tailor, reportHref }: Props) {
   const closes = deadlineLabel(job.deadline, today);
   const closed = closes.tone === "closed";
   const deadlineLine = job.deadline
@@ -103,13 +108,36 @@ export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, reportHr
           <div className="cv-cta">
             <span className="cv-cta-eyebrow">Before you apply</span>
             <h3>Is your CV ready for this job?</h3>
-            <p>
-              We&apos;ll tailor your CV to this role and have a draft ready in {draftTime}, well before the deadline.
-            </p>
-            <a className="btn btn-light btn-block" href={cvHelpHref} target="_blank" rel="noopener">
-              <Icon name="whatsapp" />
-              Get my CV ready
-            </a>
+            {check || tailor ? (
+              <>
+                {check && (
+                  <div className="cv-choice">
+                    <Link className="btn btn-light btn-block" href={check.href}>
+                      <Icon name="search" />
+                      Check it yourself · {formatKes(check.price)}
+                    </Link>
+                    <small>Instant AI feedback: how well you match, and what to fix</small>
+                  </div>
+                )}
+                {tailor && (
+                  <div className="cv-choice">
+                    <Link className="btn btn-outline-light btn-block" href={tailor.href}>
+                      <Icon name="edit" />
+                      Let us tailor it · {formatKes(tailor.price)}
+                    </Link>
+                    <small>Our writer rewrites your CV for this job, draft in {draftTime}</small>
+                  </div>
+                )}
+                <a className="cv-cta-link" href={cvHelpHref} target="_blank" rel="noopener">
+                  Questions first? Ask us on WhatsApp →
+                </a>
+              </>
+            ) : (
+              <a className="btn btn-light btn-block" href={cvHelpHref} target="_blank" rel="noopener">
+                <Icon name="whatsapp" />
+                Get my CV ready
+              </a>
+            )}
             <Link className="cv-cta-link" href="/pricing">
               See packages &amp; prices →
             </Link>

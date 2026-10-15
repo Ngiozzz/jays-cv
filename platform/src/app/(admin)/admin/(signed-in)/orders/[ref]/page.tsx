@@ -97,6 +97,19 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
                   <dt>Client&apos;s notes</dt>
                   <dd>{order.brief.notes || "None"}</dd>
                 </div>
+                {(order.brief.tailorJob || order.brief.jobAdvert) && (
+                  <div className="wide tailor-job">
+                    <dt>Tailor the CV to this job</dt>
+                    <dd>
+                      {order.brief.tailorJob && (
+                        <a href={order.brief.tailorJob.href} target="_blank" rel="noopener">
+                          {order.brief.tailorJob.title} at {order.brief.tailorJob.company} ↗
+                        </a>
+                      )}
+                      {order.brief.jobAdvert && <AdvertText text={order.brief.jobAdvert} />}
+                    </dd>
+                  </div>
+                )}
               </dl>
               {order.brief.noCv && (
                 <p className="role-note">
@@ -209,6 +222,18 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
         </aside>
       </div>
     </ContentToasts>
+  );
+}
+
+// The advert as the client pasted it; a link on its own becomes clickable
+function AdvertText({ text }: { text: string }) {
+  const link = /^https?:\/\/\S+$/.test(text.trim()) ? text.trim() : null;
+  return link ? (
+    <a href={link} target="_blank" rel="noopener noreferrer">
+      {link} ↗
+    </a>
+  ) : (
+    <p className="advert-text">{text}</p>
   );
 }
 

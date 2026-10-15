@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CvCheckStatus" ADD VALUE 'READING' BEFORE 'DONE';

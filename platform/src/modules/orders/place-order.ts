@@ -57,6 +57,9 @@ export const orderDetailsSchema = z.object({
     .refine((value) => value === "" || z.email().safeParse(value).success, "Check your email address"),
   targetRole: optionalText(100, "Keep the job title under 100 characters"),
   notes: optionalText(1000, "Keep your note under 1,000 characters"),
+  // A CV tailored to a job: the job page it was ordered from, or the advert pasted in
+  jobSlug: optionalText(200, "Choose the job again from the jobs board"),
+  jobAdvert: optionalText(5000, "Keep the job advert under 5,000 characters (or paste a link to it)"),
   noCv: z.boolean(),
   whatsappUpdates: z.boolean(),
 });
@@ -73,6 +76,8 @@ export function orderFormToInput(form: FormData): unknown {
     email: text("email"),
     targetRole: text("targetRole"),
     notes: text("notes"),
+    jobSlug: text("jobSlug"),
+    jobAdvert: text("jobAdvert"),
     noCv: form.get("noCv") === "on",
     whatsappUpdates: form.get("whatsappUpdates") === "on",
   };
@@ -94,6 +99,21 @@ export function cvProblem(file: { size: number; type: string } | null, noCv: boo
   if (!CV_TYPES.includes(file.type)) return "Upload your CV as a PDF, Word document or photo.";
   if (file.size > MAX_CV_BYTES) return "That file is over 10 MB. Please upload a smaller file or a photo.";
   return null;
+}
+
+// A CV tailored to a job needs the client's current CV and the job: the job page it came from, the
+// advert pasted in (text or a link), or a photo / PDF of it. Field name → what's missing.
+export function tailoringProblems(order: {
+  hasCv: boolean;
+  fromJobPage: boolean;
+  jobAdvert: string;
+  hasAdvertFile: boolean;
+}): Record<string, string> {
+  const problems: Record<string, string> = {};
+  if (!order.hasCv) problems.cv = "Please upload the CV you'd like tailored.";
+  if (!order.fromJobPage && order.jobAdvert.trim().length < 10 && !order.hasAdvertFile)
+    problems.jobAdvert = "Paste the job advert or a link to it, or upload a photo of it.";
+  return problems;
 }
 
 // Placing many orders quickly from one visitor looks like abuse (each one stores a file)

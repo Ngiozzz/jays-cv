@@ -18,7 +18,9 @@ export type CardPackage = {
   bestFor: string;
   draft: string;
 };
-export type CardService = { id: string; name: string; note: string; price: number };
+export type CardService = { id: string; name: string; note: string; price: number; needsJobAdvert: boolean };
+// The job a tailored CV is for, when the client came from its page on the jobs board
+export type CardJob = { slug: string; title: string; company: string };
 
 type Props = {
   packages: CardPackage[];
@@ -26,6 +28,7 @@ type Props = {
   whatsappHref: string;
   businessName: string;
   waNumber: string;
+  job: CardJob | null;
 };
 type Placed = Extract<PlaceOrderResult, { ok: true }>;
 
@@ -33,13 +36,15 @@ const STEPS = ["Choose a service", "Pick a package", "Your details & CV"];
 
 // The website's order card: 1) what do you need, 2) which package, 3) details and CV → the order is
 // created and the client gets their order number and private tracking link.
-export function OrderCard({ packages, services, whatsappHref, businessName, waNumber }: Props) {
+export function OrderCard({ packages, services, whatsappHref, businessName, waNumber, job }: Props) {
   const params = useSearchParams();
   const wantedPackage = packages.find((pkg) => pkg.shortName.toLowerCase() === params.get("pkg")?.toLowerCase());
-  const wantedService = services.find((service) => service.id === params.get("service"));
+  // From a job page: straight to the tailored CV, with the job already chosen
+  const tailoring = services.find((service) => service.needsJobAdvert);
+  const wantedService = (job && tailoring) || services.find((service) => service.id === params.get("service"));
   const needFor = (index: number) => NEEDS.find((need) => need.packageIndex === index)?.key ?? "cv";
 
-  const [step, setStep] = useState(wantedPackage || wantedService ? 2 : 1);
+  const [step, setStep] = useState(job && tailoring ? 3 : wantedPackage || wantedService ? 2 : 1);
   const [need, setNeed] = useState<NeedKey>(
     wantedService ? "single" : wantedPackage ? needFor(packages.indexOf(wantedPackage)) : "cv-letter",
   );
@@ -65,6 +70,7 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
       .map((pkg) => ({ key: `package:${pkg.id}`, name: `${pkg.name} package`, price: pkg.price }))
       .find((p) => p.key === item) ??
     services.map((s) => ({ key: `service:${s.id}`, name: s.name, price: s.price })).find((s) => s.key === item);
+  const needsJob = services.some((service) => `service:${service.id}` === item && service.needsJobAdvert);
 
   const go = (next: number) => {
     setStep(next);
@@ -187,6 +193,8 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
               item={item}
               need={need}
               chosen={chosen}
+              tailoring={needsJob}
+              job={needsJob ? job : null}
               whatsappHref={whatsappHref}
               onBack={() => go(2)}
               onPlaced={(result) => {
@@ -204,6 +212,9 @@ function DetailsStep(props: {
   item: string;
   need: NeedKey;
   chosen: { name: string; price: number } | undefined;
+  // A CV tailored to a job: the job it came from, or the advert asked for here
+  tailoring: boolean;
+  job: CardJob | null;
   whatsappHref: string;
   onBack: () => void;
   onPlaced: (result: Placed) => void;
@@ -211,13 +222,17 @@ function DetailsStep(props: {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<{ text: string; fields: Record<string, string> } | null>(null);
   const [cvName, setCvName] = useState<{ name: string; size: number } | null>(null);
-  const [noCv, setNoCv] = useState(false);
+  const [advertName, setAdvertName] = useState("");
+  const [noCvTicked, setNoCv] = useState(false);
+  // Tailoring needs a CV to tailor
+  const noCv = noCvTicked && !props.tailoring;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     data.set("item", props.item);
     data.set("need", props.need);
+    if (props.job) data.set("jobSlug", props.job.slug);
     startTransition(async () => {
       const result = await placeOrderAction(data);
       if (result.ok) props.onPlaced(result);
@@ -249,6 +264,18 @@ function DetailsStep(props: {
           <strong>{props.chosen ? formatKes(props.chosen.price) : ""}</strong>
         </div>
       </div>
+      {props.job && (
+        <div className="od-job">
+          <Icon name="briefcase" />
+          <span>
+            <small>Tailored to this job</small>
+            <strong>
+              {props.job.title} at {props.job.company}
+            </strong>
+          </span>
+          <Link href={`/jobs/${props.job.slug}`}>View the job</Link>
+        </div>
+      )}
       <form className="order-details" noValidate onSubmit={submit}>
         <div className="od-grid">
           <div className="od-field">
@@ -291,7 +318,13 @@ function DetailsStep(props: {
             <label htmlFor="od-role">
               Job you&apos;re targeting <small>(optional)</small>
             </label>
-            <input id="od-role" name="targetRole" placeholder="e.g. Procurement Officer" maxLength={100} />
+            <input
+              id="od-role"
+              name="targetRole"
+              placeholder="e.g. Procurement Officer"
+              maxLength={100}
+              defaultValue={props.job?.title}
+            />
             {fieldError("targetRole")}
           </div>
           <div className="od-field od-wide">
@@ -308,6 +341,37 @@ function DetailsStep(props: {
             {fieldError("notes")}
           </div>
         </div>
+        {props.tailoring && !props.job && (
+          <div className="od-advert">
+            <div className="od-field">
+              <label htmlFor="od-advert">
+                The job advert <em>*</em>
+              </label>
+              <textarea
+                id="od-advert"
+                name="jobAdvert"
+                rows={4}
+                maxLength={5000}
+                placeholder="Paste the job advert here, or a link to it (e.g. https://careers.company.co.ke/jobs/123)"
+              />
+              {fieldError("jobAdvert")}
+            </div>
+            <label className={advertName ? "cv-drop has-file" : "cv-drop"}>
+              <input
+                type="file"
+                name="advert"
+                accept=".pdf,image/*"
+                onChange={(event) => setAdvertName(event.target.files?.[0]?.name ?? "")}
+              />
+              <Icon name="image" />
+              <span>
+                <strong>{advertName || "Or upload a photo of the advert"}</strong>
+                <small>A screenshot or PDF of the job poster · optional if you pasted it above</small>
+              </span>
+            </label>
+            {fieldError("advert")}
+          </div>
+        )}
         {!noCv && (
           <label className={cvName ? "cv-drop has-file" : "cv-drop"}>
             <input
@@ -328,7 +392,7 @@ function DetailsStep(props: {
                 </>
               ) : (
                 <>
-                  <strong>Upload your current CV</strong>
+                  <strong>{props.tailoring ? "Upload the CV to tailor" : "Upload your current CV"}</strong>
                   <small>PDF, Word, or a clear photo of it · up to 10 MB</small>
                 </>
               )}
@@ -336,10 +400,12 @@ function DetailsStep(props: {
           </label>
         )}
         {fieldError("cv")}
-        <label className="od-check">
-          <input type="checkbox" name="noCv" checked={noCv} onChange={(event) => setNoCv(event.target.checked)} /> I
-          don&apos;t have a CV yet. Send me a short questionnaire instead.
-        </label>
+        {!props.tailoring && (
+          <label className="od-check">
+            <input type="checkbox" name="noCv" checked={noCv} onChange={(event) => setNoCv(event.target.checked)} /> I
+            don&apos;t have a CV yet. Send me a short questionnaire instead.
+          </label>
+        )}
         <label className="od-check">
           <input type="checkbox" name="whatsappUpdates" defaultChecked /> Send me updates about this order on WhatsApp
         </label>
@@ -386,6 +452,7 @@ function Done({ placed, businessName, waNumber }: { placed: Placed; businessName
           </h2>
           <p className="order-sub">
             {placed.itemName}
+            {placed.forJob && ` for ${placed.forJob}`}
             {placed.cvName ? ` · CV received (${placed.cvName})` : " · we'll send you a short questionnaire"}
           </p>
         </div>

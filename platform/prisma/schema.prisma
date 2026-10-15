@@ -51,6 +51,7 @@ model Tenant {
   payouts         WriterPayout[]
   trackingTries   TrackingAttempt[]
   cancelledOrders CancelledOrder[]
+  cvChecks        CvCheck[]
   about           AboutPage?
 }
 
@@ -82,6 +83,8 @@ model BusinessSettings {
   posterRetentionMonths Int       @default(3)
   // Abandoned (never paid) orders are deleted this many days after they were placed
   deleteAbandonedDays   Int       @default(30)
+  // What a client pays for "Check it yourself": AI feedback on their CV for one job (KES)
+  cvCheckPrice          Int       @default(10)
   aiWarnPct             Int       @default(20)
   paybill               String
   mpesaMode             MpesaMode @default(TEST)
@@ -278,6 +281,8 @@ model Job {
   files        StoredFile[]
   tokenEntries TokenLedgerEntry[]
   inboxItems   InboxItem[]
+  orders       Order[]
+  cvChecks     CvCheck[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status, postedAt])
@@ -343,6 +348,11 @@ model Order {
   industry            String?
   experience          String?
   notes               String?
+  // For a CV tailored to a job: the job on our board it was ordered from, and/or the advert the
+  // client pasted (text or a link). An uploaded advert is a JOB_ADVERT file.
+  jobId               String?
+  job                 Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  jobAdvert           String?
   noCv                Boolean     @default(false)
   source              String      @default("website")
   // Only a hash of the private tracking-link token is stored, so a database leak can't reveal links
@@ -398,6 +408,46 @@ model TrackingAttempt {
   at       DateTime @default(now())
 
   @@index([tenantId, key, at])
+}
+
+// "Check it yourself": a client pays a small fee and the AI tells them how well their CV fits one
+// job (match, strengths, gaps). Feedback only: it never writes a CV, and Jay gets no order. The CV
+// is deleted as soon as it has been read.
+enum CvCheckStatus {
+  UNPAID
+  PAID
+  // The AI is reading it right now (so a second request can't start a second, paid-for reading)
+  READING
+  DONE
+  FAILED
+}
+
+model CvCheck {
+  id        String        @id @default(cuid())
+  tenantId  String
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  jobId     String?
+  job       Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  // "HR & Admin Team Lead at Kingdom Sacco", kept if the job is later removed
+  jobLabel  String
+  jobSlug   String
+  phone     String
+  amount    Int
+  status    CvCheckStatus @default(UNPAID)
+  // The uploaded CV (private "order-files" bucket) until the AI has read it; then null
+  cvPath    String?
+  cvName    String
+  cvType    String
+  // The AI's feedback, shaped by modules/cv-check/cv-check.ts
+  result    Json?
+  error     String?
+  createdAt DateTime      @default(now())
+  paidAt    DateTime?
+  doneAt    DateTime?
+
+  payments Payment[]
+
+  @@index([tenantId, createdAt])
 }
 
 // What's left of an unpaid order after it was deleted: only its number and the hash of its tracking
@@ -471,6 +521,9 @@ model Payment {
   tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   orderId           String?
   order             Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  // A "Check it yourself" CV check paid for (no order: the client fixes their CV themself)
+  cvCheckId         String?
+  cvCheck           CvCheck?       @relation(fields: [cvCheckId], references: [id], onDelete: SetNull)
   channel           PaymentChannel
   status            PaymentStatus  @default(PENDING)
   match             PaymentMatch?
@@ -584,6 +637,8 @@ model Service {
   price           Int
   firstDraftHours Int      @default(48)
   revisionRounds  Int      @default(1)
+  // A CV tailored to one job: the order needs the job (from a job page) or its advert
+  needsJobAdvert  Boolean  @default(false)
   visible         Boolean  @default(true)
   sortOrder       Int      @default(0)
   updatedAt       DateTime @updatedAt

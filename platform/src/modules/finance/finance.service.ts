@@ -64,6 +64,9 @@ const totalOf = (sum: { _count: number; _sum: { amount: number | null } }) => ({
   amount: sum._sum.amount ?? 0,
 });
 
+// A "Check it yourself" CV check: self-service income with no order behind it
+const CV_CHECK = "CV check";
+
 export async function loadFinance(member: CurrentMember, period: Period, now: Date = new Date()) {
   assertCan(member, "manageFinance");
   const tenantId = member.tenant.id;
@@ -79,7 +82,11 @@ export async function loadFinance(member: CurrentMember, period: Period, now: Da
     repo.findRecentPayouts(tenantId, 10),
   ]);
   const totals = summarise(
-    payments.map((p) => ({ amount: p.amount, fee: p.fee, itemName: p.order?.itemName ?? "Other" })),
+    payments.map((p) => ({
+      amount: p.amount,
+      fee: p.fee,
+      itemName: p.order?.itemName ?? (p.cvCheck ? CV_CHECK : "Other"),
+    })),
     writers.reduce((sum, w) => sum + w.earnedInPeriod, 0),
   );
   return {
@@ -91,7 +98,7 @@ export async function loadFinance(member: CurrentMember, period: Period, now: Da
       confirmedAt: (p.confirmedAt ?? now).toISOString(),
       order: p.order ? orderNumberLabel(prefix, p.order.number) : "",
       client: p.order?.clientName ?? "",
-      item: p.order?.itemName ?? "",
+      item: p.order?.itemName ?? (p.cvCheck ? `${CV_CHECK}: ${p.cvCheck.jobLabel}` : ""),
       channel: CHANNEL_LABEL[p.channel],
       receipt: p.receipt,
       amount: p.amount,
@@ -161,7 +168,7 @@ export async function paymentsCsv(member: CurrentMember, period: Period, now: Da
       p.confirmedAt?.toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" }),
       p.order ? orderNumberLabel(prefix, p.order.number) : "",
       p.order?.clientName,
-      p.order?.itemName,
+      p.order?.itemName ?? (p.cvCheck ? `${CV_CHECK}: ${p.cvCheck.jobLabel}` : ""),
       CHANNEL_LABEL[p.channel],
       p.receipt,
       p.accountReference,

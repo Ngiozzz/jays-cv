@@ -21,7 +21,8 @@ export function recordUsage(
     model: string;
     inputTokens: number;
     outputTokens: number;
-    memberId: string;
+    // null: used by a website visitor, e.g. a "Check it yourself" CV check
+    memberId: string | null;
     jobId?: string;
   },
 ) {

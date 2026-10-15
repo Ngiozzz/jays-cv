@@ -80,6 +80,13 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
       industry: order.industry,
       experience: order.experience,
       notes: order.notes,
+      // A CV tailored to a job: the job on our board it was ordered from, and/or the advert sent
+      tailorJob: order.job && {
+        title: order.job.title,
+        company: order.job.company,
+        href: `${siteUrl(tenant)}/jobs/${order.job.slug}`,
+      },
+      jobAdvert: order.jobAdvert,
       noCv: order.noCv,
     },
     revisions: order.revisions.length,

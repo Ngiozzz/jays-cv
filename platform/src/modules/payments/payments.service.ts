@@ -183,7 +183,7 @@ export async function settlePrompt(
   await db.$transaction(async (tx) => {
     const payment = await tx.payment.findFirst({
       where: { checkoutRequestId, status: "PENDING" },
-      select: { id: true, orderId: true, amount: true, raw: true },
+      select: { id: true, orderId: true, cvCheckId: true, amount: true, raw: true },
     });
     if (!payment) return;
     const now = new Date();
@@ -201,6 +201,12 @@ export async function settlePrompt(
       where: { id: payment.id },
       data: { status: "CONFIRMED", match: "ORDER_NUMBER", receipt: result.receipt, confirmedAt: now },
     });
+    // A "Check it yourself" CV check: paid, so the AI can read the CV (see cv-check.service)
+    if (payment.cvCheckId)
+      await tx.cvCheck.updateMany({
+        where: { id: payment.cvCheckId, status: "UNPAID" },
+        data: { status: "PAID", paidAt: now },
+      });
     if (!payment.orderId) return;
     const order = await tx.order.findFirst({
       where: { id: payment.orderId },

@@ -3,6 +3,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { fileStore } from "@/lib/storage";
 import { tenantDb } from "@/lib/tenant-db";
 import { findSettings } from "@/modules/content/content.repo";
+import { deleteUnpaidCheckCvs } from "@/modules/cv-check/cv-check.service";
 import { listTenantIds } from "@/modules/tenants/tenants.repo";
 import type { EventKind } from "./order-events";
 import {
@@ -178,7 +179,8 @@ export async function nightlyOrderUpkeep(now = new Date()) {
     await runAutoSteps(tenant.id, settings, now);
     const deleted = await deleteAbandonedOrders(tenant.id, settings.deleteAbandonedDays, now);
     const files = await deleteExpiredClientFiles(tenant.id, settings.retentionMonths, now);
-    results.push({ tenant: tenant.slug, deleted, files });
+    const checkCvs = await deleteUnpaidCheckCvs(tenant.id, now);
+    results.push({ tenant: tenant.slug, deleted, files, checkCvs });
   }
   return results;
 }

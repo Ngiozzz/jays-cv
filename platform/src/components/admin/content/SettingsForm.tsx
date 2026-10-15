@@ -99,6 +99,11 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             after they were placed
           </label>
           {save.error("deleteAbandonedDays")}
+          <label>
+            &ldquo;Check it yourself&rdquo; (AI feedback on a CV for one job) costs{" "}
+            <span>KES {rule("cvCheckPrice", 1000)}</span>
+          </label>
+          {save.error("cvCheckPrice")}
         </div>
       </Panel>
 

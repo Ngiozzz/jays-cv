@@ -3,10 +3,14 @@ import { tenantDb } from "@/lib/tenant-db";
 
 const since = (start: Date | null) => (start ? { gte: start } : undefined);
 
-// Confirmed payments that belong to an order, newest first
+// Confirmed payments for an order or a "Check it yourself" CV check, newest first
 export function findOrderPayments(tenantId: string, start: Date | null) {
   return tenantDb(tenantId).payment.findMany({
-    where: { status: "CONFIRMED", orderId: { not: null }, confirmedAt: since(start) },
+    where: {
+      status: "CONFIRMED",
+      OR: [{ orderId: { not: null } }, { cvCheckId: { not: null } }],
+      confirmedAt: since(start),
+    },
     orderBy: { confirmedAt: "desc" },
     select: {
       id: true,
@@ -17,6 +21,7 @@ export function findOrderPayments(tenantId: string, start: Date | null) {
       accountReference: true,
       confirmedAt: true,
       order: { select: { number: true, clientName: true, itemName: true } },
+      cvCheck: { select: { jobLabel: true } },
     },
   });
 }
@@ -24,7 +29,7 @@ export function findOrderPayments(tenantId: string, start: Date | null) {
 // Money that reached the Paybill but isn't tied to an order (a name typed as the account, or not from the website)
 export function sumUnlinkedPayments(tenantId: string, start: Date | null) {
   return tenantDb(tenantId).payment.aggregate({
-    where: { status: "CONFIRMED", orderId: null, confirmedAt: since(start) },
+    where: { status: "CONFIRMED", orderId: null, cvCheckId: null, confirmedAt: since(start) },
     _count: true,
     _sum: { amount: true },
   });

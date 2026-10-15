@@ -12,5 +12,12 @@ export async function placeOrderAction(form: FormData): Promise<PlaceOrderResult
   const ip =
     requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || requestHeaders.get("x-real-ip") || "unknown";
   const cv = form.get("cv");
-  return placeOrder(tenant, orderFormToInput(form), cv instanceof File ? cv : null, ip);
+  const advert = form.get("advert");
+  return placeOrder(
+    tenant,
+    orderFormToInput(form),
+    cv instanceof File ? cv : null,
+    ip,
+    advert instanceof File ? advert : null,
+  );
 }

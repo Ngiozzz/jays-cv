@@ -51,6 +51,7 @@ export default async function JobPage({ params }: PageProps<"/[tenant]/jobs/[slu
   if (!job) notFound();
 
   const pageUrl = `${env.APP_URL}/jobs/${job.slug}`;
+  const tailoring = prices.services.find((service) => service.needsJobAdvert);
   // Same category first, then the newest
   const similar = board.jobs
     .filter((other) => other.slug !== job.slug)
@@ -74,6 +75,8 @@ export default async function JobPage({ params }: PageProps<"/[tenant]/jobs/[slu
             today={today}
             pageUrl={pageUrl}
             draftTime={draftTimeLabel(standardDraftHours(prices.packages))}
+            check={{ href: `/jobs/${job.slug}/check`, price: settings.cvCheckPrice }}
+            tailor={tailoring ? { href: `/order?job=${encodeURIComponent(job.slug)}`, price: tailoring.price } : null}
             cvHelpHref={whatsappLink(
               settings.whatsapp,
               `Hi Jay CVS, I'd like my CV ready for the ${job.title} job at ${job.company}.`,

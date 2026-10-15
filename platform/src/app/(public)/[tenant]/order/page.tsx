@@ -4,6 +4,7 @@ import { OrderCard } from "@/components/order/OrderCard";
 import { PageHero } from "@/components/site/PageHero";
 import { whatsappDigits, whatsappLink } from "@/modules/content/contact";
 import { getPriceList } from "@/modules/content/content.service";
+import { findJobForOrder } from "@/modules/jobs/jobs.repo";
 import { draftTimeLabel } from "@/modules/content/packages";
 import { siteContext } from "../site-context";
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   description: "Order a professional CV, cover letter or LinkedIn revamp in three quick steps. Pay by M-Pesa.",
 };
 
-export default async function OrderPage({ params }: PageProps<"/[tenant]/order">) {
+export default async function OrderPage({ params, searchParams }: PageProps<"/[tenant]/order">) {
   const { tenant, settings } = await siteContext(params);
   const prices = await getPriceList(tenant.id);
   const packages = prices.packages.map((pkg) => ({
@@ -28,7 +29,15 @@ export default async function OrderPage({ params }: PageProps<"/[tenant]/order">
     name: service.name,
     note: service.note,
     price: service.price,
+    needsJobAdvert: service.needsJobAdvert,
   }));
+  const card = {
+    packages,
+    services,
+    businessName: tenant.name,
+    waNumber: whatsappDigits(settings.whatsapp),
+    whatsappHref: whatsappLink(settings.whatsapp, `Hi ${tenant.name}, I have a question before I order`),
+  };
 
   return (
     <>
@@ -38,17 +47,26 @@ export default async function OrderPage({ params }: PageProps<"/[tenant]/order">
         lead="Three quick steps: choose a service, pick a package and upload your CV. You'll get a private link to pay and follow your order."
       />
       <div className="container journey-wrap">
-        {/* The card reads ?pkg= or ?service= from the address to start on the right choice */}
+        {/* The card reads ?pkg= or ?service= from the address to start on the right choice;
+            ?job= (from a job page's "Get my CV tailored") starts a tailored CV for that job */}
         <Suspense>
-          <OrderCard
-            packages={packages}
-            services={services}
-            businessName={tenant.name}
-            waNumber={whatsappDigits(settings.whatsapp)}
-            whatsappHref={whatsappLink(settings.whatsapp, `Hi ${tenant.name}, I have a question before I order`)}
-          />
+          <CardForJob tenantId={tenant.id} searchParams={searchParams} card={card} />
         </Suspense>
       </div>
     </>
   );
+}
+
+async function CardForJob({
+  tenantId,
+  searchParams,
+  card,
+}: {
+  tenantId: string;
+  searchParams: PageProps<"/[tenant]/order">["searchParams"];
+  card: Omit<Parameters<typeof OrderCard>[0], "job">;
+}) {
+  const slug = (await searchParams).job;
+  const job = typeof slug === "string" && slug ? await findJobForOrder(tenantId, slug.slice(0, 200)) : null;
+  return <OrderCard {...card} job={job && { slug: job.slug, title: job.title, company: job.company }} />;
 }

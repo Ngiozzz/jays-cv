@@ -2,6 +2,14 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { env } from "@/lib/env";
+import {
+  cvCheckPrompt,
+  cvFeedbackSchema,
+  PRETEND_FEEDBACK,
+  type CheckCvType,
+  type CheckJob,
+  type CvFeedback,
+} from "@/modules/cv-check/cv-check";
 import { posterPrompt, posterReadingSchema, type PosterReading } from "./poster-reading";
 import { pretendReadingFor } from "./pretend-readings";
 
@@ -42,6 +50,40 @@ export async function readJobPoster(image: PosterImage, today: string): Promise<
   });
 
   if (response.stop_reason === "refusal") throw new AiUnavailableError("The AI couldn't read this image.");
+  if (!response.parsed_output) throw new AiUnavailableError("The AI's answer couldn't be read. Please try again.");
+  return {
+    data: response.parsed_output,
+    usage: {
+      model: response.model,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
+}
+
+// "Check it yourself": the client's CV (a PDF or a photo) compared with one job. Feedback only.
+export async function checkCvAgainstJob(
+  cv: { base64: string; mediaType: CheckCvType },
+  job: CheckJob,
+): Promise<AiResult<CvFeedback>> {
+  if (!client) return { data: PRETEND_FEEDBACK, usage: null };
+
+  const document =
+    cv.mediaType === "application/pdf"
+      ? ({ type: "document", source: { type: "base64", media_type: "application/pdf", data: cv.base64 } } as const)
+      : ({ type: "image", source: { type: "base64", media_type: cv.mediaType, data: cv.base64 } } as const);
+
+  const response = await client.beta.messages.parse({
+    model: env.ANTHROPIC_MODEL,
+    max_tokens: 16000,
+    // A recruiter's judgement, not deep research: medium effort keeps each check quick and cheap
+    output_config: { effort: "medium", format: betaZodOutputFormat(cvFeedbackSchema) },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [{ role: "user", content: [document, { type: "text", text: cvCheckPrompt(job) }] }],
+  });
+
+  if (response.stop_reason === "refusal") throw new AiUnavailableError("The AI couldn't read this CV.");
   if (!response.parsed_output) throw new AiUnavailableError("The AI's answer couldn't be read. Please try again.");
   return {
     data: response.parsed_output,

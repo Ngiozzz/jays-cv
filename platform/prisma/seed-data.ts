@@ -93,6 +93,14 @@ export const SERVICES = [
   { name: "Job application support", note: "Per application / portal", price: 1000, firstDraftHours: 48 },
   { name: "CV update", note: "For CVs we wrote in the last 12 months", price: 700, firstDraftHours: 48 },
   { name: "International CV format", note: "UK, Canada, US, Europe, Gulf", price: 2500, firstDraftHours: 48 },
+  // Ordered from a job page's "Get my CV tailored for this job", or with the advert pasted in
+  {
+    name: "CV tailored to a job",
+    note: "Your CV rewritten for one specific job advert",
+    price: 1000,
+    firstDraftHours: 48,
+    needsJobAdvert: true,
+  },
 ];
 
 export const REVIEWS = [
