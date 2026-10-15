@@ -7,6 +7,7 @@ import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { footerContact } from "@/modules/content/footer";
 import { getSiteChrome } from "@/modules/content/content.service";
 import { whatsappLink } from "@/modules/content/contact";
+import { testWebsite } from "@/modules/payments/gateway";
 import { allTenantSlugs, getTenant } from "@/modules/tenants/tenants.service";
 
 // The proxy rewrites each request to /<business slug>/…, so every business's pages are built and cached separately
@@ -20,6 +21,11 @@ export default async function PublicLayout({ children, params }: LayoutProps<"/[
 
   return (
     <>
+      {testWebsite && (
+        <div className="test-site-bar" role="note">
+          <strong>Test website.</strong> Payments here are pretend: no money moves. The real site is jaycvs.co.ke.
+        </div>
+      )}
       {announcement && <AnnouncementBar text={announcement.announcementText} link={announcement.announcementLink} />}
       <a className="skip-link" href="#main">
         Skip to content

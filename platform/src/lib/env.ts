@@ -26,6 +26,9 @@ const schema = z.object({
   ANTHROPIC_CV_CHECK_MODEL: z.string().trim().min(1).default("claude-sonnet-5-5"),
   ANTHROPIC_WRITER_MODEL: z.string().trim().min(1).default("claude-sonnet-5-5"),
   ANTHROPIC_REVIEW_MODEL: z.string().trim().min(1).default("claude-haiku-5-5"),
+  // "on" keeps the pretend M-Pesa on a deployed test website (e.g. the Vercel preview shown to Jay),
+  // with a "Test website" banner on every page. Never set it on the real website.
+  MPESA_PRETEND: z.enum(["on", "off"]).default("off"),
   // Shared secret for the nightly tasks (Vercel Cron sends it automatically when set in Vercel)
   CRON_SECRET: optional,
 });

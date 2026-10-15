@@ -5751,3 +5751,13 @@ button.final-file {
     align-items: stretch;
   }
 }
+
+/* A deployed test website (pretend M-Pesa): says so on every page */
+.test-site-bar {
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  background: #fef3c7;
+  color: #78350f;
+  border-bottom: 1px solid #fcd34d;
+}

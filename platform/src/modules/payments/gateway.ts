@@ -1,5 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { env } from "@/lib/env";
 
 // The connection to M-Pesa. Until the business has Safaricom Daraja keys, the website uses a pretend
 // M-Pesa in development: no prompt reaches a phone, and the tester chooses on screen what the client
@@ -32,8 +33,9 @@ const pretendGateway: MpesaGateway = {
   },
 };
 
-// The live site never pretends: anyone could "pay" with the test buttons. Without Daraja keys
-// there, the prompt is simply unavailable and clients use the Paybill.
+// The real website never pretends: anyone could "pay" with the test buttons. Without Daraja keys
+// there, the prompt is simply unavailable and clients use the Paybill. A deployed test website can
+// keep pretending with MPESA_PRETEND=on (it then shows a "Test website" banner).
 const unavailableGateway: MpesaGateway = {
   pretend: false,
   async sendPrompt() {
@@ -41,4 +43,8 @@ const unavailableGateway: MpesaGateway = {
   },
 };
 
-export const mpesa: MpesaGateway = process.env.NODE_ENV === "production" ? unavailableGateway : pretendGateway;
+export const mpesa: MpesaGateway =
+  env.NODE_ENV !== "production" || env.MPESA_PRETEND === "on" ? pretendGateway : unavailableGateway;
+
+// A deployed website with pretend payments must say so on every page
+export const testWebsite = env.NODE_ENV === "production" && env.MPESA_PRETEND === "on";
