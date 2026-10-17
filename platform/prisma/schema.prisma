@@ -852,8 +852,14 @@ model InboxItem {
   posterType    String      @default("image/jpeg")
   posterBytes   Int         @default(0)
   source        String      @default("Uploaded")
-  // Text the AI read off the poster, used for the scam checks
+  // Text the AI read off the poster (and the text posted with it), used for the scam checks
   rawText       String      @default("")
+  // The text posted with the poster (WhatsApp/LinkedIn caption); its links are opened for the AI
+  caption       String      @default("")
+  // Each link in the caption and whether it could be read: LinkResult[] (modules/ai/links.ts)
+  links         Json?
+  // A poster listing several jobs gives one item per job: the others point at the first
+  splitFromId   String?
   // The AI's second opinion on whether the advert is a scam: "low" | "medium" | "high", and why
   scamRisk      String?
   scamReason    String?

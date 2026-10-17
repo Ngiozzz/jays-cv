@@ -1,6 +1,8 @@
 // Google for Jobs reads this from each job page (schema.org JobPosting), so Jay CVS jobs can
 // appear in Google's job search. Pure, so it's unit-tested.
 
+import { isNoLocation } from "./jobs.schema";
+
 type JobForGoogle = {
   title: string;
   company: string;
@@ -49,7 +51,12 @@ export function jobPostingSchema(job: JobForGoogle, pageUrl: string) {
     hiringOrganization: { "@type": "Organization", name: job.company },
     jobLocation: {
       "@type": "Place",
-      address: { "@type": "PostalAddress", addressLocality: job.location, addressCountry: "KE" },
+      // "Not specified" is not a place, so Google only gets the country
+      address: {
+        "@type": "PostalAddress",
+        ...(isNoLocation(job.location) ? {} : { addressLocality: job.location }),
+        addressCountry: "KE",
+      },
     },
     ...(job.workMode === "Remote"
       ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "Kenya" } }

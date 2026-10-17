@@ -6386,3 +6386,214 @@ kbd {
 .review-ai.ok {
   color: #15803d;
 }
+
+/* "What the AI found on the poster" (Post a job + Bulk post) */
+.ai-report {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--gold-border);
+  border-radius: 12px;
+  background: var(--white);
+}
+.ai-report-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+.ai-report-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+}
+.ai-report-needed {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.ai-report-group h4 {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ai-report-group.unsure h4 {
+  color: #9a3412;
+}
+.ai-report-group.filled h4 span {
+  color: #15803d;
+}
+.ai-report-chips,
+.ai-report-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ai-report-list {
+  display: grid;
+  gap: 6px;
+}
+.ai-report-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.ai-report-list small {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.ai-report-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.ai-report-chip:hover {
+  border-color: var(--gold);
+}
+.ai-report-group.unsure .ai-report-chip {
+  border-color: #fdba74;
+  background: #fffaf0;
+}
+.ai-report-group.filled .ai-report-chip {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+.ai-report-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.ai-report-foot {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.ai-unsure {
+  border-color: #c2410c !important;
+  background: #fffaf0 !important;
+}
+.ai-tool-progress,
+.poster-actions .ai-progress {
+  margin-top: 12px;
+}
+.d-head .ai-progress {
+  margin-top: 6px;
+}
+
+/* "Text that came with the poster" (Post a job + Bulk post) */
+.caption-field {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.caption-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 400;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+.caption-field small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.d-side .caption-field {
+  margin-top: 12px;
+}
+.caption-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.caption-text {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  font-weight: 400;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 160px;
+  overflow: auto;
+}
+
+/* A poster listing several jobs (Post a job) */
+.poster-jobs {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--gold-border);
+  border-radius: 10px;
+  background: var(--white);
+  font-size: 0.85rem;
+}
+.poster-jobs p {
+  margin: 0;
+}
+.poster-jobs ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.poster-job {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+.poster-job.is-sel {
+  border-color: var(--gold);
+  background: var(--primary-soft);
+  font-weight: 700;
+}
+.poster-jobs-done {
+  color: #166534;
+  font-weight: 600;
+}
+.ai-report-link a {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ai-report-group.links li.failed .ai-report-link {
+  color: #991b1b;
+}
+.ai-report-group.links li.ok .ai-report-link {
+  color: #166534;
+}

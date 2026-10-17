@@ -1,5 +1,5 @@
 import { daysUntil } from "./jobs.rules";
-import type { ApplyMethod } from "./jobs.schema";
+import { isNoLocation, type ApplyMethod } from "./jobs.schema";
 
 // Searching and filtering the public jobs board (runs in the browser, so it must stay pure)
 
@@ -32,7 +32,7 @@ export function placesOf(location: string): string[] {
     .split("(")[0]
     .split(/&|,/)
     .map((place) => place.trim())
-    .filter((place) => place && !place.startsWith("["));
+    .filter((place) => place && !place.startsWith("[") && !isNoLocation(place));
 }
 
 export function countBy<T extends BoardJob>(jobs: T[], key: "category" | "type"): Record<string, number> {
@@ -47,7 +47,10 @@ export function filterJobs<T extends BoardJob>(jobs: T[], filters: BoardFilters,
   const list = jobs.filter(
     (job) =>
       (!term ||
-        [job.title, job.company, job.category, job.location, job.summary, ...job.tags].join(" ").toLowerCase().includes(term)) &&
+        [job.title, job.company, job.category, job.location, job.summary, ...job.tags]
+          .join(" ")
+          .toLowerCase()
+          .includes(term)) &&
       (!filters.loc || job.location.includes(filters.loc)) &&
       (!filters.cat || job.category === filters.cat) &&
       (!filters.types.length || filters.types.includes(job.type)) &&

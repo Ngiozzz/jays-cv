@@ -4,6 +4,8 @@ import { Icon } from "@/components/icons/Icon";
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { deleteJobAction, saveJobAction } from "@/app/(admin)/admin/(signed-in)/jobs/actions";
 import { JobCard } from "@/components/jobs/JobCard";
+import type { LinkResult } from "@/modules/ai/links";
+import { readingReport } from "@/modules/ai/reading-report";
 import type { JobDisplayStatus } from "@/modules/jobs/jobs.rules";
 import {
   JOB_CATEGORIES,
@@ -15,11 +17,32 @@ import {
   type JobInput,
 } from "@/modules/jobs/jobs.schema";
 import { companyKey } from "@/modules/jobs/companies";
+import { AiReport } from "./AiReport";
 import { ApplyFields } from "./ApplyFields";
 import { CompanyLogoField, type KnownCompany } from "./CompanyLogoField";
 import { FormField } from "./FormField";
 import { JobStatusPill } from "./JobStatusPill";
 import { PosterSection } from "./PosterSection";
+
+// The input each reading field jumps to from the AI's report
+const FIELD_IDS: Record<string, string> = {
+  title: "f-title",
+  company: "f-company",
+  location: "f-location",
+  category: "f-category",
+  type: "f-type",
+  workMode: "f-mode",
+  salary: "f-salary",
+  summary: "f-summary",
+  responsibilities: "f-resp",
+  requirements: "f-req",
+  tags: "f-tags",
+  deadline: "f-deadline",
+  apply: "f-apply",
+};
+
+// The reading field an input belongs to ("applyEmail" → "apply")
+const fieldOf = (name: string) => (name.startsWith("apply") ? "apply" : name);
 
 type Props = {
   jobId: string | null;
@@ -37,6 +60,10 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend,
   const [live, setLive] = useState(initial);
   // Bumped when the AI fills the form, so the fields re-render with its values
   const [fillCount, setFillCount] = useState(0);
+  // Fields the AI wasn't sure about and the person hasn't touched yet (null: no reading)
+  const [unsure, setUnsure] = useState<string[] | null>(null);
+  // The links in the text posted with the poster, and whether each could be read
+  const [links, setLinks] = useState<LinkResult[]>([]);
   const fields = useRef<HTMLDivElement>(null);
   const errors = state?.fieldErrors ?? {};
 
@@ -45,14 +72,26 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend,
     if (!fillCount || !fields.current) return;
     fields.current.querySelectorAll<HTMLInputElement>("input, textarea, select").forEach((el) => {
       const filled = el.type === "checkbox" || el.type === "radio" ? false : Boolean(el.value);
-      el.classList.toggle("ai-filled", filled);
+      const doubtful = el.type !== "checkbox" && el.type !== "radio" && Boolean(unsure?.includes(fieldOf(el.name)));
+      el.classList.toggle("ai-filled", filled && !doubtful);
+      el.classList.toggle("ai-unsure", doubtful);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only after each new reading
   }, [fillCount]);
 
-  const fillFromPoster = (job: JobInput) => {
+  const fillFromPoster = (job: JobInput, doubtful: string[], read: LinkResult[]) => {
     setValues(job);
     setLive(job);
+    setUnsure(doubtful);
+    setLinks(read);
     setFillCount((count) => count + 1);
+  };
+
+  // Editing a field the AI wasn't sure about counts as checking it
+  const touched = (el: HTMLElement) => {
+    el.classList.remove("ai-filled", "ai-unsure");
+    const name = (el as HTMLInputElement).name;
+    if (name && unsure?.includes(fieldOf(name))) setUnsure(unsure.filter((key) => key !== fieldOf(name)));
   };
 
   // Live preview and checklist follow what's typed
@@ -75,18 +114,30 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend,
       noValidate
       onSubmit={submit}
       onInput={(e) => {
-        (e.target as HTMLElement).classList.remove("ai-filled");
+        touched(e.target as HTMLElement);
         readForm(e.currentTarget);
       }}
-      onChange={(e) => readForm(e.currentTarget)}
+      onChange={(e) => {
+        touched(e.target as HTMLElement);
+        readForm(e.currentTarget);
+      }}
     >
       <div className="post-form">
-        <PosterSection existingUrl={posterUrl} error={errors.poster} aiPretend={aiPretend} onRead={fillFromPoster} />
+        <PosterSection
+          existingUrl={posterUrl}
+          error={errors.poster}
+          aiPretend={aiPretend}
+          onRead={fillFromPoster}
+          onClear={() => setUnsure(null)}
+        />
+        {unsure && (
+          <AiReport report={readingReport(live, unsure)} links={links} idOf={(key) => FIELD_IDS[key] ?? `f-${key}`} />
+        )}
         <div ref={fields} key={fillCount} className="post-fields">
           <BasicsSection initial={values} errors={errors} company={live.company} companies={companies} />
           <DetailsSection initial={values} />
           <DeadlineSection initial={values} openEnded={live.openEnded} error={errors.deadline} />
-          <section className="form-section">
+          <section className="form-section" id="f-apply">
             <h2>
               <span className="n">5</span>How to apply
             </h2>

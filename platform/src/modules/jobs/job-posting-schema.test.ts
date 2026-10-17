@@ -34,6 +34,11 @@ describe("jobPostingSchema", () => {
     expect(data).toMatchObject({ jobLocationType: "TELECOMMUTE" });
     expect(data).not.toHaveProperty("validThrough");
   });
+
+  it('gives Google only the country when the location is "Not specified"', () => {
+    const data = jobPostingSchema({ ...job, location: "Not specified" }, "https://x");
+    expect(data.jobLocation.address).toEqual({ "@type": "PostalAddress", addressCountry: "KE" });
+  });
 });
 
 describe("jsonLd", () => {

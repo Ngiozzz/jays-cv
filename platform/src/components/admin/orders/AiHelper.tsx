@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { runWriterToolAction } from "@/app/(admin)/admin/(signed-in)/orders/actions";
+import { AiProgress } from "@/components/ai/AiProgress";
 import { CopyButton } from "@/components/CopyButton";
 import { Icon } from "@/components/icons/Icon";
 import type { CvAnalysis, FinalCheck, SummaryDraft, WriterTool } from "@/modules/ai/writer-tools";
@@ -16,6 +17,18 @@ type Props = {
 };
 
 const ACCEPT = ".pdf,.docx,.jpg,.jpeg,.png,.webp";
+
+// What the progress bar says while each tool runs (about 20 seconds each)
+const STEPS: Record<WriterTool, string[]> = {
+  analysis: ["Opening the file", "Reading the CV", "Scoring it against the job", "Writing the analysis"],
+  summary: ["Opening the file", "Reading the CV", "Picking out the facts", "Drafting three summaries"],
+  "final-check": [
+    "Opening the file",
+    "Reading the draft",
+    "Checking spelling, dates and contacts",
+    "Listing what to fix",
+  ],
+};
 
 // The writer's AI helper: three tools that read a CV and help, never write it. Each keeps its last
 // result, so the writer (or Jay) can come back to it without paying again.
@@ -38,7 +51,11 @@ export function AiHelper({ orderId, results, clientCvName, latestDraftName, aiPr
           tool="analysis"
           title="Analyse the client's CV"
           what="Score, what to keep, what to fix first, what to ask the client and keywords for the job."
-          reads={clientCvName ? `Reads the client's CV: ${clientCvName}` : "The client didn't send a CV: choose one to analyse."}
+          reads={
+            clientCvName
+              ? `Reads the client's CV: ${clientCvName}`
+              : "The client didn't send a CV: choose one to analyse."
+          }
           needsFile={!clientCvName}
           initial={latest("analysis")}
           render={(data) => <Analysis data={data as CvAnalysis} />}
@@ -48,7 +65,9 @@ export function AiHelper({ orderId, results, clientCvName, latestDraftName, aiPr
           tool="summary"
           title="Draft the professional summary"
           what="Three versions of the profile at the top of the CV, using only facts from the client's CV."
-          reads={clientCvName ? `Reads the client's CV: ${clientCvName}` : "The client didn't send a CV: choose one to read."}
+          reads={
+            clientCvName ? `Reads the client's CV: ${clientCvName}` : "The client didn't send a CV: choose one to read."
+          }
           needsFile={!clientCvName}
           initial={latest("summary")}
           render={(data) => <Summary data={data as SummaryDraft} />}
@@ -117,7 +136,7 @@ function Tool({ orderId, tool, title, what, reads, needsFile, initial, render }:
         <div className="ai-tool-actions">
           <button type="button" className="btn btn-ai btn-sm" onClick={run} disabled={running}>
             <Icon name="sparkle" />
-            {running ? "Reading… (about 20 seconds)" : result ? "Run again" : "Run"}
+            {running ? "Reading…" : result ? "Run again" : "Run"}
           </button>
           <label className="ai-tool-file">
             <input
@@ -130,6 +149,7 @@ function Tool({ orderId, tool, title, what, reads, needsFile, initial, render }:
           </label>
         </div>
       </div>
+      <AiProgress active={running} seconds={20} steps={STEPS[tool]} className="ai-tool-progress" />
       {error && (
         <p className="field-error" role="alert">
           {error}
@@ -139,8 +159,13 @@ function Tool({ orderId, tool, title, what, reads, needsFile, initial, render }:
         <div className="ai-tool-result">
           {render(result.data)}
           <small className="ai-tool-meta">
-            {result.by} · {new Date(result.at).toLocaleString("en-GB", { timeZone: "Africa/Nairobi", dateStyle: "medium", timeStyle: "short" })} ·
-            read {result.fileName}
+            {result.by} ·{" "}
+            {new Date(result.at).toLocaleString("en-GB", {
+              timeZone: "Africa/Nairobi",
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}{" "}
+            · read {result.fileName}
           </small>
         </div>
       )}

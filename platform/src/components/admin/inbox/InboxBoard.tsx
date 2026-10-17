@@ -7,6 +7,7 @@ import {
   confirmInboxFieldAction,
   discardInboxItemAction,
   readInboxItemAction,
+  rereadInboxItemAction,
   restoreInboxItemAction,
 } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
 import { CopyButton } from "@/components/CopyButton";
@@ -332,6 +333,14 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
                 setView("check");
                 refresh();
               }}
+              onReread={async (caption) => {
+                const result = await rereadInboxItemAction(selected.id, caption);
+                if (!result.ok) return setNotice({ tone: "error", text: result.error });
+                // The new reading replaces any corrections made to the old one
+                setEdits(({ [selected.id]: _old, ...rest }) => rest);
+                setConfirmed(({ [selected.id]: _done, ...rest }) => rest);
+                refresh();
+              }}
               discardOpen={discardOpen}
               setDiscardOpen={setDiscardOpen}
             />
@@ -389,6 +398,7 @@ function QueueItem(props: {
               <strong>{job?.title || "Untitled poster"}</strong>
               <small>
                 {job?.company || "—"} · {card.source}
+                {card.part && ` · Job ${card.part.index} of ${card.part.total}`}
               </small>
             </>
           )}

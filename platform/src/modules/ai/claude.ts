@@ -10,7 +10,15 @@ import {
   type CheckJob,
   type CvFeedback,
 } from "@/modules/cv-check/cv-check";
-import { parsePosterReading, posterPrompt, posterReadingSchema, type PosterReading } from "./poster-reading";
+import {
+  extraTexts,
+  parsePosterAnswer,
+  posterAnswerSchema,
+  posterPrompt,
+  singleJobAnswer,
+  type PosterAnswer,
+  type PosterExtras,
+} from "./poster-reading";
 import { pretendReadingFor } from "./pretend-readings";
 import {
   analysisPrompt,
@@ -74,14 +82,19 @@ function answerJson(response: Anthropic.Beta.BetaMessage, task: string): unknown
 
 export type PosterImage = { base64: string; mediaType: "image/jpeg" | "image/png" | "image/webp"; fileName: string };
 
-export async function readJobPoster(image: PosterImage, today: string): Promise<AiResult<PosterReading>> {
-  if (!client) return { data: pretendReadingFor(image.fileName, today), usage: null };
+// The poster, plus the text posted with it and the pages its links lead to (when there are any)
+export async function readJobPoster(
+  image: PosterImage,
+  today: string,
+  extras: PosterExtras | null = null,
+): Promise<AiResult<PosterAnswer>> {
+  if (!client) return { data: singleJobAnswer(pretendReadingFor(image.fileName, today)), usage: null };
 
   const response = await ask(client, {
     model: env.ANTHROPIC_POSTER_MODEL,
     max_tokens: 16000,
     // Reading a poster is extraction, not reasoning: low effort keeps it quick and cheap
-    output_config: { effort: "low", format: betaZodOutputFormat(posterReadingSchema) },
+    output_config: { effort: "low", format: betaZodOutputFormat(posterAnswerSchema) },
     // If a safety check declines (rare false positives), the API retries on a fallback model in the same call
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
@@ -89,15 +102,16 @@ export async function readJobPoster(image: PosterImage, today: string): Promise<
       {
         role: "user",
         content: [
+          ...extraTexts(extras).map((text) => ({ type: "text" as const, text })),
           { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.base64 } },
-          { type: "text", text: posterPrompt(today) },
+          { type: "text", text: posterPrompt(today, extras) },
         ],
       },
     ],
   });
 
   const raw = answerJson(response, "poster reading");
-  const reading = parsePosterReading(raw);
+  const reading = parsePosterAnswer(raw);
   if (!reading) {
     console.error("[ai] poster reading: unexpected answer", JSON.stringify(raw).slice(0, 2000));
     throw new AiUnavailableError("The AI's answer couldn't be read. Please try again.");
@@ -167,8 +181,10 @@ export type CvDocument =
   | { kind: "text"; text: string };
 
 function documentBlock(cv: CvDocument): Anthropic.Beta.BetaContentBlockParam {
-  if (cv.kind === "pdf") return { type: "document", source: { type: "base64", media_type: "application/pdf", data: cv.base64 } };
-  if (cv.kind === "image") return { type: "image", source: { type: "base64", media_type: cv.mediaType, data: cv.base64 } };
+  if (cv.kind === "pdf")
+    return { type: "document", source: { type: "base64", media_type: "application/pdf", data: cv.base64 } };
+  if (cv.kind === "image")
+    return { type: "image", source: { type: "base64", media_type: cv.mediaType, data: cv.base64 } };
   return { type: "document", source: { type: "text", media_type: "text/plain", data: cv.text } };
 }
 

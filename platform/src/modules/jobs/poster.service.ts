@@ -2,7 +2,9 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { fileStore } from "@/lib/storage";
 import { AiUnavailableError, readJobPoster } from "@/modules/ai/claude";
-import { readingToJobInput } from "@/modules/ai/poster-reading";
+import { readLinks } from "@/modules/ai/link-reader";
+import { findLinks, type LinkResult } from "@/modules/ai/links";
+import { readingToJobInput, type ScamRisk } from "@/modules/ai/poster-reading";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { scamFlag, type Flag } from "@/modules/inbox/inbox.flags";
@@ -13,12 +15,37 @@ import { todayInNairobi } from "./jobs.rules";
 import type { JobInput } from "./jobs.schema";
 import { isPosterType, posterPath, posterProblem } from "./poster";
 
+// One job from the poster, and the fields the AI couldn't read confidently (for the person to check)
+export type ReadJob = { job: JobInput; unsure: string[] };
+
+// What the scam checks need about the whole advert, kept if the other jobs go to Bulk post
+export type AdvertText = { rawText: string; scamRisk: ScamRisk; scamReason: string };
+
 export type ReadPosterResult =
-  | { ok: true; job: JobInput; pretend: boolean; scam: Pick<Flag, "level" | "text" | "more"> | null }
+  | {
+      ok: true;
+      // Usually one; a poster listing several jobs gives one each
+      jobs: ReadJob[];
+      // The links in the posted text, and whether each could be read
+      links: LinkResult[];
+      advert: AdvertText;
+      pretend: boolean;
+      scam: Pick<Flag, "level" | "text" | "more"> | null;
+    }
   | { ok: false; error: string };
 
-// "Read poster & fill in details": the AI reads the image; the person checks the result before publishing
-export async function readPoster(member: CurrentMember, file: File): Promise<ReadPosterResult> {
+// Opens the links in the text posted with a poster, for the AI to read alongside it
+export async function captionExtras(caption: string) {
+  const pages = await readLinks(findLinks(caption));
+  return {
+    extras: { caption, pages },
+    links: pages.map(({ url, finalUrl, ok, reason }) => ({ url, finalUrl, ok, reason })),
+  };
+}
+
+// "Read poster & fill in details": the AI reads the image (and the text posted with it, and the pages
+// its links lead to); the person checks the result before publishing
+export async function readPoster(member: CurrentMember, file: File, caption: string): Promise<ReadPosterResult> {
   assertCan(member, "postJobs");
   const problem = posterProblem(file);
   if (problem || !isPosterType(file.type)) return { ok: false, error: problem ?? "Please choose an image." };
@@ -34,20 +61,34 @@ export async function readPoster(member: CurrentMember, file: File): Promise<Rea
       mediaType: file.type,
       fileName: file.name,
     };
-    const { data, usage } = await readJobPoster(image, todayInNairobi());
+    const { extras, links } = await captionExtras(caption);
+    const { data, usage } = await readJobPoster(image, todayInNairobi(), extras);
     if (usage) {
       await recordUsage(member.tenant.id, { feature: "Poster reading", memberId: member.id, ...usage });
     }
     if (!data.isJobAdvert) {
       return { ok: false, error: "This image doesn't look like a job advert. Please check you chose the right one." };
     }
-    const job = readingToJobInput(data);
-    const scam = scamFlag(data.rawText, job.salary, { risk: data.scamRisk, reason: data.scamReason });
-    return { ok: true, job, pretend: !usage, scam: scam && { level: scam.level, text: scam.text, more: scam.more } };
+    const jobs = data.jobs.map((reading) => ({ job: readingToJobInput(reading), unsure: reading.unsureFields }));
+    const advert = { rawText: advertText(data.rawText, caption), scamRisk: data.scamRisk, scamReason: data.scamReason };
+    const scam = scamFlag(advert.rawText, jobs[0].job.salary, { risk: data.scamRisk, reason: data.scamReason });
+    return {
+      ok: true,
+      jobs,
+      links,
+      advert,
+      pretend: !usage,
+      scam: scam && { level: scam.level, text: scam.text, more: scam.more },
+    };
   } catch (error) {
     if (error instanceof AiUnavailableError) return { ok: false, error: error.message };
     throw error;
   }
+}
+
+// The scam checks look at the poster's words and at the text posted with it
+export function advertText(posterText: string, caption: string): string {
+  return [posterText, caption.trim()].filter(Boolean).join("\n\n");
 }
 
 // Saves the poster with the job, replacing any earlier one

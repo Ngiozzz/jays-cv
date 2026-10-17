@@ -30,6 +30,7 @@ describe("placesOf", () => {
   it("splits combined locations and drops details in brackets", () => {
     expect(placesOf("Nairobi (Mombasa Road) & Kisumu")).toEqual(["Nairobi"]);
     expect(placesOf("Nairobi, Mombasa & Kisumu")).toEqual(["Nairobi", "Mombasa", "Kisumu"]);
+    expect(placesOf("Not specified")).toEqual([]);
     expect(placesOf("[Location]")).toEqual([]);
   });
 });

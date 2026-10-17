@@ -43,7 +43,9 @@ export async function readPosterAction(form: FormData): Promise<ReadPosterResult
   const member = await requirePermission("postJobs");
   const poster = chosenFile(form.get("poster"));
   if (!poster) return { ok: false, error: "Choose the poster image first." };
-  return readPoster(member, poster);
+  // The text posted with the poster (e.g. a WhatsApp caption with apply links)
+  const caption = String(form.get("caption") ?? "").slice(0, 5000);
+  return readPoster(member, poster, caption);
 }
 
 export type RowActionState = { error: string } | null;

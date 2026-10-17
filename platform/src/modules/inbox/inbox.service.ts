@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { fileStore } from "@/lib/storage";
 import { AiUnavailableError, readJobPoster } from "@/modules/ai/claude";
+import type { LinkResult } from "@/modules/ai/links";
 import { READING_FIELDS, readingToJobInput } from "@/modules/ai/poster-reading";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
@@ -10,6 +11,7 @@ import { todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { saveJob } from "@/modules/jobs/jobs.service";
 import { EMPTY_JOB, jobDraftSchema, publishProblems, type JobInput } from "@/modules/jobs/jobs.schema";
 import { isPosterType, posterProblem } from "@/modules/jobs/poster";
+import { advertText, captionExtras, type AdvertText, type ReadJob } from "@/modules/jobs/poster.service";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan } from "@/modules/team/permissions";
 import * as repo from "./inbox.repo";
@@ -69,19 +71,39 @@ export async function readInboxItem(member: CurrentMember, id: string): Promise<
       mediaType: item.posterType,
       fileName: item.posterName,
     };
-    const { data, usage } = await readJobPoster(image, todayInNairobi());
+    const { extras, links } = await captionExtras(item.caption);
+    const { data, usage } = await readJobPoster(image, todayInNairobi(), extras);
     if (usage) await recordUsage(tenantId, { feature: "Poster reading", memberId: member.id, ...usage });
+    const [first, ...others] = data.isJobAdvert ? data.jobs : [];
+    const advert = {
+      rawText: advertText(data.rawText, item.caption),
+      scamRisk: data.scamRisk,
+      scamReason: data.scamReason,
+    };
     await repo.updateInboxItem(tenantId, id, {
       state: "CHECK",
-      rawText: data.rawText,
-      scamRisk: data.isJobAdvert ? data.scamRisk : null,
-      scamReason: data.isJobAdvert ? data.scamReason : null,
-      reading: data.isJobAdvert ? readingToJobInput(data) : { ...EMPTY_JOB, title: "" },
-      unsure: data.unsureFields,
-      readError: data.isJobAdvert ? null : "This doesn't look like a job advert.",
+      rawText: advert.rawText,
+      links,
+      scamRisk: first ? data.scamRisk : null,
+      scamReason: first ? data.scamReason : null,
+      reading: first ? readingToJobInput(first) : { ...EMPTY_JOB, title: "" },
+      unsure: first?.unsureFields ?? [],
+      checked: [],
+      readError: first ? null : "This doesn't look like a job advert.",
       inputTokens: usage?.inputTokens,
       outputTokens: usage?.outputTokens,
     });
+    // A poster listing several jobs: one item each, replacing any from an earlier reading
+    if (!item.splitFromId) {
+      const old = await repo.takeUndecidedSplits(tenantId, id);
+      await Promise.all(old.map((split) => fileStore.remove("job-posters", split.posterPath)));
+      for (const other of others) {
+        await addSplit(member, item, bytes, links, advert, {
+          job: readingToJobInput(other),
+          unsure: other.unsureFields,
+        });
+      }
+    }
   } catch (error) {
     // The team can still type the details from the poster
     const message = error instanceof AiUnavailableError ? error.message : "The AI couldn't read this poster.";
@@ -92,6 +114,104 @@ export async function readInboxItem(member: CurrentMember, id: string): Promise<
     });
     if (!(error instanceof AiUnavailableError)) console.error("Poster reading failed", error);
   }
+  return { ok: true };
+}
+
+type PosterFile = Pick<
+  NonNullable<Awaited<ReturnType<typeof repo.findInboxItem>>>,
+  "id" | "posterName" | "posterType" | "source" | "caption"
+>;
+
+// One more job from the same poster, read and waiting to be checked. It gets its own copy of the
+// image, so publishing, replacing or clearing up one job's poster never touches the others.
+async function addSplit(
+  member: CurrentMember,
+  poster: PosterFile,
+  bytes: Uint8Array,
+  links: LinkResult[],
+  advert: AdvertText,
+  read: ReadJob,
+) {
+  const tenantId = member.tenant.id;
+  const path = posterBucketPath(tenantId, randomBytes(12).toString("hex"), poster.posterType);
+  await fileStore.put("job-posters", path, bytes, poster.posterType);
+  await repo.createInboxItem(tenantId, {
+    state: "CHECK",
+    splitFromId: poster.id,
+    posterPath: path,
+    posterName: poster.posterName,
+    posterType: poster.posterType,
+    posterBytes: bytes.length,
+    source: poster.source,
+    caption: poster.caption,
+    links,
+    rawText: advert.rawText,
+    scamRisk: advert.scamRisk,
+    scamReason: advert.scamReason,
+    reading: read.job,
+    unsure: read.unsure,
+    checked: [],
+    addedById: member.id,
+    readAt: new Date(),
+  });
+}
+
+// "Read again" with the text that was posted with the poster: queued like a new poster, so the
+// screen reads it a moment later. Jobs split off it that haven't been dealt with are replaced.
+export async function rereadInboxItem(member: CurrentMember, id: string, caption: string): Promise<Result> {
+  assertCan(member, "postJobs");
+  const item = await repo.findInboxItem(member.tenant.id, id);
+  if (!item || item.state !== "CHECK")
+    return { ok: false, error: "Only posters waiting to be checked can be read again." };
+  if (item.splitFromId) return { ok: false, error: "Read the poster again from its first job." };
+  await repo.updateInboxItem(member.tenant.id, id, {
+    state: "READING",
+    caption: caption.trim().slice(0, MAX_CAPTION),
+    readAt: null,
+    readError: null,
+  });
+  return { ok: true };
+}
+
+export const MAX_CAPTION = 5000;
+
+// Post a job read a poster listing several jobs: the others wait in Bulk post, already read
+export async function addReadJobs(
+  member: CurrentMember,
+  file: File,
+  caption: string,
+  links: LinkResult[],
+  advert: AdvertText,
+  jobs: ReadJob[],
+): Promise<Result> {
+  assertCan(member, "postJobs");
+  const problem = posterProblem(file);
+  if (problem || !isPosterType(file.type)) return { ok: false, error: problem ?? "Please choose an image." };
+  if (!jobs.length) return { ok: false, error: "There are no other jobs to add." };
+  const tenantId = member.tenant.id;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const path = posterBucketPath(tenantId, randomBytes(12).toString("hex"), file.type);
+  await fileStore.put("job-posters", path, bytes, file.type);
+  const [first, ...rest] = jobs;
+  const root = await repo.createInboxItem(tenantId, {
+    state: "CHECK",
+    posterPath: path,
+    posterName: file.name || "poster",
+    posterType: file.type,
+    posterBytes: file.size,
+    source: "Uploaded",
+    caption: caption.slice(0, MAX_CAPTION),
+    links,
+    rawText: advert.rawText,
+    scamRisk: advert.scamRisk,
+    scamReason: advert.scamReason,
+    reading: first.job,
+    unsure: first.unsure,
+    checked: [],
+    addedById: member.id,
+    readAt: new Date(),
+  });
+  for (const read of rest) await addSplit(member, root, bytes, links, advert, read);
   return { ok: true };
 }
 

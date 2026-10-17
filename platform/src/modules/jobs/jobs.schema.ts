@@ -161,6 +161,12 @@ export function jobFormToInput(form: FormData): unknown {
   };
 }
 
+// The location when the advert doesn't say where the job is (never a guessed town)
+export const NO_LOCATION = "Not specified";
+
+export const isNoLocation = (location: string) =>
+  !location.trim() || location.trim().toLowerCase() === NO_LOCATION.toLowerCase();
+
 // What "Post a job" starts from
 export const EMPTY_JOB: JobInput = {
   title: "",

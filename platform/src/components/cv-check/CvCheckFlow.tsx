@@ -7,6 +7,7 @@ import {
   pretendCheckPaymentAction,
   startCvCheckAction,
 } from "@/app/(public)/[tenant]/check/actions";
+import { AiProgress } from "@/components/ai/AiProgress";
 import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
 import type { CheckProgress } from "@/modules/cv-check/cv-check.service";
@@ -71,9 +72,13 @@ export function CvCheckFlow({ jobSlug, jobLabel, price, businessName }: Props) {
   if (stage.name === "reading")
     return (
       <div className="ps-wait check-reading" role="status">
-        <span className="check-spinner" aria-hidden="true"></span>
         <strong>Reading your CV…</strong>
         <p>Payment received. We&apos;re comparing your CV with {jobLabel}. This takes about half a minute.</p>
+        <AiProgress
+          active
+          seconds={30}
+          steps={["Opening your CV", "Reading your CV", "Comparing it with the job", "Writing your feedback"]}
+        />
       </div>
     );
 

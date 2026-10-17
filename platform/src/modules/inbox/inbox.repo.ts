@@ -47,6 +47,17 @@ export function findOldDiscarded(tenantId: string, before: Date) {
   });
 }
 
+// Jobs split off a poster that nobody has dealt with yet (replaced when the poster is read again)
+export async function takeUndecidedSplits(tenantId: string, splitFromId: string) {
+  const db = tenantDb(tenantId);
+  const splits = await db.inboxItem.findMany({
+    where: { splitFromId, state: { in: ["READING", "CHECK"] } },
+    select: { id: true, posterPath: true },
+  });
+  if (splits.length) await db.inboxItem.deleteMany({ where: { id: { in: splits.map((s) => s.id) } } });
+  return splits;
+}
+
 export function deleteInboxItems(tenantId: string, ids: string[]) {
   return tenantDb(tenantId).inboxItem.deleteMany({ where: { id: { in: ids } } });
 }

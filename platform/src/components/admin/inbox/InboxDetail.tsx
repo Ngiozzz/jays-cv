@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { findLinks } from "@/modules/ai/links";
+import { AiProgress } from "@/components/ai/AiProgress";
+import { AiReport } from "@/components/admin/jobs/AiReport";
 import { Icon } from "@/components/icons/Icon";
+import { readingReport } from "@/modules/ai/reading-report";
 import type { Flag } from "@/modules/inbox/inbox.flags";
 import type { InboxCard } from "@/modules/inbox/inbox.view";
 import type { JobInput } from "@/modules/jobs/jobs.schema";
@@ -35,6 +39,8 @@ type Props = {
   onApprove: () => void;
   onDiscard: (reason: string) => void;
   onRestore: () => void;
+  // Read the poster again with the text that was posted with it
+  onReread: (caption: string) => Promise<void>;
   discardOpen: boolean;
   setDiscardOpen: (open: boolean) => void;
 };
@@ -87,6 +93,17 @@ export function InboxDetail(props: Props) {
           <div>
             <span className="ipill reading">Reading…</span>
             <small>The AI is reading this poster. Usually a few seconds.</small>
+            <AiProgress
+              active
+              seconds={10 + 4 * findLinks(card.caption).length}
+              steps={[
+                "Waiting its turn",
+                ...(findLinks(card.caption).length ? ["Opening the company's pages"] : []),
+                "Reading the text",
+                "Filling in the details",
+                "Checking for scam signs",
+              ]}
+            />
           </div>
           {nav}
         </div>
@@ -162,7 +179,10 @@ export function InboxDetail(props: Props) {
           <span className={clean ? "ipill ready" : "ipill flagged"}>
             {clean ? "✓ Ready to approve" : "⚠ Needs a look"}
           </span>
-          <small>{card.source}</small>
+          <small>
+            {card.source}
+            {card.part && ` · Job ${card.part.index} of ${card.part.total} from this poster`}
+          </small>
         </div>
         {nav}
       </div>
@@ -203,6 +223,7 @@ export function InboxDetail(props: Props) {
             <span className="n">1</span>The poster
           </p>
           {poster}
+          <CaptionBox key={card.id} card={card} onReread={props.onReread} />
           {job && (
             <div className="d-preview">
               <p className="preview-label">Live preview</p>
@@ -220,15 +241,24 @@ export function InboxDetail(props: Props) {
           )}
         </div>
         {job && (
-          <QuickForm
-            job={job}
-            unsure={props.unsure}
-            companies={props.companies}
-            logo={props.logo}
-            onChange={props.onChange}
-            onConfirm={props.onConfirm}
-            onLogo={props.onLogo}
-          />
+          <div>
+            {!card.readError && (
+              <AiReport
+                report={readingReport(job, props.unsure)}
+                links={card.links}
+                idOf={(key) => (key === "apply" ? "q-target" : `q-${key}`)}
+              />
+            )}
+            <QuickForm
+              job={job}
+              unsure={props.unsure}
+              companies={props.companies}
+              logo={props.logo}
+              onChange={props.onChange}
+              onConfirm={props.onConfirm}
+              onLogo={props.onLogo}
+            />
+          </div>
         )}
       </div>
       {props.discardOpen ? (
@@ -280,5 +310,58 @@ function DiscardChoice(props: { flags: Flag[]; busy: boolean; onCancel: () => vo
         Discard
       </button>
     </fieldset>
+  );
+}
+
+// The text posted with the poster (e.g. a WhatsApp caption with apply links). Changing it and
+// reading again replaces the reading, and any jobs split off it that haven't been dealt with.
+function CaptionBox({ card, onReread }: { card: InboxCard; onReread: (caption: string) => Promise<void> }) {
+  const [caption, setCaption] = useState(card.caption);
+  const [sending, setSending] = useState(false);
+  const links = findLinks(caption).length;
+
+  if (card.splitOff) {
+    return card.caption ? (
+      <div className="caption-field">
+        <span>Text that came with the poster</span>
+        <p className="caption-text">{card.caption}</p>
+        <small>To change it, go to job 1 of this poster and read it again there.</small>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <label className="caption-field">
+      <span>
+        Text that came with the poster <small className="optional">(optional)</small>
+      </span>
+      <textarea
+        rows={4}
+        value={caption}
+        maxLength={5000}
+        onChange={(event) => setCaption(event.target.value)}
+        placeholder="Paste the WhatsApp or LinkedIn caption, with its links. The AI reads it and the company pages the links open."
+      />
+      <span className="caption-actions">
+        <small>
+          {links > 0
+            ? `${links} link${links > 1 ? "s" : ""}: the AI will open ${links > 1 ? "them" : "it"} too.`
+            : "Reading again uses a little AI credit."}
+        </small>
+        <button
+          type="button"
+          className="btn btn-ai btn-sm"
+          disabled={sending || (caption.trim() === card.caption.trim() && !card.readError)}
+          onClick={async () => {
+            setSending(true);
+            await onReread(caption);
+            setSending(false);
+          }}
+        >
+          <Icon name="sparkle" />
+          {sending ? "Sending…" : "Read again with this text"}
+        </button>
+      </span>
+    </label>
   );
 }
