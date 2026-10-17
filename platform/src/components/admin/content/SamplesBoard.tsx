@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { addSampleAction, moveSampleAction, saveSamplesAction } from "@/app/(admin)/admin/(signed-in)/content/actions";
-import { POSTER_SIZE, shrinkImage } from "@/components/admin/jobs/shrink-image";
+import { CV_PAGE_SIZE, shrinkImage } from "@/components/admin/jobs/shrink-image";
 import { Icon } from "@/components/icons/Icon";
 import { SAMPLE_TAGS } from "@/modules/content/admin/samples";
 import type { AdminSample } from "@/modules/content/admin/samples.service";
@@ -126,7 +126,7 @@ function ImagePick({ side, error }: { side: "before" | "after"; error?: string }
 
   const choose = async (file: File | undefined) => {
     if (!file || !input.current) return;
-    const small = await shrinkImage(file, POSTER_SIZE);
+    const small = await shrinkImage(file, CV_PAGE_SIZE);
     const transfer = new DataTransfer();
     transfer.items.add(small);
     input.current.files = transfer.files;

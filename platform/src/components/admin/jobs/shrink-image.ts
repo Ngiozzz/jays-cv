@@ -6,6 +6,8 @@ type ShrinkOptions = { maxSide: number; type: "image/jpeg" | "image/png" };
 // and PNG keeps transparent backgrounds.
 export const POSTER_SIZE: ShrinkOptions = { maxSide: 1600, type: "image/jpeg" };
 export const LOGO_SIZE: ShrinkOptions = { maxSide: 200, type: "image/png" };
+// Sample CVs: visitors zoom in to read them, so an A4 page keeps about 1,700px of width
+export const CV_PAGE_SIZE: ShrinkOptions = { maxSide: 2400, type: "image/jpeg" };
 
 const QUALITY = 0.85;
 

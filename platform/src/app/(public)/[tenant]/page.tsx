@@ -70,7 +70,7 @@ export default async function HomePage({ params }: PageProps<"/[tenant]">) {
             <p>Real client CVs, before and after. Personal details removed with permission.</p>
           </SectionHead>
           <div className="samples-grid">
-            {samples.slice(0, 3).map((sample) => (
+            {samples.slice(0, 2).map((sample) => (
               <SampleFigure key={sample.id} sample={sample} />
             ))}
           </div>
