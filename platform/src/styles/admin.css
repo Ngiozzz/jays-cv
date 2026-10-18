@@ -5004,6 +5004,9 @@ kbd {
   color: var(--muted);
   font-size: 0.8rem;
 }
+.perm .field-error {
+  color: #b91c1c;
+}
 .perm-note {
   display: flex;
   gap: 6px;

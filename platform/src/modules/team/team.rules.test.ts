@@ -47,9 +47,17 @@ describe("inviteSchema", () => {
   });
 
   it("allows no phone number", () => {
-    expect(inviteSchema.safeParse(form({ name: "Brian", email: "b@x.com", phone: "", payPercent: "35" })).success).toBe(
-      true,
-    );
+    const brian = { name: "Brian", email: "b@x.com", phone: "", canWrite: "on", payPercent: "35" };
+    expect(inviteSchema.safeParse(form(brian)).success).toBe(true);
+  });
+
+  it("needs at least one thing they can do", () => {
+    const base = { name: "Brian", email: "b@x.com", phone: "", payPercent: "35" };
+    const nothing = inviteSchema.safeParse(form(base));
+    expect(nothing.success ? [] : nothing.error.issues.map((issue) => [issue.path[0], issue.message])).toEqual([
+      ["canWrite", "Tick at least one: Write CVs or Post jobs"],
+    ]);
+    expect(inviteSchema.safeParse(form({ ...base, canPostJobs: "on" })).success).toBe(true);
   });
 });
 

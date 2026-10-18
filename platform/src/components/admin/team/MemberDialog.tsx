@@ -85,7 +85,7 @@ export function MemberDialog({ mode, member, onClose }: Props) {
           <fieldset className="perm">
             <legend>What can they do?</legend>
             <label>
-              <input type="checkbox" name="canWrite" defaultChecked={mode === "invite" || member.canWrite} />
+              <input type="checkbox" name="canWrite" defaultChecked={mode === "edit" && member.canWrite} />
               <span>
                 <b>Write CVs</b>
                 <small>Accept paid orders and work on the ones they accept</small>
@@ -102,6 +102,7 @@ export function MemberDialog({ mode, member, onClose }: Props) {
               <Icon name="lock" />
               Money, the team, prices and website settings stay with you.
             </p>
+            {error("canWrite")}
           </fieldset>
           <div className={errors.payPercent ? "f invalid" : "f"}>
             <label htmlFor="mi-rate">Pay per CV (% of the order price)</label>
