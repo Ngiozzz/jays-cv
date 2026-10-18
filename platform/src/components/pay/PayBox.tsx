@@ -102,7 +102,8 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
   const [stage, setStage] = useState<Stage>({ name: "form" });
   const [phone, setPhone] = useState(info.phone);
   const [busy, startBusy] = useBusy();
-  const [now, setNow] = useState(() => Date.now());
+  // The clock starts when a prompt is sent (never during render, so the page can be prerendered)
+  const [now, setNow] = useState(0);
 
   const settle = (result: Awaited<ReturnType<typeof checkPromptAction>>) => {
     if ("ok" in result) setStage({ name: "failed", message: result.error });
@@ -129,7 +130,11 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
     startBusy(async () => {
       const result = await sendPromptAction(info.ref, phone);
       if (!result.ok) setStage({ name: "form", error: result.error });
-      else setStage({ name: "waiting", paymentId: result.paymentId, phone: result.phone, started: Date.now() });
+      else {
+        const started = Date.now();
+        setNow(started);
+        setStage({ name: "waiting", paymentId: result.paymentId, phone: result.phone, started });
+      }
     });
 
   const answer = (paymentId: string, outcome: PretendOutcome) =>

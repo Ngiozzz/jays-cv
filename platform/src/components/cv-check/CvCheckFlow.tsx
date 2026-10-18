@@ -30,7 +30,8 @@ export function CvCheckFlow({ jobSlug, jobLabel, price, businessName }: Props) {
   const [stage, setStage] = useState<Stage>({ name: "form" });
   const [busy, startBusy] = useTransition();
   const [cvName, setCvName] = useState("");
-  const [now, setNow] = useState(() => Date.now());
+  // The clock starts when a prompt is sent (never during render, so the page can be prerendered)
+  const [now, setNow] = useState(0);
 
   const apply = (started: Started, progress: CheckProgress | { ok: false; error: string }) => {
     if ("ok" in progress) return setStage({ name: "error", message: progress.error });
@@ -63,7 +64,11 @@ export function CvCheckFlow({ jobSlug, jobLabel, price, businessName }: Props) {
     startBusy(async () => {
       const result = await startCvCheckAction(data);
       if (!result.ok) setStage({ name: "form", error: result.error, field: result.field });
-      else setStage({ name: "waiting", started: Date.now(), ...result });
+      else {
+        const started = Date.now();
+        setNow(started);
+        setStage({ name: "waiting", started, ...result });
+      }
     });
   };
 

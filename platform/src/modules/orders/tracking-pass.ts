@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { env } from "@/lib/env";
 
 // After a client proves an order is theirs (tracking link, or order number + phone), their browser
@@ -29,6 +30,8 @@ function passCookie(kind: PassKind, tenantId: string, id: string) {
 }
 
 async function hasPass(kind: PassKind, tenantId: string, id: string): Promise<boolean> {
+  // Checking the expiry reads the clock, so this always runs per visit, never in a prerender
+  await connection();
   const value = (await cookies()).get(cookieName(kind, id))?.value;
   const [expiresText, signature] = value?.split(".") ?? [];
   const expires = Number(expiresText);

@@ -8,6 +8,12 @@ import { formatKes } from "@/lib/money";
 import { getPriceList } from "@/modules/content/content.service";
 import { getPublicJob } from "@/modules/jobs/jobs.public";
 import { siteContext } from "../../../site-context";
+import { generateStaticParams as jobPageParams } from "../page";
+
+// Built ahead of time for the same jobs as the job page itself
+export async function generateStaticParams() {
+  return jobPageParams();
+}
 
 export const metadata: Metadata = {
   title: "Check your CV for this job",
