@@ -1,0 +1,13 @@
+# Never upload private settings or local-only folders to Vercel (Vercel builds from a clean install)
+.env*
+!.env.example
+.uploads
+.next
+node_modules
+test-results
+coverage
+*.tsbuildinfo
+.agents
+.claude
+.windsurf
+src/generated/prisma
