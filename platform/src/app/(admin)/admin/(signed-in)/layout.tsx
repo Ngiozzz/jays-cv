@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { AdminFrame, type FrameNavItem } from "@/components/admin/AdminFrame";
+import { AdminFrameSkeleton } from "@/components/admin/AdminFrameSkeleton";
 import { ADMIN_NAV } from "@/components/admin/admin-nav";
 import { can } from "@/modules/team/permissions";
 import { requireMember, type CurrentMember } from "@/modules/team/current-member";
@@ -9,7 +10,7 @@ import { requireMember, type CurrentMember } from "@/modules/team/current-member
 export default function SignedInLayout({ children }: { children: ReactNode }) {
   return (
     <div className="admin">
-      <Suspense fallback={<p className="admin-loading">Loading…</p>}>
+      <Suspense fallback={<AdminFrameSkeleton />}>
         <Shell>{children}</Shell>
       </Suspense>
     </div>
