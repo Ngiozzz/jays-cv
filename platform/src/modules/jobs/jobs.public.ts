@@ -16,6 +16,9 @@ export type PublicJob = {
   title: string;
   company: string;
   location: string;
+  counties: string[];
+  town: string;
+  country: string;
   workMode: string;
   type: string;
   category: string;

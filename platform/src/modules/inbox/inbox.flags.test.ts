@@ -8,7 +8,8 @@ const job = (patch: Partial<JobInput> = {}): JobInput => ({
   ...EMPTY_JOB,
   title: "Accounts Assistant",
   company: "Savanna Fresh Foods Ltd",
-  location: "Nairobi",
+  counties: ["Nairobi"],
+  location: "Nairobi County",
   deadline: "2026-10-30",
   apply: { ...EMPTY_JOB.apply, method: "email", email: "careers@savannafresh.co.ke" },
   ...patch,
@@ -33,11 +34,17 @@ describe("scam checks", () => {
   });
 
   it("adds the AI's opinion: high raises 'Possible scam' on its own, medium a softer warning", () => {
-    const high = scamFlag("Send CV to hr.kenyaairways@gmail.com", "", { risk: "high", reason: "A big employer using a Gmail address." });
+    const high = scamFlag("Send CV to hr.kenyaairways@gmail.com", "", {
+      risk: "high",
+      reason: "A big employer using a Gmail address.",
+    });
     expect(high).toMatchObject({ level: "critical", text: "Possible scam" });
     expect(high?.more).toContain("AI: A big employer using a Gmail address.");
 
-    const medium = scamFlag("Send CV to jobs@company.co.ke", "", { risk: "medium", reason: "The salary is unusually high." });
+    const medium = scamFlag("Send CV to jobs@company.co.ke", "", {
+      risk: "medium",
+      reason: "The salary is unusually high.",
+    });
     expect(medium).toMatchObject({ level: "warning", text: "May be a scam" });
 
     expect(scamFlag("Send CV to jobs@company.co.ke", "", { risk: "low", reason: "" })).toBeNull();

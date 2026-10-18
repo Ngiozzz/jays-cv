@@ -23,6 +23,28 @@ export const cvFeedbackSchema = z.object({
 
 export type CvFeedback = z.infer<typeof cvFeedbackSchema>;
 
+// What the AI returns: the feedback, plus the name and email written on the CV, so "Let us tailor it"
+// can start the order with them filled in. Kept apart from the feedback (it's not shown as feedback).
+export const cvCheckAnswerSchema = cvFeedbackSchema.extend({ name: z.string(), email: z.string() });
+export type CvCheckAnswer = z.infer<typeof cvCheckAnswerSchema>;
+
+// After the check, the CV is kept privately this long in case the client orders a tailored CV;
+// then it's deleted. Ordering moves it to the order.
+export const CHECK_CV_KEEP_HOURS = 48;
+
+export const checkCvKeptUntil = (doneAt: Date) => new Date(doneAt.getTime() + CHECK_CV_KEEP_HOURS * 3_600_000);
+
+// "Sun 20 Oct, 2:15 pm" in Kenyan time (the same on the server and in the browser)
+export const keptUntilText = (iso: string) =>
+  new Intl.DateTimeFormat("en-KE", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Africa/Nairobi",
+  }).format(new Date(iso));
+
 export type CheckJob = {
   title: string;
   company: string;
@@ -54,7 +76,8 @@ export function cvCheckPrompt(job: CheckJob): string {
     "- strengths: 3–5 short points of what already fits. gaps: 3–6 short points the job asks for that the CV doesn't show.",
     "- missingKeywords: up to 8 words or short phrases from the job that the CV lacks (skills, tools, certifications).",
     "- tips: 3–5 concrete changes in order of impact, written to the job seeker as 'you'. Plain English, no jargon.",
-    "- If the document is not a CV, set isCv to false, matchPercent to 0 and leave the lists empty.",
+    "- name and email: the job seeker's full name and email address exactly as written on the CV; empty strings if it doesn't show them.",
+    "- If the document is not a CV, set isCv to false, matchPercent to 0, leave the lists empty, and leave name and email empty.",
   ];
   return lines.join("\n");
 }

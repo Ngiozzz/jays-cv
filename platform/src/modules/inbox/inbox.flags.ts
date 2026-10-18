@@ -1,4 +1,5 @@
 import type { ReadingField, ScamRisk } from "@/modules/ai/poster-reading";
+import { OUTSIDE_KENYA } from "@/modules/jobs/counties";
 import { daysUntil, formatDay } from "@/modules/jobs/jobs.rules";
 import type { ApplyMethod, JobInput } from "@/modules/jobs/jobs.schema";
 
@@ -127,7 +128,7 @@ export function missingDetails(job: JobInput): string[] {
   const missing: string[] = [];
   if (!job.title.trim()) missing.push("Job title");
   if (!job.company.trim()) missing.push("Company");
-  if (!job.location.trim()) missing.push("Location");
+  if (!job.counties.length || (job.counties[0] === OUTSIDE_KENYA && !job.country.trim())) missing.push("Location");
   if (!job.apply[APPLY_TARGET[job.apply.method]].trim()) missing.push("How to apply");
   return missing;
 }

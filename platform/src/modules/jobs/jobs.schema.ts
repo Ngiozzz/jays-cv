@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { NO_LOCATION, OUTSIDE_KENYA, cleanCounties, isNoLocation, locationText, type JobPlace } from "./counties";
+
+export { NO_LOCATION, isNoLocation };
 
 // Choices offered on the "Post a job" form (same lists as the preview)
 export const JOB_CATEGORIES = [
@@ -73,11 +76,18 @@ export function tagSlug(tag: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-// A draft only needs a title
-export const jobDraftSchema = z.object({
+// A draft only needs a title. Where the job is: counties from the fixed list (modules/jobs/counties.ts),
+// an optional town or area, and the country for jobs outside Kenya.
+export const jobFieldsSchema = z.object({
   title: z.string().trim().min(2, "Add the job title").max(160),
   company: text(160),
-  location: text(160),
+  counties: z
+    .array(z.string())
+    .max(60)
+    .default([])
+    .transform((list): string[] => cleanCounties(list)),
+  town: text(120),
+  country: text(80),
   category: z.union([z.enum(JOB_CATEGORIES), z.literal("")]).default(""),
   type: z.enum(JOB_TYPES).default("Full-time"),
   workMode: z.enum(WORK_MODES).default("On-site"),
@@ -91,6 +101,14 @@ export const jobDraftSchema = z.object({
   apply: applySchema,
   source: text(200),
 });
+
+// The location as the site shows it ("Tala, Machakos County") is worked out from the parts, never typed
+export const withLocation = <T extends JobPlace>(job: T): T & { location: string } => ({
+  ...job,
+  location: locationText(job),
+});
+
+export const jobDraftSchema = jobFieldsSchema.transform(withLocation);
 
 export type JobInput = z.infer<typeof jobDraftSchema>;
 
@@ -106,7 +124,10 @@ const APPLY_REQUIRED: Record<ApplyMethod, { field: keyof ApplyDetails; message: 
 export function publishProblems(job: JobInput): { path: string; message: string }[] {
   const problems: { path: string; message: string }[] = [];
   if (!job.company) problems.push({ path: "company", message: "Add the company" });
-  if (!job.location) problems.push({ path: "location", message: "Add the location" });
+  if (!job.counties.length) problems.push({ path: "location", message: "Choose the county" });
+  if (job.counties[0] === OUTSIDE_KENYA && !job.country) {
+    problems.push({ path: "country", message: "Add the country" });
+  }
   if (!job.deadline && !job.openEnded) {
     problems.push({ path: "deadline", message: 'Set a deadline, or tick "Open until filled"' });
   }
@@ -135,7 +156,9 @@ export function jobFormToInput(form: FormData): unknown {
   return {
     title: field(form, "title"),
     company: field(form, "company"),
-    location: field(form, "location"),
+    counties: form.getAll("counties").map(String),
+    town: field(form, "town"),
+    country: field(form, "country"),
     category: field(form, "category"),
     type: field(form, "type") || undefined,
     workMode: field(form, "workMode") || undefined,
@@ -161,16 +184,13 @@ export function jobFormToInput(form: FormData): unknown {
   };
 }
 
-// The location when the advert doesn't say where the job is (never a guessed town)
-export const NO_LOCATION = "Not specified";
-
-export const isNoLocation = (location: string) =>
-  !location.trim() || location.trim().toLowerCase() === NO_LOCATION.toLowerCase();
-
 // What "Post a job" starts from
 export const EMPTY_JOB: JobInput = {
   title: "",
   company: "",
+  counties: [],
+  town: "",
+  country: "",
   location: "",
   category: "",
   type: "Full-time",

@@ -4,6 +4,7 @@ import { OrderCard } from "@/components/order/OrderCard";
 import { PageHero } from "@/components/site/PageHero";
 import { whatsappDigits, whatsappLink } from "@/modules/content/contact";
 import { getPriceList } from "@/modules/content/content.service";
+import { checkPrefill } from "@/modules/cv-check/cv-check.service";
 import { findJobForOrder } from "@/modules/jobs/jobs.repo";
 import { draftTimeLabel } from "@/modules/content/packages";
 import { siteContext } from "../site-context";
@@ -48,9 +49,10 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/[t
       />
       <div className="container journey-wrap">
         {/* The card reads ?pkg= or ?service= from the address to start on the right choice;
-            ?job= (from a job page's "Get my CV tailored") starts a tailored CV for that job */}
+            ?job= (from a job page's "Get my CV tailored") starts a tailored CV for that job, and
+            ?check= (from "Check it yourself" feedback) fills in their details and CV too */}
         <Suspense>
-          <CardForJob tenantId={tenant.id} searchParams={searchParams} card={card} />
+          <CardForJob tenant={tenant} searchParams={searchParams} card={card} />
         </Suspense>
       </div>
     </>
@@ -58,15 +60,23 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/[t
 }
 
 async function CardForJob({
-  tenantId,
+  tenant,
   searchParams,
   card,
 }: {
-  tenantId: string;
+  tenant: Awaited<ReturnType<typeof siteContext>>["tenant"];
   searchParams: PageProps<"/[tenant]/order">["searchParams"];
   card: Omit<Parameters<typeof OrderCard>[0], "job">;
 }) {
-  const slug = (await searchParams).job;
-  const job = typeof slug === "string" && slug ? await findJobForOrder(tenantId, slug.slice(0, 200)) : null;
-  return <OrderCard {...card} job={job && { slug: job.slug, title: job.title, company: job.company }} />;
+  const { job: slug, check: checkId } = await searchParams;
+  const job = typeof slug === "string" && slug ? await findJobForOrder(tenant.id, slug.slice(0, 200)) : null;
+  const fromCheck =
+    job && typeof checkId === "string" && checkId ? await checkPrefill(tenant, checkId.slice(0, 64)) : null;
+  return (
+    <OrderCard
+      {...card}
+      job={job && { slug: job.slug, title: job.title, company: job.company }}
+      fromCheck={fromCheck}
+    />
+  );
 }

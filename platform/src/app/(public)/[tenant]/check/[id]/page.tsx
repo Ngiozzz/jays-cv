@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Icon } from "@/components/icons/Icon";
+import { HowToApply } from "@/components/jobs/HowToApply";
 import { Breadcrumb } from "@/components/site/PageHero";
 import { formatKes } from "@/lib/money";
 import { getPriceList } from "@/modules/content/content.service";
-import { matchBand } from "@/modules/cv-check/cv-check";
+import { CHECK_CV_KEEP_HOURS, keptUntilText, matchBand } from "@/modules/cv-check/cv-check";
 import { loadCvCheck, type LoadedCvCheck } from "@/modules/cv-check/cv-check.service";
+import { getPublicJob } from "@/modules/jobs/jobs.public";
+import { applyDeadlineLine, daysUntil } from "@/modules/jobs/jobs.rules";
 import { getTenant } from "@/modules/tenants/tenants.service";
 
 // Private to the person who paid for the check: never indexed
@@ -39,6 +42,11 @@ async function Feedback({ params }: { params: PageProps<"/[tenant]/check/[id]">[
       </div>
     );
   const tailoring = prices.services.find((service) => service.needsJobAdvert);
+  const feedback = check.status === "DONE" ? check.feedback : null;
+  const strongFit = Boolean(feedback?.isCv && matchBand(feedback.matchPercent).tone === "good");
+  // A strong fit is sent straight to the employer's own steps, while the job is still open
+  const { today, job } = strongFit ? await getPublicJob(tenant.id, check.jobSlug) : { today: "", job: null };
+  const canApply = job && (!job.deadline || daysUntil(job.deadline, today) >= 0);
   return (
     <>
       <Breadcrumb
@@ -50,13 +58,34 @@ async function Feedback({ params }: { params: PageProps<"/[tenant]/check/[id]">[
         ]}
       />
       <FeedbackCard check={check} />
+      {canApply && (
+        <div className="check-apply">
+          <div className="check-apply-head">
+            <Icon name="check" />
+            <div>
+              <strong>You&apos;re a strong fit: send your application</strong>
+              <p>
+                Your CV already shows what {job.company} is asking for. Apply the way they ask below, before the
+                deadline.
+              </p>
+            </div>
+          </div>
+          <HowToApply apply={job.apply} jobTitle={job.title} deadlineLine={applyDeadlineLine(job.deadline, today)} />
+        </div>
+      )}
       {tailoring && check.status === "DONE" && (
         <div className="check-upsell">
           <div>
-            <strong>Rather we did it for you?</strong>
-            <p>A writer tailors your CV to this job, using everything above.</p>
+            <strong>{strongFit ? "Want it polished before you apply?" : "Rather we did it for you?"}</strong>
+            <p>
+              A writer tailors your CV to this job, using everything above.
+              {check.cvKeptUntil && " Your details and this CV are filled in for you."}
+            </p>
           </div>
-          <Link className="btn btn-primary" href={`/order?job=${encodeURIComponent(check.jobSlug)}`}>
+          <Link
+            className="btn btn-primary"
+            href={`/order?job=${encodeURIComponent(check.jobSlug)}&check=${encodeURIComponent(id)}`}
+          >
             Let us tailor it · {formatKes(tailoring.price)}
           </Link>
         </div>
@@ -127,27 +156,14 @@ function FeedbackCard({ check }: { check: LoadedCvCheck }) {
           </ul>
         </section>
       </div>
-      {feedback.missingKeywords.length > 0 && (
-        <section>
-          <h2>Keywords to add (where they&apos;re true for you)</h2>
-          <div className="keyword-chips">
-            {feedback.missingKeywords.map((word) => (
-              <span key={word}>{word}</span>
-            ))}
-          </div>
-        </section>
-      )}
-      <section>
-        <h2>What to change first</h2>
-        <ol>
-          {feedback.tips.map((tip) => (
-            <li key={tip}>{tip}</li>
-          ))}
-        </ol>
-      </section>
+      {/* The keywords and "what to change first" tips aren't shown: the fixing is what Jay CVS's
+          tailoring service is for (the box under this card) */}
       <p className="check-note">
         <Icon name="info" />
-        AI feedback to help you improve your CV. Only add what&apos;s true about you. Your CV has been deleted.
+        AI feedback to help you improve your CV. Only add what&apos;s true about you.{" "}
+        {check.cvKeptUntil
+          ? `Your CV is kept privately for ${CHECK_CV_KEEP_HOURS} hours (until ${keptUntilText(check.cvKeptUntil)}) in case you'd like us to tailor it, then deleted.`
+          : "Your CV has been deleted."}
       </p>
     </div>
   );

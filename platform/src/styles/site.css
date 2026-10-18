@@ -5829,6 +5829,40 @@ button.final-file {
   font-weight: 600;
   font-size: 0.88rem;
 }
+/* Strong match: the employer's How to apply steps, right under the feedback */
+.check-apply {
+  margin-top: 18px;
+  padding: 22px 24px;
+  border: 2px solid #16a34a;
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.check-apply-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.check-apply-head > svg {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+}
+.check-apply-head strong {
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+.check-apply-head p {
+  margin: 4px 0 0;
+}
+.check-apply .apply-box {
+  margin: 0;
+  box-shadow: none;
+}
 .check-upsell {
   display: flex;
   align-items: center;

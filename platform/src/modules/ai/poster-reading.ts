@@ -4,12 +4,19 @@ import {
   ATTACH_OPTIONS,
   JOB_CATEGORIES,
   JOB_TYPES,
-  NO_LOCATION,
   WORK_MODES,
   cleanTags,
   jobDraftSchema,
   type JobInput,
 } from "@/modules/jobs/jobs.schema";
+import {
+  ALL_COUNTIES,
+  NO_LOCATION,
+  OUTSIDE_KENYA,
+  PLACE_CHOICES,
+  cleanCounties,
+  matchPlace,
+} from "@/modules/jobs/counties";
 
 // Fields a person may need to check against the poster (shown as "AI wasn't sure")
 export const READING_FIELDS = [
@@ -40,7 +47,10 @@ export const posterReadingSchema = z.object({
   unsureFields: z.array(z.enum(READING_FIELDS)),
   title: z.string(),
   company: z.string(),
-  location: z.string(),
+  // Where the job is: counties from the fixed list, the town or area, and the country if abroad
+  counties: z.array(z.enum(PLACE_CHOICES)),
+  town: z.string(),
+  country: z.string(),
   category: z.enum([...JOB_CATEGORIES, "Unknown"]),
   type: z.enum(JOB_TYPES),
   workMode: z.enum(WORK_MODES),
@@ -123,7 +133,7 @@ export function posterPrompt(today: string, extras: PosterExtras | null = null):
       : []),
     `Today is ${today}. Write the application deadline as YYYY-MM-DD; if the poster gives no deadline, use an empty string.`,
     "Copy names, emails, phone numbers and links exactly as printed. Use an empty string for anything the poster doesn't say; never guess.",
-    `For the location, write the town or area exactly as the poster gives it. If the poster doesn't say where the job is, write "${NO_LOCATION}": never guess a town from the company's name or phone number.`,
+    `For where the job is, choose counties from the list of Kenya's 47 counties. Put the town or area the poster names in town, as written, and choose the county it is in (e.g. Tala → town "Tala", county Machakos; Westlands → town "Westlands", county Nairobi). Choose several counties if the job is in several places; choose "${ALL_COUNTIES}" if it is nationwide or in many counties. For a job outside Kenya choose "${OUTSIDE_KENYA}", put the city in town and the country in country. Leave country empty for jobs in Kenya. If the poster doesn't say where the job is, choose "${NO_LOCATION}" and leave town empty: never guess a place from the company's name or phone number. If you are not sure which county a town is in, add "location" to unsureFields.`,
     "Write the summary for job seekers, as one or two plain sentences in your own words about the job itself. Never mention the poster, the advert, the image or what details are missing. List responsibilities and requirements one item each, as printed.",
     'Choose the closest category, job type and work setting; use "Unknown" for the category if none fits.',
     "For how to apply, pick the method the poster asks for. Put any special instructions (e.g. 'state your expected salary') in notes.",
@@ -160,7 +170,7 @@ export function parsePosterReading(raw: unknown): PosterReading | null {
     rawText: text("rawText"),
     title: text("title"),
     company: text("company"),
-    location: cleanLocation(text("location")),
+    ...readPlace(answer, unsure),
     category: choice("category", [...JOB_CATEGORIES, "Unknown"] as const, "Unknown", "category"),
     type: choice("type", JOB_TYPES, "Full-time", "type"),
     workMode: choice("workMode", WORK_MODES, "On-site", "workMode"),
@@ -186,12 +196,26 @@ export function parsePosterReading(raw: unknown): PosterReading | null {
   return { ...reading, unsureFields: READING_FIELDS.filter((field) => unsure.has(field)) };
 }
 
-// An empty or vague answer ("N/A", "Unknown", "Kenya") becomes "Not specified"
-const VAGUE_LOCATION = /^(n\/?a|none|nil|unknown|not (specified|stated|given|mentioned|provided)|kenya|-+|\?+)$/i;
-
-export function cleanLocation(location: string): string {
-  const trimmed = location.trim();
-  return !trimmed || VAGUE_LOCATION.test(trimmed) ? NO_LOCATION : trimmed;
+// Where the job is, read forgivingly: county names are matched to the official ones ("Muranga County"
+// → Murang'a). A name that isn't a county is flagged for a person to check; no county at all becomes
+// "Not specified".
+function readPlace(
+  answer: Record<string, unknown>,
+  unsure: Set<ReadingField>,
+): Pick<PosterReading, "counties" | "town" | "country"> {
+  const named = (Array.isArray(answer.counties) ? answer.counties : []).filter(
+    (item): item is string => typeof item === "string" && Boolean(item.trim()),
+  );
+  if (named.some((name) => !matchPlace(name))) unsure.add("location");
+  const counties = cleanCounties(named);
+  const stated = (key: string) => (typeof answer[key] === "string" ? (answer[key] as string).trim() : "");
+  const standAlone = counties[0] === NO_LOCATION || counties[0] === ALL_COUNTIES;
+  return {
+    counties: counties.length ? counties : [NO_LOCATION],
+    // A town is only kept where it means something, and never a vague "N/A" or "Kenya"
+    town: !counties.length || standAlone || matchPlace(stated("town")) === NO_LOCATION ? "" : stated("town"),
+    country: counties[0] === OUTSIDE_KENYA ? stated("country") : "",
+  };
 }
 
 // The whole answer: each job read with the same forgiving rules as a single reading
@@ -235,7 +259,9 @@ export function readingToJobInput(reading: PosterReading): JobInput {
   return jobDraftSchema.parse({
     title: reading.title.trim() || "Untitled job",
     company: reading.company,
-    location: reading.location,
+    counties: reading.counties,
+    town: reading.town,
+    country: reading.country,
     category: reading.category === "Unknown" ? "" : reading.category,
     type: reading.type,
     workMode: reading.workMode,
@@ -269,7 +295,9 @@ export const PRETEND_READING: PosterReading = {
   unsureFields: [],
   title: "I.T Specialist",
   company: "Kilimall",
-  location: "Nairobi (Mombasa Road)",
+  counties: ["Nairobi"],
+  town: "Mombasa Road",
+  country: "",
   category: "IT & Tech",
   type: "Full-time",
   workMode: "On-site",

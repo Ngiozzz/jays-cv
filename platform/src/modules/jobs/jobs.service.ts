@@ -6,7 +6,14 @@ import * as repo from "./jobs.repo";
 import { companyIdFor, logoUrl } from "./companies.service";
 import { removePoster } from "./poster.service";
 import { displayStatus, slugify, todayInNairobi, uniqueSlug, type JobDisplayStatus } from "./jobs.rules";
-import { applySchema, jobDraftSchema, publishProblems, type JobInput } from "./jobs.schema";
+import {
+  applySchema,
+  jobDraftSchema,
+  jobFieldsSchema,
+  publishProblems,
+  withLocation,
+  type JobInput,
+} from "./jobs.schema";
 
 // Every function checks the "post jobs" permission itself: the screens hiding buttons is not enough
 
@@ -47,13 +54,15 @@ export function countByStatus(jobs: JobRow[]): Record<JobDisplayStatus | "all", 
 
 // The saved job, in the shape the form edits
 export function toJobInput(job: Job): JobInput {
-  return {
+  return withLocation({
     title: job.title,
     company: job.company,
-    location: job.location,
-    category: jobDraftSchema.shape.category.catch("").parse(job.category),
-    type: jobDraftSchema.shape.type.catch("Full-time").parse(job.type),
-    workMode: jobDraftSchema.shape.workMode.catch("On-site").parse(job.workMode),
+    counties: jobFieldsSchema.shape.counties.parse(job.counties),
+    town: job.town,
+    country: job.country,
+    category: jobFieldsSchema.shape.category.catch("").parse(job.category),
+    type: jobFieldsSchema.shape.type.catch("Full-time").parse(job.type),
+    workMode: jobFieldsSchema.shape.workMode.catch("On-site").parse(job.workMode),
     salary: job.salary ?? "",
     summary: job.summary,
     responsibilities: job.responsibilities,
@@ -63,7 +72,7 @@ export function toJobInput(job: Job): JobInput {
     openEnded: job.status !== "DRAFT" && !job.deadline,
     apply: applySchema.catch(applySchema.parse({})).parse(job.apply),
     source: job.source ?? "",
-  };
+  });
 }
 
 export async function getJob(member: CurrentMember, id: string) {
@@ -76,6 +85,9 @@ function columns(job: JobInput) {
     title: job.title,
     company: job.company,
     location: job.location,
+    counties: job.counties,
+    town: job.town,
+    country: job.country,
     category: job.category,
     type: job.type,
     workMode: job.workMode,

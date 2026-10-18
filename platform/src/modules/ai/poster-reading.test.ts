@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   PRETEND_READING,
-  cleanLocation,
   extraTexts,
   parsePosterAnswer,
   parsePosterReading,
@@ -79,18 +78,36 @@ describe("parsePosterReading", () => {
     expect(parsePosterReading("sorry")).toBeNull();
   });
 
-  it('says "Not specified" when the poster gives no location', () => {
-    expect(parsePosterReading({ ...PRETEND_READING, location: "" })?.location).toBe("Not specified");
-    expect(parsePosterReading({ ...PRETEND_READING, location: "Kericho" })?.location).toBe("Kericho");
+  it('says "Not specified" when the poster gives no county, and drops a vague town', () => {
+    const none = parsePosterReading({ ...PRETEND_READING, counties: [], town: "N/A" });
+    expect(none).toMatchObject({ counties: ["Not specified"], town: "" });
+    expect(none?.unsureFields).not.toContain("location");
   });
-});
 
-describe("cleanLocation", () => {
-  it("turns vague answers into Not specified and keeps real places", () => {
-    for (const vague of ["", "  ", "N/A", "unknown", "Not stated", "Kenya", "-"]) {
-      expect(cleanLocation(vague)).toBe("Not specified");
-    }
-    expect(cleanLocation(" Nairobi (Westlands) ")).toBe("Nairobi (Westlands)");
+  it("keeps the town with its county, matching county names forgivingly", () => {
+    const tala = parsePosterReading({ ...PRETEND_READING, counties: ["machakos county"], town: "Tala" });
+    expect(tala).toMatchObject({ counties: ["Machakos"], town: "Tala", country: "" });
+    expect(parsePosterReading({ ...PRETEND_READING, counties: ["Muranga", "Nairobi City"] })?.counties).toEqual([
+      "Murang'a",
+      "Nairobi",
+    ]);
+  });
+
+  it("flags a place that isn't a county for a person to check", () => {
+    const odd = parsePosterReading({ ...PRETEND_READING, counties: ["Westlands"], town: "" });
+    expect(odd?.counties).toEqual(["Not specified"]);
+    expect(odd?.unsureFields).toContain("location");
+  });
+
+  it("keeps the country only for jobs outside Kenya", () => {
+    const abroad = parsePosterReading({
+      ...PRETEND_READING,
+      counties: ["Outside Kenya"],
+      town: "Doha",
+      country: "Qatar",
+    });
+    expect(abroad).toMatchObject({ counties: ["Outside Kenya"], town: "Doha", country: "Qatar" });
+    expect(parsePosterReading({ ...PRETEND_READING, country: "Kenya" })?.country).toBe("");
   });
 });
 

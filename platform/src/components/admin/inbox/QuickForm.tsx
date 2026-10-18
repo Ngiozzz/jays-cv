@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { LOGO_SIZE, shrinkImage } from "@/components/admin/jobs/shrink-image";
 import type { KnownCompany } from "@/components/admin/jobs/CompanyLogoField";
+import { CountyPicker } from "@/components/admin/jobs/CountyPicker";
 import { JobLogo } from "@/components/jobs/JobLogo";
 import { companyKey } from "@/modules/jobs/companies";
 import {
@@ -13,6 +14,7 @@ import {
   MAX_TAGS,
   WORK_MODES,
   cleanTags,
+  withLocation,
   type ApplyDetails,
   type ApplyMethod,
   type JobInput,
@@ -44,7 +46,8 @@ const lines = (text: string) => text.split("\n");
 // Everything the AI read from the poster, corrected in place. The same steps and fields as
 // Post a job (step 1, the poster, is beside this form), all open on one screen.
 export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, onLogo }: Props) {
-  const set = (patch: Partial<JobInput>) => onChange({ ...job, ...patch });
+  // The shown location ("Tala, Machakos County") follows the county, town and country
+  const set = (patch: Partial<JobInput>) => onChange(withLocation({ ...job, ...patch }));
   const setApply = (patch: Partial<ApplyDetails>) => set({ apply: { ...job.apply, ...patch } });
   const method = job.apply.method;
   const only = (...methods: ApplyMethod[]) => methods.includes(method);
@@ -106,11 +109,6 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
               </datalist>
             </>,
           )}
-          {field(
-            "location",
-            "Location *",
-            <input id="q-location" value={job.location} onChange={(e) => set({ location: e.target.value })} />,
-          )}
           <div className="f full logo-field">
             <span className="label">Company logo</span>
             <div className="logo-field-row">
@@ -134,6 +132,22 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
                   : "No logo yet: initials are shown instead. Add one if you have it."}
             </small>
           </div>
+          <CountyPicker
+            value={{ counties: job.counties, town: job.town, country: job.country }}
+            onChange={(place) => set(place)}
+            idPrefix="q"
+            unsure={unsure.includes("location")}
+            note={
+              unsure.includes("location") && (
+                <small className="unsure-note">
+                  AI wasn&apos;t sure: check the poster.{" "}
+                  <button type="button" onClick={() => onConfirm("location")}>
+                    Looks right
+                  </button>
+                </small>
+              )
+            }
+          />
           {field(
             "category",
             "Category",

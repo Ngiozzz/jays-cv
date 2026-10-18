@@ -8,7 +8,7 @@ type Props = {
   report: ReadingReport;
   // The links in the text posted with the poster, and whether each could be read
   links?: LinkResult[];
-  // The input to jump to for a field ("location" → "f-location")
+  // The input to jump to for a field ("title" → "f-title")
   idOf: (key: string) => string;
 };
 

@@ -25,7 +25,14 @@ describe("readingReport", () => {
   });
 
   it("marks what's needed to publish and treats Not specified as missing", () => {
-    const job = readingToJobInput({ ...PRETEND_READING, company: "", location: "", applyEmail: "", notes: "" });
+    const job = readingToJobInput({
+      ...PRETEND_READING,
+      company: "",
+      counties: ["Not specified"],
+      town: "",
+      applyEmail: "",
+      notes: "",
+    });
     const missing = readingReport(job, []).missing;
     expect(keys(missing)).toEqual(["company", "location", "salary", "deadline", "apply"]);
     expect(missing.filter((item) => item.needed).map((item) => item.key)).toEqual(["company", "apply"]);

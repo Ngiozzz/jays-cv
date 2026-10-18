@@ -43,7 +43,7 @@ export function readingReport(job: JobInput, unsure: readonly string[]): Reading
 
   check("title", Boolean(job.title.trim()) && job.title !== "Untitled job", "Type the job title.", true);
   check("company", Boolean(job.company.trim()), 'Type the company, or describe it ("Private hospital").', true);
-  check("location", !isNoLocation(job.location), 'Shown as "Not specified". Add the town if you know it.');
+  check("location", !isNoLocation(job), 'Shown as "Not specified". Choose the county if you know it.');
   check("category", Boolean(job.category), "Choose one so the job shows under the right category.");
   check("salary", Boolean(job.salary.trim()), "Left blank. That's normal: most adverts don't say.");
   check("summary", Boolean(job.summary.trim()), "A sentence or two helps the job show on Google.");

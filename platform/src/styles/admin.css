@@ -708,6 +708,67 @@
   background: var(--accent-soft) !important;
   border-color: var(--gold-light) !important;
 }
+
+/* County picker: chosen counties as chips, typed into like a text box */
+.county-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #ddd3c2;
+  border-radius: 10px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.county-picker:focus-within {
+  border-color: var(--gold-text);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+.f.invalid .county-picker {
+  border-color: #dc2626;
+}
+.f .county-picker input[type="text"] {
+  flex: 1 1 160px;
+  min-width: 120px;
+  padding: 5px 4px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.f .county-picker input[type="text"]:focus {
+  box-shadow: none;
+}
+.county-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  border: 1px solid var(--gold-border);
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.county-chip button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.county-chip button:hover {
+  background: var(--white);
+  color: #b91c1c;
+}
 .inline-check {
   display: inline-flex;
   align-items: center;

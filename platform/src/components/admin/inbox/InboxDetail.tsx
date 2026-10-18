@@ -246,7 +246,7 @@ export function InboxDetail(props: Props) {
               <AiReport
                 report={readingReport(job, props.unsure)}
                 links={card.links}
-                idOf={(key) => (key === "apply" ? "q-target" : `q-${key}`)}
+                idOf={(key) => (key === "apply" ? "q-target" : key === "location" ? "q-county" : `q-${key}`)}
               />
             )}
             <QuickForm

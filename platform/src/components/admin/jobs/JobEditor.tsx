@@ -17,9 +17,11 @@ import {
   type JobInput,
 } from "@/modules/jobs/jobs.schema";
 import { companyKey } from "@/modules/jobs/companies";
+import type { JobPlace } from "@/modules/jobs/counties";
 import { AiReport } from "./AiReport";
 import { ApplyFields } from "./ApplyFields";
 import { CompanyLogoField, type KnownCompany } from "./CompanyLogoField";
+import { CountyPicker } from "./CountyPicker";
 import { FormField } from "./FormField";
 import { JobStatusPill } from "./JobStatusPill";
 import { PosterSection } from "./PosterSection";
@@ -28,7 +30,7 @@ import { PosterSection } from "./PosterSection";
 const FIELD_IDS: Record<string, string> = {
   title: "f-title",
   company: "f-company",
-  location: "f-location",
+  location: "f-county",
   category: "f-category",
   type: "f-type",
   workMode: "f-mode",
@@ -41,8 +43,10 @@ const FIELD_IDS: Record<string, string> = {
   apply: "f-apply",
 };
 
-// The reading field an input belongs to ("applyEmail" → "apply")
-const fieldOf = (name: string) => (name.startsWith("apply") ? "apply" : name);
+// The reading field an input belongs to ("applyEmail" → "apply", "town" → "location")
+const PLACE_INPUTS = ["counties", "countiesChanged", "town", "country"];
+const fieldOf = (name: string) =>
+  name.startsWith("apply") ? "apply" : PLACE_INPUTS.includes(name) ? "location" : name;
 
 type Props = {
   jobId: string | null;
@@ -134,7 +138,13 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend,
           <AiReport report={readingReport(live, unsure)} links={links} idOf={(key) => FIELD_IDS[key] ?? `f-${key}`} />
         )}
         <div ref={fields} key={fillCount} className="post-fields">
-          <BasicsSection initial={values} errors={errors} company={live.company} companies={companies} />
+          <BasicsSection
+            initial={values}
+            errors={errors}
+            company={live.company}
+            companies={companies}
+            placeUnsure={Boolean(unsure?.includes("location"))}
+          />
           <DetailsSection initial={values} />
           <DeadlineSection initial={values} openEnded={live.openEnded} error={errors.deadline} />
           <section className="form-section" id="f-apply">
@@ -197,9 +207,20 @@ export function JobEditor({ jobId, initial, status, today, posterUrl, aiPretend,
   );
 }
 
-type BasicsProps = { initial: JobInput; errors: Record<string, string>; company: string; companies: KnownCompany[] };
+type BasicsProps = {
+  initial: JobInput;
+  errors: Record<string, string>;
+  company: string;
+  companies: KnownCompany[];
+  placeUnsure: boolean;
+};
 
-function BasicsSection({ initial, errors, company, companies }: BasicsProps) {
+function BasicsSection({ initial, errors, company, companies, placeUnsure }: BasicsProps) {
+  const [place, setPlace] = useState<JobPlace>({
+    counties: initial.counties,
+    town: initial.town,
+    country: initial.country,
+  });
   return (
     <section className="form-section">
       <h2>
@@ -233,16 +254,15 @@ function BasicsSection({ initial, errors, company, companies }: BasicsProps) {
             ))}
           </datalist>
         </FormField>
-        <FormField id="f-location" label="Location" required error={errors.location}>
-          <input
-            type="text"
-            id="f-location"
-            name="location"
-            defaultValue={initial.location}
-            placeholder="e.g. Nairobi (Mombasa Road)"
-          />
-        </FormField>
         <CompanyLogoField company={company} known={companies} error={errors.companyLogo} />
+        <CountyPicker
+          value={place}
+          onChange={setPlace}
+          idPrefix="f"
+          formNames
+          unsure={placeUnsure}
+          errors={{ location: errors.location, country: errors.country }}
+        />
         <FormField id="f-category" label="Category">
           <select id="f-category" name="category" defaultValue={initial.category}>
             <option value="">Choose a category</option>

@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { NO_FILTERS, countBy, filterJobs, placesOf, type BoardJob } from "./board-filter";
+import { NO_FILTERS, boardPlaces, countBy, filterJobs, type BoardJob } from "./board-filter";
 
 const today = "2026-10-12";
 const job = (patch: Partial<BoardJob>): BoardJob => ({
   title: "Job",
   company: "Co",
-  location: "Nairobi",
+  location: "Nairobi County",
+  counties: ["Nairobi"],
   type: "Full-time",
   category: "IT & Tech",
   summary: "",
@@ -18,7 +19,8 @@ const job = (patch: Partial<BoardJob>): BoardJob => ({
 const nurse = job({
   title: "Nurse",
   category: "Healthcare",
-  location: "Kisumu",
+  location: "Kisumu County",
+  counties: ["Kisumu"],
   deadline: "2026-10-14",
   postedDay: "2026-10-01",
 });
@@ -26,12 +28,17 @@ const dev = job({ title: "Developer", company: "Kilimall", deadline: "2026-11-30
 const intern = job({ title: "Intern", type: "Graduate / Internship", postedDay: "2026-10-05" });
 const jobs = [nurse, dev, intern];
 
-describe("placesOf", () => {
-  it("splits combined locations and drops details in brackets", () => {
-    expect(placesOf("Nairobi (Mombasa Road) & Kisumu")).toEqual(["Nairobi"]);
-    expect(placesOf("Nairobi, Mombasa & Kisumu")).toEqual(["Nairobi", "Mombasa", "Kisumu"]);
-    expect(placesOf("Not specified")).toEqual([]);
-    expect(placesOf("[Location]")).toEqual([]);
+describe("boardPlaces", () => {
+  it("lists the counties with jobs A to Z, then Outside Kenya", () => {
+    const places = boardPlaces([
+      { counties: ["Outside Kenya"] },
+      { counties: ["Nairobi", "Kisumu"] },
+      { counties: ["Machakos"] },
+      { counties: ["All counties"] },
+      { counties: ["Not specified"] },
+      { counties: ["Nairobi"] },
+    ]);
+    expect(places).toEqual(["Kisumu", "Machakos", "Nairobi", "Outside Kenya"]);
   });
 });
 
@@ -52,6 +59,20 @@ describe("filterJobs", () => {
 
   it("filters by place, category and type", () => {
     expect(filterJobs(jobs, { ...NO_FILTERS, loc: "Kisumu" }, today)).toEqual([nurse]);
+  });
+
+  it("shows a Tala job under Machakos, and nationwide jobs under every county", () => {
+    const tala = job({ title: "Teacher", location: "Tala, Machakos County", counties: ["Machakos"] });
+    const nationwide = job({ title: "Sales rep", location: "All counties", counties: ["All counties"] });
+    const all = [tala, nationwide, nurse];
+    expect(filterJobs(all, { ...NO_FILTERS, loc: "Machakos" }, today)).toEqual([tala, nationwide]);
+    expect(filterJobs(all, { ...NO_FILTERS, loc: "Kisumu" }, today)).toEqual([nationwide, nurse]);
+    // An older shared link with a town still works, and so does searching for the town
+    expect(filterJobs(all, { ...NO_FILTERS, loc: "Tala" }, today)).toEqual([tala]);
+    expect(filterJobs(all, { ...NO_FILTERS, q: "tala" }, today)).toEqual([tala]);
+  });
+
+  it("filters by category and type", () => {
     expect(filterJobs(jobs, { ...NO_FILTERS, cat: "Healthcare" }, today)).toEqual([nurse]);
     expect(filterJobs(jobs, { ...NO_FILTERS, types: ["Graduate / Internship"] }, today)).toEqual([intern]);
   });

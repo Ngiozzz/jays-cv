@@ -6,6 +6,7 @@ import { useRef, useState, useTransition, type FormEvent } from "react";
 import { placeOrderAction } from "@/app/(public)/[tenant]/order/actions";
 import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
+import { keptUntilText } from "@/modules/cv-check/cv-check";
 import { NEEDS, type NeedKey } from "@/modules/orders/place-order";
 import { PayBox } from "@/components/pay/PayBox";
 import type { PlaceOrderResult } from "@/modules/orders/place-order.service";
@@ -21,6 +22,15 @@ export type CardPackage = {
 export type CardService = { id: string; name: string; note: string; price: number; needsJobAdvert: boolean };
 // The job a tailored CV is for, when the client came from its page on the jobs board
 export type CardJob = { slug: string; title: string; company: string };
+// Ordering straight after a "Check it yourself": their details as read off the CV, and the CV itself
+// while it's still kept (modules/cv-check/cv-check.service.ts checkPrefill)
+export type CardCheck = {
+  checkId: string;
+  name: string;
+  phone: string;
+  email: string;
+  cv: { name: string; keptUntil: string } | null;
+};
 
 type Props = {
   packages: CardPackage[];
@@ -29,6 +39,7 @@ type Props = {
   businessName: string;
   waNumber: string;
   job: CardJob | null;
+  fromCheck?: CardCheck | null;
 };
 type Placed = Extract<PlaceOrderResult, { ok: true }>;
 
@@ -36,7 +47,7 @@ const STEPS = ["Choose a service", "Pick a package", "Your details & CV"];
 
 // The website's order card: 1) what do you need, 2) which package, 3) details and CV → the order is
 // created and the client gets their order number and private tracking link.
-export function OrderCard({ packages, services, whatsappHref, businessName, waNumber, job }: Props) {
+export function OrderCard({ packages, services, whatsappHref, businessName, waNumber, job, fromCheck }: Props) {
   const params = useSearchParams();
   const wantedPackage = packages.find((pkg) => pkg.shortName.toLowerCase() === params.get("pkg")?.toLowerCase());
   // From a job page: straight to the tailored CV, with the job already chosen
@@ -195,6 +206,7 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
               chosen={chosen}
               tailoring={needsJob}
               job={needsJob ? job : null}
+              fromCheck={needsJob && job ? (fromCheck ?? null) : null}
               whatsappHref={whatsappHref}
               onBack={() => go(2)}
               onPlaced={(result) => {
@@ -215,6 +227,7 @@ function DetailsStep(props: {
   // A CV tailored to a job: the job it came from, or the advert asked for here
   tailoring: boolean;
   job: CardJob | null;
+  fromCheck: CardCheck | null;
   whatsappHref: string;
   onBack: () => void;
   onPlaced: (result: Placed) => void;
@@ -226,6 +239,7 @@ function DetailsStep(props: {
   const [noCvTicked, setNoCv] = useState(false);
   // Tailoring needs a CV to tailor
   const noCv = noCvTicked && !props.tailoring;
+  const checkCv = props.fromCheck?.cv ?? null;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -233,6 +247,8 @@ function DetailsStep(props: {
     data.set("item", props.item);
     data.set("need", props.need);
     if (props.job) data.set("jobSlug", props.job.slug);
+    // No other file chosen: the CV from their check is used
+    if (checkCv && !cvName) data.set("checkId", props.fromCheck!.checkId);
     startTransition(async () => {
       const result = await placeOrderAction(data);
       if (result.ok) props.onPlaced(result);
@@ -288,6 +304,7 @@ function DetailsStep(props: {
               autoComplete="name"
               placeholder="e.g. Faith Njeri"
               maxLength={80}
+              defaultValue={props.fromCheck?.name}
               required
             />
             {fieldError("name")}
@@ -303,6 +320,7 @@ function DetailsStep(props: {
               inputMode="tel"
               autoComplete="tel"
               placeholder="07XX XXX XXX"
+              defaultValue={props.fromCheck?.phone}
               required
             />
             {fieldError("phone")}
@@ -311,7 +329,14 @@ function DetailsStep(props: {
             <label htmlFor="od-email">
               Email <small>(optional)</small>
             </label>
-            <input id="od-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" />
+            <input
+              id="od-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              defaultValue={props.fromCheck?.email}
+            />
             {fieldError("email")}
           </div>
           <div className="od-field">
@@ -373,7 +398,7 @@ function DetailsStep(props: {
           </div>
         )}
         {!noCv && (
-          <label className={cvName ? "cv-drop has-file" : "cv-drop"}>
+          <label className={cvName || checkCv ? "cv-drop has-file" : "cv-drop"}>
             <input
               type="file"
               name="cv"
@@ -389,6 +414,14 @@ function DetailsStep(props: {
                 <>
                   <strong>{cvName.name}</strong>
                   <small>{Math.max(1, Math.round(cvName.size / 1024))} KB · tap to change</small>
+                </>
+              ) : checkCv ? (
+                <>
+                  <strong>Your CV from the check: {checkCv.name}</strong>
+                  <small>
+                    Already attached. Kept privately until {keptUntilText(checkCv.keptUntil)}, then deleted unless you
+                    order · tap to use a different CV
+                  </small>
                 </>
               ) : (
                 <>

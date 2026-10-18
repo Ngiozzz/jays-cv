@@ -10,6 +10,7 @@ import {
 import { AiProgress } from "@/components/ai/AiProgress";
 import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
+import { CHECK_CV_KEEP_HOURS } from "@/modules/cv-check/cv-check";
 import type { CheckProgress } from "@/modules/cv-check/cv-check.service";
 import { PROMPT_SECONDS, type PretendOutcome } from "@/modules/payments/mpesa";
 
@@ -173,7 +174,9 @@ export function CvCheckFlow({ jobSlug, jobLabel, price, businessName }: Props) {
       </button>
       <p className="check-privacy">
         <Icon name="lock" />
-        Our AI reads your CV once to give you feedback, then it&apos;s deleted. Nobody at {businessName} sees it.
+        Our AI reads your CV to give you feedback. It&apos;s kept privately for {CHECK_CV_KEEP_HOURS} hours in case
+        you&apos;d like {businessName} to tailor it for this job, then deleted. Nobody at {businessName} sees it unless
+        you order.
       </p>
     </form>
   );

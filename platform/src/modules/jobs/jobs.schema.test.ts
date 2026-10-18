@@ -12,7 +12,7 @@ function form(fields: Record<string, string | string[]>) {
 const complete = {
   title: "I.T Specialist",
   company: "Kilimall",
-  location: "Nairobi",
+  counties: "Nairobi",
   category: "IT & Tech",
   type: "Full-time",
   workMode: "On-site",
@@ -56,6 +56,13 @@ describe("publishProblems", () => {
     expect(publishProblems(job).map((p) => p.path)).toEqual(["company", "location", "deadline", "apply.url"]);
   });
 
+  it("asks for the country of a job outside Kenya", () => {
+    const abroad = jobDraftSchema.parse(
+      jobFormToInput(form({ ...complete, counties: "Outside Kenya", town: "Dubai" })),
+    );
+    expect(publishProblems(abroad)).toEqual([{ path: "country", message: "Add the country" }]);
+  });
+
   it("checks the email and link look real", () => {
     const badEmail = jobDraftSchema.parse(jobFormToInput(form({ ...complete, applyEmail: "not-an-email" })));
     expect(publishProblems(badEmail)).toEqual([
@@ -70,7 +77,7 @@ describe("publishProblems", () => {
 
 describe("previewOf", () => {
   it("follows the other fields even before a title is typed", () => {
-    const preview = previewOf(form({ company: "Kilimall", location: "Nairobi" }));
-    expect(preview).toMatchObject({ title: "", company: "Kilimall", location: "Nairobi" });
+    const preview = previewOf(form({ company: "Kilimall", counties: "Machakos", town: "Tala" }));
+    expect(preview).toMatchObject({ title: "", company: "Kilimall", location: "Tala, Machakos County" });
   });
 });

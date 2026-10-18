@@ -3,12 +3,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { env } from "@/lib/env";
 import {
+  cvCheckAnswerSchema,
   cvCheckPrompt,
-  cvFeedbackSchema,
   PRETEND_FEEDBACK,
   type CheckCvType,
   type CheckJob,
-  type CvFeedback,
+  type CvCheckAnswer,
 } from "@/modules/cv-check/cv-check";
 import {
   extraTexts,
@@ -130,8 +130,9 @@ export async function readJobPoster(
 export async function checkCvAgainstJob(
   cv: { base64: string; mediaType: CheckCvType },
   job: CheckJob,
-): Promise<AiResult<CvFeedback>> {
-  if (!client) return { data: PRETEND_FEEDBACK, usage: null };
+): Promise<AiResult<CvCheckAnswer>> {
+  if (!client)
+    return { data: { ...PRETEND_FEEDBACK, name: "Faith Njeri", email: "faith.njeri@example.com" }, usage: null };
 
   const document =
     cv.mediaType === "application/pdf"
@@ -142,14 +143,14 @@ export async function checkCvAgainstJob(
     model: env.ANTHROPIC_CV_CHECK_MODEL,
     max_tokens: 16000,
     // A recruiter's judgement, not deep research: medium effort keeps each check quick and cheap
-    output_config: { effort: "medium", format: betaZodOutputFormat(cvFeedbackSchema) },
+    output_config: { effort: "medium", format: betaZodOutputFormat(cvCheckAnswerSchema) },
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     messages: [{ role: "user", content: [document, { type: "text", text: cvCheckPrompt(job) }] }],
   });
 
   const raw = answerJson(response, "CV check");
-  const feedback = cvFeedbackSchema.safeParse(withMatchInRange(raw));
+  const feedback = cvCheckAnswerSchema.safeParse(withMatchInRange(raw));
   if (!feedback.success) {
     console.error("[ai] CV check: unexpected answer", JSON.stringify(raw).slice(0, 2000));
     throw new AiUnavailableError("The AI's answer couldn't be read. Please try again.");

@@ -1,12 +1,14 @@
 // Google for Jobs reads this from each job page (schema.org JobPosting), so Jay CVS jobs can
 // appear in Google's job search. Pure, so it's unit-tested.
 
-import { isNoLocation } from "./jobs.schema";
+import { OUTSIDE_KENYA, isCounty } from "./counties";
 
 type JobForGoogle = {
   title: string;
   company: string;
-  location: string;
+  counties: string[];
+  town: string;
+  country: string;
   workMode: string;
   type: string;
   summary: string;
@@ -36,6 +38,28 @@ function escapeHtml(text: string): string {
   );
 }
 
+// Each county the job is in becomes a place (with the town when there's only one county). Nationwide
+// and "Not specified" jobs only give the country; jobs abroad give their city and country.
+function jobLocation(job: JobForGoogle) {
+  const place = (address: Record<string, string>) => ({
+    "@type": "Place",
+    address: { "@type": "PostalAddress", ...address },
+  });
+  if (job.counties[0] === OUTSIDE_KENYA) {
+    return place({ ...(job.town ? { addressLocality: job.town } : {}), addressCountry: job.country || "KE" });
+  }
+  const counties = job.counties.filter(isCounty);
+  if (!counties.length) return place({ addressCountry: "KE" });
+  const places = counties.map((county) =>
+    place({
+      ...(job.town && counties.length === 1 ? { addressLocality: job.town } : {}),
+      addressRegion: `${county} County`,
+      addressCountry: "KE",
+    }),
+  );
+  return places.length === 1 ? places[0] : places;
+}
+
 export function jobPostingSchema(job: JobForGoogle, pageUrl: string) {
   return {
     "@context": "https://schema.org",
@@ -49,15 +73,7 @@ export function jobPostingSchema(job: JobForGoogle, pageUrl: string) {
     ...(job.deadline ? { validThrough: `${job.deadline}T23:59:59+03:00` } : {}),
     employmentType: EMPLOYMENT_TYPE[job.type] ?? "OTHER",
     hiringOrganization: { "@type": "Organization", name: job.company },
-    jobLocation: {
-      "@type": "Place",
-      // "Not specified" is not a place, so Google only gets the country
-      address: {
-        "@type": "PostalAddress",
-        ...(isNoLocation(job.location) ? {} : { addressLocality: job.location }),
-        addressCountry: "KE",
-      },
-    },
+    jobLocation: jobLocation(job),
     ...(job.workMode === "Remote"
       ? { jobLocationType: "TELECOMMUTE", applicantLocationRequirements: { "@type": "Country", name: "Kenya" } }
       : {}),

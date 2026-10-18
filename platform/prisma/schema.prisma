@@ -260,7 +260,14 @@ model Job {
   // The remembered employer (for its logo); set from the company name when the job is saved
   companyId        String?
   companyRef       Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  // As shown on the site ("Tala, Machakos County"); worked out from counties, town and country on save
   location         String
+  // Official county names (modules/jobs/counties.ts), or one of "All counties" / "Outside Kenya" / "Not specified"
+  counties         String[]    @default([])
+  // Town or area, e.g. "Tala"; for a job outside Kenya, its city
+  town             String      @default("")
+  // Only for jobs outside Kenya
+  country          String      @default("")
   workMode         String
   type             String
   category         String
@@ -428,27 +435,31 @@ enum CvCheckStatus {
 }
 
 model CvCheck {
-  id        String        @id @default(cuid())
-  tenantId  String
-  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  jobId     String?
-  job       Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  id             String        @id @default(cuid())
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  jobId          String?
+  job            Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
   // "HR & Admin Team Lead at Kingdom Sacco", kept if the job is later removed
-  jobLabel  String
-  jobSlug   String
-  phone     String
-  amount    Int
-  status    CvCheckStatus @default(UNPAID)
-  // The uploaded CV (private "order-files" bucket) until the AI has read it; then null
-  cvPath    String?
-  cvName    String
-  cvType    String
+  jobLabel       String
+  jobSlug        String
+  phone          String
+  amount         Int
+  status         CvCheckStatus @default(UNPAID)
+  // The uploaded CV (private "order-files" bucket). Kept 48 hours after the check in case the client
+  // orders a tailored CV (ordering moves it to the order); then deleted and set to null
+  cvPath         String?
+  cvName         String
+  cvType         String
   // The AI's feedback, shaped by modules/cv-check/cv-check.ts
-  result    Json?
-  error     String?
-  createdAt DateTime      @default(now())
-  paidAt    DateTime?
-  doneAt    DateTime?
+  result         Json?
+  // Read off the CV by the AI, to fill in the order form if they order a tailored CV
+  applicantName  String        @default("")
+  applicantEmail String        @default("")
+  error          String?
+  createdAt      DateTime      @default(now())
+  paidAt         DateTime?
+  doneAt         DateTime?
 
   payments Payment[]
 

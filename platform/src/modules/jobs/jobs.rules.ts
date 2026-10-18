@@ -88,3 +88,17 @@ export function companyInitials(company: string): string {
 export function companyHue(company: string): number {
   return [...company].reduce((hue, char) => (hue * 31 + char.charCodeAt(0)) % 360, 7);
 }
+
+export const daysLeftText = (deadline: string, today: string) => {
+  const days = daysUntil(deadline, today);
+  if (days < 0) return "closed";
+  if (days === 0) return "closes today";
+  return days === 1 ? "1 day left" : `${days} days left`;
+};
+
+// The line under "How to apply": "Deadline: 24 Oct 2026 (3 days left)"
+export function applyDeadlineLine(deadline: string | null, today: string): string {
+  return deadline
+    ? `Deadline: ${formatDay(deadline)} (${daysLeftText(deadline, today)})`
+    : "Open until filled. Apply early.";
+}

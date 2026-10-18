@@ -3,7 +3,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
 import type { PublicJob } from "@/modules/jobs/jobs.public";
-import { daysUntil, deadlineLabel, formatDay, postedLabel } from "@/modules/jobs/jobs.rules";
+import { applyDeadlineLine, daysLeftText, deadlineLabel, formatDay, postedLabel } from "@/modules/jobs/jobs.rules";
 import { tagSlug } from "@/modules/jobs/jobs.schema";
 import { HowToApply } from "./HowToApply";
 import { JobLogo } from "./JobLogo";
@@ -21,19 +21,10 @@ type Props = {
   reportHref: string;
 };
 
-const daysLeftText = (deadline: string, today: string) => {
-  const days = daysUntil(deadline, today);
-  if (days < 0) return "closed";
-  if (days === 0) return "closes today";
-  return days === 1 ? "1 day left" : `${days} days left`;
-};
-
 export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, check, tailor, reportHref }: Props) {
   const closes = deadlineLabel(job.deadline, today);
   const closed = closes.tone === "closed";
-  const deadlineLine = job.deadline
-    ? `Deadline: ${formatDay(job.deadline)} (${daysLeftText(job.deadline, today)})`
-    : "Open until filled. Apply early.";
+  const deadlineLine = applyDeadlineLine(job.deadline, today);
   const shareText = `${job.title} at ${job.company}. Apply by ${job.deadline ? formatDay(job.deadline) : "soon"}: ${pageUrl}`;
 
   return (

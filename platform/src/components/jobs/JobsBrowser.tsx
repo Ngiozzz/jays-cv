@@ -7,11 +7,12 @@ import { Icon } from "@/components/icons/Icon";
 import {
   NO_FILTERS,
   countBy,
+  boardPlaces,
   filterJobs,
-  placesOf,
   type BoardFilters,
   type BoardListing,
 } from "@/modules/jobs/board-filter";
+import { isCounty } from "@/modules/jobs/counties";
 import { JobCard } from "./JobCard";
 
 type Props = {
@@ -28,7 +29,7 @@ export function JobsBrowser({ jobs, today, channelLink, draftTime, initial = NO_
   const [filters, setFilters] = useState<BoardFilters>(initial);
   const set = (patch: Partial<BoardFilters>) => setFilters((current) => ({ ...current, ...patch }));
 
-  const places = useMemo(() => [...new Set(jobs.flatMap((job) => placesOf(job.location)))].sort(), [jobs]);
+  const places = useMemo(() => boardPlaces(jobs), [jobs]);
   const categories = useMemo(() => countBy(jobs, "category"), [jobs]);
   const types = useMemo(() => countBy(jobs, "type"), [jobs]);
 
@@ -71,11 +72,13 @@ export function JobsBrowser({ jobs, today, channelLink, draftTime, initial = NO_
             </label>
             <label className="job-search-field job-search-loc">
               <Icon name="pin" />
-              <span className="sr-only">Location</span>
+              <span className="sr-only">County</span>
               <select value={filters.loc} onChange={(event) => set({ loc: event.target.value })}>
-                <option value="">All locations</option>
+                <option value="">All counties</option>
                 {places.map((place) => (
-                  <option key={place}>{place}</option>
+                  <option key={place} value={place}>
+                    {isCounty(place) ? `${place} County` : place}
+                  </option>
                 ))}
               </select>
             </label>

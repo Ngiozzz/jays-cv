@@ -9,7 +9,7 @@ describe("channelPost", () => {
     const job = jobDraftSchema.parse({
       title: "I.T Specialist",
       company: "Kilimall",
-      location: "Nairobi",
+      counties: ["Nairobi"],
       deadline: "2026-11-05",
       apply: {
         method: "email",
@@ -22,7 +22,7 @@ describe("channelPost", () => {
       [
         "🔥 *I.T SPECIALIST*",
         "🏢 Kilimall",
-        "📍 Nairobi · Full-time",
+        "📍 Nairobi County · Full-time",
         "⏳ Deadline: 5 Nov 2026",
         "📧 Apply: send CV & Cover letter to recruitment@kilimall.com (Subject: IT SPECIALIST)",
         "",
@@ -37,7 +37,7 @@ describe("channelPost", () => {
     const job = jobDraftSchema.parse({
       title: "Nurse",
       company: "Avenue",
-      location: "Kisumu",
+      counties: ["Kisumu"],
       salary: "KES 60,000",
       openEnded: true,
       apply: { method: "link", url: "https://avenue.co.ke/careers" },

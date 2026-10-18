@@ -18,11 +18,20 @@ import {
 } from "@/modules/payments/mpesa";
 import { settlePrompt } from "@/modules/payments/payments.service";
 import type { CurrentTenant } from "@/modules/tenants/tenants.service";
-import { checkCvProblem, cvFeedbackSchema, type CheckCvType, type CvFeedback } from "./cv-check";
+import { z } from "zod";
+import {
+  CHECK_CV_KEEP_HOURS,
+  checkCvKeptUntil,
+  checkCvProblem,
+  cvFeedbackSchema,
+  type CheckCvType,
+  type CvFeedback,
+} from "./cv-check";
 
 // "Check it yourself": the client uploads their CV on a job page, pays by M-Pesa prompt, and the AI
-// compares it with that job. Self-service: no order is created and Jay never sees the CV, which is
-// deleted as soon as the AI has read it. Only the browser that started a check can see it.
+// compares it with that job. Self-service: no order is created and Jay never sees the CV. It's kept
+// privately for 48 hours in case the client then orders a tailored CV (the order form starts filled
+// in, with this CV attached); otherwise it's deleted. Only the browser that started a check can see it.
 
 type Refused = { ok: false; error: string; field?: string };
 const refuse = (error: string, field?: string): Refused => ({ ok: false, error, field });
@@ -69,6 +78,7 @@ export async function startCvCheck(
   if (problem) return refuse(problem, "cv");
 
   const db = tenantDb(tenant.id);
+  await deleteOldCheckCvs(tenant.id, new Date());
   const recent = await db.cvCheck.count({
     where: { phone, createdAt: { gte: new Date(Date.now() - CHECK_LIMIT.minutes * 60_000) } },
   });
@@ -204,8 +214,9 @@ export async function pretendCheckPayment(
   return followCvCheck(tenant, checkId, paymentId);
 }
 
-// Paid: the AI reads the CV once, then the CV is deleted. Only the request that moves the check
-// from Paid to Reading runs it, so a check is never read (or charged in tokens) twice.
+// Paid: the AI reads the CV once. The CV is then kept for 48 hours (deleted at once if it isn't a
+// CV). Only the request that moves the check from Paid to Reading runs it, so a check is never read
+// (or charged in tokens) twice.
 async function readCv(tenant: CurrentTenant, checkId: string): Promise<CheckProgress> {
   const db = tenantDb(tenant.id);
   const { count } = await db.cvCheck.updateMany({
@@ -247,11 +258,19 @@ async function readCv(tenant: CurrentTenant, checkId: string): Promise<CheckProg
       job,
     );
     if (usage) await recordUsage(tenant.id, { feature: "CV check", memberId: null, ...usage });
+    const { name, email, ...feedback } = data;
     await db.cvCheck.updateMany({
       where: { id: checkId },
-      data: { status: "DONE", result: data, doneAt: new Date(), cvPath: null },
+      data: {
+        status: "DONE",
+        result: feedback,
+        doneAt: new Date(),
+        applicantName: feedback.isCv ? name.trim().slice(0, 80) : "",
+        applicantEmail: feedback.isCv && z.email().safeParse(email.trim()).success ? email.trim().toLowerCase() : "",
+        cvPath: feedback.isCv ? check.cvPath : null,
+      },
     });
-    await fileStore.remove("order-files", check.cvPath).catch(() => {});
+    if (!feedback.isCv) await fileStore.remove("order-files", check.cvPath).catch(() => {});
     return { state: "done" };
   } catch (error) {
     await db.cvCheck.updateMany({
@@ -273,22 +292,108 @@ export async function loadCvCheck(tenant: CurrentTenant, checkId: string) {
   if (!(await hasCheckPass(tenant.id, checkId))) return null;
   const check = await tenantDb(tenant.id).cvCheck.findFirst({
     where: { id: checkId },
-    select: { status: true, jobLabel: true, jobSlug: true, result: true, doneAt: true, amount: true },
+    select: {
+      status: true,
+      jobLabel: true,
+      jobSlug: true,
+      result: true,
+      doneAt: true,
+      amount: true,
+      cvPath: true,
+    },
   });
   if (!check) return null;
-  const feedback: CvFeedback | null = check.result ? cvFeedbackSchema.parse(check.result) : null;
-  return { ...check, feedback, doneAt: check.doneAt?.toISOString() ?? null };
+  const { cvPath, ...rest } = check;
+  const feedback: CvFeedback | null = rest.result ? cvFeedbackSchema.parse(rest.result) : null;
+  const keptUntil = cvPath && rest.doneAt ? checkCvKeptUntil(rest.doneAt) : null;
+  return {
+    ...rest,
+    feedback,
+    doneAt: rest.doneAt?.toISOString() ?? null,
+    // While the CV is still kept for a tailored CV order: until when
+    cvKeptUntil: keptUntil && keptUntil.getTime() > Date.now() ? keptUntil.toISOString() : null,
+  };
+}
+
+// ---------- Ordering a tailored CV straight after a check ----------
+
+export type CheckPrefill = {
+  checkId: string;
+  name: string;
+  phone: string;
+  email: string;
+  // The checked CV, while it's still kept
+  cv: { name: string; keptUntil: string } | null;
+};
+
+async function ownDoneCheck(tenant: CurrentTenant, checkId: string) {
+  if (!(await hasCheckPass(tenant.id, checkId))) return null;
+  return tenantDb(tenant.id).cvCheck.findFirst({
+    where: { id: checkId, status: "DONE" },
+    select: {
+      phone: true,
+      applicantName: true,
+      applicantEmail: true,
+      cvPath: true,
+      cvName: true,
+      cvType: true,
+      doneAt: true,
+    },
+  });
+}
+
+const stillKept = (check: { cvPath: string | null; doneAt: Date | null }, now: Date) =>
+  Boolean(check.cvPath && check.doneAt && checkCvKeptUntil(check.doneAt) > now);
+
+// The order form's starting values: only for the browser that paid for the check
+export async function checkPrefill(tenant: CurrentTenant, checkId: string): Promise<CheckPrefill | null> {
+  const check = await ownDoneCheck(tenant, checkId);
+  if (!check) return null;
+  return {
+    checkId,
+    name: check.applicantName,
+    phone: localPhone(check.phone),
+    email: check.applicantEmail,
+    cv: stillKept(check, new Date())
+      ? { name: check.cvName, keptUntil: checkCvKeptUntil(check.doneAt!).toISOString() }
+      : null,
+  };
+}
+
+// The checked CV as an upload, for an order placed without choosing another file
+export async function checkCvFile(tenant: CurrentTenant, checkId: string): Promise<File | null> {
+  const check = await ownDoneCheck(tenant, checkId);
+  if (!check || !stillKept(check, new Date())) return null;
+  const bytes = await fileStore.get("order-files", check.cvPath!).catch(() => null);
+  return bytes ? new File([new Uint8Array(bytes)], check.cvName, { type: check.cvType }) : null;
+}
+
+// Once the order has its own copy, the check's copy goes
+export async function releaseCheckCv(tenant: CurrentTenant, checkId: string): Promise<void> {
+  const db = tenantDb(tenant.id);
+  const check = await db.cvCheck.findFirst({ where: { id: checkId }, select: { cvPath: true } });
+  if (!check?.cvPath) return;
+  await db.cvCheck.updateMany({ where: { id: checkId }, data: { cvPath: null } });
+  await fileStore.remove("order-files", check.cvPath).catch(() => {});
 }
 
 export type LoadedCvCheck = NonNullable<Awaited<ReturnType<typeof loadCvCheck>>>;
 
-// ---------- Nightly: CVs uploaded for checks that were never paid ----------
+// ---------- CVs past their time: nightly, and whenever a new check starts ----------
 
-// Nobody paid, so the AI never read them: deleted after two hours, like every check's CV after reading
-export async function deleteUnpaidCheckCvs(tenantId: string, now: Date): Promise<number> {
+// Checks nobody paid for (the AI never read them): deleted after two hours. Checked CVs: deleted
+// 48 hours after the check, unless an order took them first.
+export async function deleteOldCheckCvs(tenantId: string, now: Date): Promise<number> {
   const db = tenantDb(tenantId);
+  const hoursAgo = (hours: number) => new Date(now.getTime() - hours * 3_600_000);
   const stale = await db.cvCheck.findMany({
-    where: { status: "UNPAID", cvPath: { not: null }, createdAt: { lte: new Date(now.getTime() - 2 * 3_600_000) } },
+    where: {
+      cvPath: { not: null },
+      OR: [
+        { status: "UNPAID", createdAt: { lte: hoursAgo(2) } },
+        { status: "DONE", doneAt: { lte: hoursAgo(CHECK_CV_KEEP_HOURS) } },
+      ],
+    },
     select: { id: true, cvPath: true },
     take: 500,
   });

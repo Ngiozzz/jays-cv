@@ -4,7 +4,9 @@ import { jobPostingSchema, jsonLd } from "./job-posting-schema";
 const job = {
   title: "I.T Specialist",
   company: "Kilimall",
-  location: "Nairobi",
+  counties: ["Nairobi"],
+  town: "Westlands",
+  country: "",
   workMode: "On-site",
   type: "Full-time",
   summary: "Run IT operations.",
@@ -24,7 +26,9 @@ describe("jobPostingSchema", () => {
       validThrough: "2026-11-05T23:59:59+03:00",
       employmentType: "FULL_TIME",
       hiringOrganization: { name: "Kilimall" },
-      jobLocation: { address: { addressLocality: "Nairobi", addressCountry: "KE" } },
+      jobLocation: {
+        address: { addressLocality: "Westlands", addressRegion: "Nairobi County", addressCountry: "KE" },
+      },
     });
     expect(data.description).toContain("<li>Degree &lt;IT&gt;</li>");
   });
@@ -35,9 +39,33 @@ describe("jobPostingSchema", () => {
     expect(data).not.toHaveProperty("validThrough");
   });
 
-  it('gives Google only the country when the location is "Not specified"', () => {
-    const data = jobPostingSchema({ ...job, location: "Not specified" }, "https://x");
-    expect(data.jobLocation.address).toEqual({ "@type": "PostalAddress", addressCountry: "KE" });
+  it('gives Google only the country when the location is "Not specified" or nationwide', () => {
+    for (const counties of [["Not specified"], ["All counties"]]) {
+      const data = jobPostingSchema({ ...job, counties, town: "" }, "https://x");
+      expect(data.jobLocation).toEqual({
+        "@type": "Place",
+        address: { "@type": "PostalAddress", addressCountry: "KE" },
+      });
+    }
+  });
+
+  it("lists each county for a job in several, and the city and country for a job abroad", () => {
+    const several = jobPostingSchema({ ...job, counties: ["Nairobi", "Kisumu"] }, "https://x");
+    expect(several.jobLocation).toEqual([
+      {
+        "@type": "Place",
+        address: { "@type": "PostalAddress", addressRegion: "Nairobi County", addressCountry: "KE" },
+      },
+      { "@type": "Place", address: { "@type": "PostalAddress", addressRegion: "Kisumu County", addressCountry: "KE" } },
+    ]);
+    const abroad = jobPostingSchema(
+      { ...job, counties: ["Outside Kenya"], town: "Dubai", country: "United Arab Emirates" },
+      "https://x",
+    );
+    expect(abroad.jobLocation).toEqual({
+      "@type": "Place",
+      address: { "@type": "PostalAddress", addressLocality: "Dubai", addressCountry: "United Arab Emirates" },
+    });
   });
 });
 
