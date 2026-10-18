@@ -2,6 +2,7 @@ import "server-only";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { findLowPendingReviews } from "@/modules/content/admin/reviews.repo";
 import { sumUsageByFeature } from "@/modules/ai/tokens.repo";
+import { findOpenRequest } from "@/modules/ai/token-requests.repo";
 import { loadFinance } from "@/modules/finance/finance.service";
 import { periodStart } from "@/modules/finance/finance.rules";
 import { listJobs } from "@/modules/jobs/jobs.service";
@@ -16,12 +17,13 @@ import { jobSummary, myCvs, openOrders, ordersNeedingAttention, progressRows, ty
 // again): orders for writers, jobs for job posters, money, team and AI tokens for the owner.
 
 async function ownerSummary(member: CurrentMember, now: Date) {
-  const [finance, team, tokens, usage, lowReviews] = await Promise.all([
+  const [finance, team, tokens, usage, lowReviews, tokenRequest] = await Promise.all([
     loadFinance(member, "month", now),
     loadTeam(member),
     getTokenBalance(member.tenant.id),
     sumUsageByFeature(member.tenant.id, periodStart("month", now)!),
     findLowPendingReviews(member.tenant.id),
+    findOpenRequest(member.tenant.id),
   ]);
   const writers = team.members.filter((m) => m.role !== "OWNER");
   const owed = finance.writers.filter((w) => w.owed > 0);
@@ -37,6 +39,8 @@ async function ownerSummary(member: CurrentMember, now: Date) {
     invitedWriters: team.invites.filter((i) => !i.owner && !i.expired).length,
     tokens,
     usage,
+    // More tokens asked for and not yet added by the platform owner
+    tokenRequest,
     // Unhappy clients to call before word gets around (owner only; cleared once the review is dealt with)
     lowReviews: lowReviews.map((review) => ({
       id: review.id,

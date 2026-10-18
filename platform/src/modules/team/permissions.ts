@@ -13,7 +13,8 @@ export type Permission =
   | "deleteOrders"
   | "workOnAnyOrder"
   | "acceptOrders"
-  | "postJobs";
+  | "postJobs"
+  | "requestTokens";
 
 export type MemberAccess = {
   role: Role;
@@ -35,6 +36,7 @@ const WRITER_PERMISSIONS: Record<Permission, (m: MemberAccess) => boolean> = {
   workOnAnyOrder: () => false,
   acceptOrders: (m) => m.canWrite,
   postJobs: (m) => m.canPostJobs,
+  requestTokens: () => false,
 };
 
 export function can(member: MemberAccess, permission: Permission): boolean {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { callerKind, command, tokensToRemove, usageEntry, usageQuery } from "./messages";
+import { callerKind, command, tokenRequestEntry, tokensToRemove, usageEntry, usageQuery } from "./messages";
 
 describe("callerKind", () => {
   it("names the kind of caller, never the person", () => {
@@ -50,6 +50,24 @@ describe("command", () => {
     expect(command.safeParse({ id: "cmd_12345678", type: "add_tokens", tokens: -5 }).success).toBe(false);
     expect(command.safeParse({ id: "cmd_12345678", type: "remove_tokens", tokens: 500 }).success).toBe(true);
     expect(command.safeParse({ id: "cmd_12345678", type: "delete_business" }).success).toBe(false);
+  });
+});
+
+describe("tokenRequestEntry", () => {
+  it("sends the amount, date and note, never who asked", () => {
+    const entry = tokenRequestEntry({
+      id: "req1",
+      tokens: 1_000_000,
+      note: "Busy week",
+      createdAt: new Date("2026-10-18T10:00:00Z"),
+    });
+    expect(entry).toEqual({ id: "req1", tokens: 1_000_000, note: "Busy week", at: "2026-10-18T10:00:00.000Z" });
+  });
+
+  it("lets added tokens name the request they answer", () => {
+    expect(
+      command.safeParse({ id: "cmd_12345678", type: "add_tokens", tokens: 1_000_000, requestId: "req1" }).success,
+    ).toBe(true);
   });
 });
 

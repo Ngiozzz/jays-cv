@@ -17,6 +17,8 @@ export const command = z.discriminatedUnion("type", [
     type: z.literal("add_tokens"),
     tokens: z.number().int().min(1).max(1_000_000_000),
     note: z.string().max(200).optional(),
+    // The owner's request these tokens answer; it's closed with them
+    requestId: z.string().min(1).max(64).optional(),
   }),
   z.object({
     id: z.string().min(8).max(64),
@@ -39,6 +41,11 @@ export type Caller = "team" | "visitor" | "automatic";
 export function callerKind(entry: { memberId: string | null; feature: string | null }): Caller {
   if (entry.memberId) return "team";
   return entry.feature === "CV check" ? "visitor" : "automatic";
+}
+
+// An open request for more tokens: the amount, date and the owner's short note, never who asked
+export function tokenRequestEntry(row: { id: string; tokens: number; note: string | null; createdAt: Date }) {
+  return { id: row.id, tokens: row.tokens, note: row.note, at: row.createdAt.toISOString() };
 }
 
 type LedgerRow = {

@@ -58,6 +58,7 @@ model Tenant {
   orderAiResults  OrderAiResult[]
   about           AboutPage?
   ccCommands      CcCommand[]
+  tokenRequests   TokenRequest[]
 }
 
 enum MpesaMode {
@@ -211,6 +212,7 @@ model Membership {
   inboxDecided   InboxItem[]        @relation("InboxDecidedBy")
   contentChanges ContentChange[]
   tokenEntries   TokenLedgerEntry[]
+  tokenRequests  TokenRequest[]
   orderAiResults OrderAiResult[]
 
   @@unique([tenantId, userId])
@@ -862,6 +864,29 @@ model CcCommand {
   receivedAt DateTime @default(now())
 
   @@index([tenantId, receivedAt])
+}
+
+enum TokenRequestStatus {
+  PENDING
+  DONE
+  CANCELLED
+}
+
+// The owner asking the platform owner for more AI tokens. The Command Center sees the open one
+// (amount and note only) and closes it by adding tokens with its id.
+model TokenRequest {
+  id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tokens        Int
+  note          String?
+  status        TokenRequestStatus @default(PENDING)
+  requestedById String?
+  requestedBy   Membership?        @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime           @default(now())
+  closedAt      DateTime?
+
+  @@index([tenantId, status])
 }
 
 // ---------------------------------------------------------------------------

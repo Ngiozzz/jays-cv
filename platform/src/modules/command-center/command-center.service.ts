@@ -1,9 +1,10 @@
 import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { tenantDb } from "@/lib/tenant-db";
+import { findOpenRequest } from "@/modules/ai/token-requests.repo";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import * as repo from "./command-center.repo";
-import { SETTLE_MS, tokensToRemove, usageEntry, type Command } from "./messages";
+import { SETTLE_MS, tokenRequestEntry, tokensToRemove, usageEntry, type Command } from "./messages";
 import { verify } from "./protocol";
 
 type Business = { id: string; slug: string; name: string };
@@ -39,7 +40,11 @@ export async function getUsage(business: Business, after: number, limit: number)
 }
 
 export async function getSummary(business: Business) {
-  const [balance, lastSeq] = await Promise.all([getTokenBalance(business.id), repo.findLastSeq(business.id)]);
+  const [balance, lastSeq, request] = await Promise.all([
+    getTokenBalance(business.id),
+    repo.findLastSeq(business.id),
+    findOpenRequest(business.id),
+  ]);
   return {
     business: business.slug,
     name: business.name,
@@ -47,6 +52,8 @@ export async function getSummary(business: Business) {
     granted: balance.granted,
     aiPaused: balance.paused,
     lastSeq,
+    // The owner's open request for more tokens, if any
+    tokenRequest: request ? tokenRequestEntry(request) : null,
   };
 }
 
@@ -71,6 +78,13 @@ export async function runCommand(business: Business, cmd: Command): Promise<Comm
           },
         });
         result = { tokensAdded: cmd.tokens, seq: entry.seq };
+        if (cmd.requestId) {
+          const closed = await tx.tokenRequest.updateMany({
+            where: { id: cmd.requestId, status: "PENDING" },
+            data: { status: "DONE", closedAt: new Date() },
+          });
+          result.requestClosed = closed.count > 0;
+        }
       } else if (cmd.type === "remove_tokens") {
         const balance = await tx.tokenLedgerEntry.aggregate({ _sum: { delta: true } });
         const removed = tokensToRemove(cmd.tokens, balance._sum.delta ?? 0);

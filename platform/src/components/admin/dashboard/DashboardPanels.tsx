@@ -7,6 +7,7 @@ import type { DashboardData } from "@/modules/dashboard/dashboard.service";
 import { deadlineLabel } from "@/modules/jobs/jobs.rules";
 import type { ListOrder } from "@/modules/orders/orders-list";
 import { STATUS_TEXT } from "@/modules/orders/orders.rules";
+import { OpenTokenRequest, RequestTokensButton } from "./TokenRequest";
 
 type Jobs = NonNullable<DashboardData["jobs"]>;
 type Business = NonNullable<DashboardData["business"]>;
@@ -227,6 +228,7 @@ export function AiUsagePanel({ business }: { business: Business }) {
           <Icon name="sparkle" className="h-icon" />
           AI tokens
         </h2>
+        {!business.tokenRequest && <RequestTokensButton />}
       </div>
       <div className="panel-body">
         <div className="ai-total">
@@ -253,10 +255,18 @@ export function AiUsagePanel({ business }: { business: Business }) {
           <p className="ai-low">
             <Icon name="alert" />
             <span>
-              {tokens.remaining > 0 ? "Running low." : "Out of tokens: AI buttons are paused."} Ask your developer to
-              add more tokens.
+              {tokens.remaining > 0 ? "Running low." : "Out of tokens: AI buttons are paused."}{" "}
+              {business.tokenRequest ? "Your request for more is on its way." : "Use Request tokens to ask for more."}
             </span>
           </p>
+        )}
+        {business.tokenRequest && (
+          <OpenTokenRequest
+            id={business.tokenRequest.id}
+            tokens={business.tokenRequest.tokens}
+            note={business.tokenRequest.note}
+            createdAt={business.tokenRequest.createdAt}
+          />
         )}
         {usage.length > 0 ? (
           <table className="ai-table">
