@@ -1,0 +1,8 @@
+# Safety net: the app deploys from platform/ (see platform/vercel.json). If a deploy is ever started
+# from this top folder by mistake, private settings and local-only folders must still never upload.
+**/.env*
+!**/.env.example
+**/.uploads
+**/node_modules
+**/.next
+**/.vercel
