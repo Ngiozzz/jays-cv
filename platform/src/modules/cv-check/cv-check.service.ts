@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { fileStore } from "@/lib/storage";
 import { tenantDb } from "@/lib/tenant-db";
 import { AiUnavailableError, checkCvAgainstJob } from "@/modules/ai/claude";
+import { aiStopped } from "@/modules/ai/tokens";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { findSettings } from "@/modules/content/content.repo";
@@ -83,7 +84,7 @@ export async function startCvCheck(
     where: { phone, createdAt: { gte: new Date(Date.now() - CHECK_LIMIT.minutes * 60_000) } },
   });
   if (recent >= CHECK_LIMIT.count) return refuse("You've run several checks just now. Please try again in an hour.");
-  if ((await getTokenBalance(tenant.id)).remaining <= 0)
+  if (aiStopped(await getTokenBalance(tenant.id)))
     return refuse("CV checks aren't available right now. Please try again later.");
 
   const { cvCheckPrice } = await findSettings(tenant.id);

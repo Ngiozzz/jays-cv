@@ -2,7 +2,15 @@ import "server-only";
 import { docxText } from "@/lib/docx-text";
 import { fileStore } from "@/lib/storage";
 import { tenantDb } from "@/lib/tenant-db";
-import { AiUnavailableError, analyseCv, checkDraft, draftSummary, type AiResult, type CvDocument } from "@/modules/ai/claude";
+import {
+  AiUnavailableError,
+  analyseCv,
+  checkDraft,
+  draftSummary,
+  type AiResult,
+  type CvDocument,
+} from "@/modules/ai/claude";
+import { AI_PAUSED_MESSAGE, aiStopped } from "@/modules/ai/tokens";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { TOOL_LABEL, type OrderBrief, type WriterTool } from "@/modules/ai/writer-tools";
@@ -50,7 +58,9 @@ export function toCvDocument(bytes: Uint8Array, mimeType: string): CvDocument | 
     return { kind: "image", base64, mediaType: mimeType };
   if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
     const text = docxText(bytes);
-    return text && text.length > 40 ? { kind: "text", text } : "This Word file couldn't be read. Save it as PDF and upload that.";
+    return text && text.length > 40
+      ? { kind: "text", text }
+      : "This Word file couldn't be read. Save it as PDF and upload that.";
   }
   if (mimeType === "application/msword")
     return "This is an old Word (.doc) file the AI can't read. Save it as .docx or PDF and upload that.";
@@ -86,10 +96,13 @@ export async function runWriterTool(
     },
   });
   if (!order) return { ok: false, error: "This order no longer exists." };
-  if (!canWorkOn(member, order)) return { ok: false, error: "Only the writer on this order and the owner can use the AI helper." };
-  if (!WORKING.includes(order.status)) return { ok: false, error: "The AI helper works while an order is being written." };
-  if ((await getTokenBalance(tenantId)).remaining <= 0)
-    return { ok: false, error: "The AI tokens have run out. Ask your developer for more." };
+  if (!canWorkOn(member, order))
+    return { ok: false, error: "Only the writer on this order and the owner can use the AI helper." };
+  if (!WORKING.includes(order.status))
+    return { ok: false, error: "The AI helper works while an order is being written." };
+  const stopped = aiStopped(await getTokenBalance(tenantId));
+  if (stopped === "paused") return { ok: false, error: AI_PAUSED_MESSAGE };
+  if (stopped) return { ok: false, error: "The AI tokens have run out. Ask your developer for more." };
 
   // What to read: a file the writer chose, or the client's CV (analysis, summary) / our latest draft (final check)
   let document: CvDocument | string;

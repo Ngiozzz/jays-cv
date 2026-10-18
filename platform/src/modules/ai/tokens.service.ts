@@ -9,5 +9,5 @@ export async function getTokenBalance(tenantId: string): Promise<TokenBalance> {
     sumGrantedTokens(tenantId),
     findSettings(tenantId),
   ]);
-  return tokenBalance(remaining, granted, settings.aiWarnPct);
+  return tokenBalance(remaining, granted, settings.aiWarnPct, settings.aiPaused);
 }

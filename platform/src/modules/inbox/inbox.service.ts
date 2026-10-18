@@ -4,6 +4,7 @@ import { fileStore } from "@/lib/storage";
 import { AiUnavailableError, readJobPoster } from "@/modules/ai/claude";
 import type { LinkResult } from "@/modules/ai/links";
 import { READING_FIELDS, readingToJobInput } from "@/modules/ai/poster-reading";
+import { AI_PAUSED_MESSAGE, aiStopped } from "@/modules/ai/tokens";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { createPosterRecord, findJob } from "@/modules/jobs/jobs.repo";
@@ -56,9 +57,9 @@ export async function addPosters(member: CurrentMember, files: File[], source: s
 export async function readInboxItem(member: CurrentMember, id: string): Promise<Result> {
   assertCan(member, "postJobs");
   const tenantId = member.tenant.id;
-  if ((await getTokenBalance(tenantId)).remaining <= 0) {
-    return { ok: false, error: "Your AI tokens have run out. Ask your developer for more." };
-  }
+  const stopped = aiStopped(await getTokenBalance(tenantId));
+  if (stopped === "paused") return { ok: false, error: AI_PAUSED_MESSAGE };
+  if (stopped) return { ok: false, error: "Your AI tokens have run out. Ask your developer for more." };
   // Another browser may already be reading this one
   if (!(await repo.claimForReading(tenantId, id))) return { ok: true };
   const item = await repo.findInboxItem(tenantId, id);

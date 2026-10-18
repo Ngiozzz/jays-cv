@@ -55,3 +55,6 @@ next-env.d.ts
 
 # local file storage stand-in (development)
 /.uploads
+
+# Command Center signing keys (scripts/command-center-key.ts)
+command-center-keys.local.json

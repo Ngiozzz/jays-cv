@@ -17,16 +17,19 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model Tenant {
-  id              String   @id @default(cuid())
-  slug            String   @unique
-  name            String
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
   // Public domain (e.g. "jaycvs.co.ke"); requests are matched to a business by host
-  domain          String?  @unique
-  orderPrefix     String   @default("JC")
+  domain           String?  @unique
+  orderPrefix      String   @default("JC")
   // Next order number to hand out; incremented inside the order-creating transaction
-  nextOrderNumber Int      @default(1041)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  nextOrderNumber  Int      @default(1041)
+  // Secret shared with the platform owner's Command Center to sign messages; set by
+  // scripts/command-center-key.ts, never shown in the app
+  commandCenterKey String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   settings        BusinessSettings?
   homepage        Homepage?
@@ -54,6 +57,7 @@ model Tenant {
   cvChecks        CvCheck[]
   orderAiResults  OrderAiResult[]
   about           AboutPage?
+  ccCommands      CcCommand[]
 }
 
 enum MpesaMode {
@@ -87,6 +91,8 @@ model BusinessSettings {
   // What a client pays for "Check it yourself": AI feedback on their CV for one job (KES)
   cvCheckPrice          Int       @default(10)
   aiWarnPct             Int       @default(20)
+  // Set by the platform owner from the Command Center: no AI runs while it is on
+  aiPaused              Boolean   @default(false)
   paybill               String
   mpesaMode             MpesaMode @default(TEST)
   updatedAt             DateTime  @updatedAt
@@ -836,9 +842,26 @@ model TokenLedgerEntry {
   jobId        String?
   job          Job?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
   note         String?
+  // Running number the Command Center reads usage by ("everything after #N")
+  seq          Int            @unique @default(autoincrement())
   createdAt    DateTime       @default(now())
 
   @@index([tenantId, createdAt])
+  @@index([tenantId, seq])
+}
+
+// Commands received from the platform owner's Command Center. The id is the Command Center's own,
+// so a command sent twice (a retry) is only carried out once.
+model CcCommand {
+  id         String   @id
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type       String
+  payload    Json
+  result     Json
+  receivedAt DateTime @default(now())
+
+  @@index([tenantId, receivedAt])
 }
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { AiUnavailableError, readJobPoster } from "@/modules/ai/claude";
 import { readLinks } from "@/modules/ai/link-reader";
 import { findLinks, type LinkResult } from "@/modules/ai/links";
 import { readingToJobInput, type ScamRisk } from "@/modules/ai/poster-reading";
+import { AI_PAUSED_MESSAGE, aiStopped } from "@/modules/ai/tokens";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { scamFlag, type Flag } from "@/modules/inbox/inbox.flags";
@@ -50,8 +51,9 @@ export async function readPoster(member: CurrentMember, file: File, caption: str
   const problem = posterProblem(file);
   if (problem || !isPosterType(file.type)) return { ok: false, error: problem ?? "Please choose an image." };
 
-  const balance = await getTokenBalance(member.tenant.id);
-  if (balance.remaining <= 0) {
+  const stopped = aiStopped(await getTokenBalance(member.tenant.id));
+  if (stopped === "paused") return { ok: false, error: `${AI_PAUSED_MESSAGE} You can type the details in.` };
+  if (stopped) {
     return { ok: false, error: "Your AI tokens have run out. Ask your developer for more, or type the details in." };
   }
 

@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { fileStore } from "@/lib/storage";
 import { tenantDb } from "@/lib/tenant-db";
 import { screenReview } from "@/modules/ai/claude";
+import { aiStopped } from "@/modules/ai/tokens";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import type { CurrentTenant } from "@/modules/tenants/tenants.service";
@@ -216,7 +217,7 @@ async function screenNewReview(
   review: { rating: number; name: string; role: string | null; text: string },
 ) {
   try {
-    if ((await getTokenBalance(tenantId)).remaining <= 0) return;
+    if (aiStopped(await getTokenBalance(tenantId))) return;
     const screened = await screenReview({ ...review, role: review.role ?? "" });
     if (!screened) return;
     if (screened.usage) {
