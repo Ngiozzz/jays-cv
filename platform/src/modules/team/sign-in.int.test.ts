@@ -26,7 +26,7 @@ afterAll(async () => {
 async function createUser(email: string) {
   const ctx = await auth.$context;
   return ctx.internalAdapter.createUser(
-    { email, name: "Test", emailVerified: true },
+    { email, name: "Grace Wanjiku", emailVerified: true },
     { method: "oauth", oauth: { providerId: "google", profile: { email } } },
   );
 }
@@ -42,10 +42,16 @@ describe("invite-only sign-in", () => {
     expect(await db.user.count({ where: { email: strangerEmail } })).toBe(0);
   });
 
-  it("turns the invite into an active membership", async () => {
+  it("turns the invite into an active membership, named as on their Google account", async () => {
     const user = await createUser(invitedEmail);
     const membership = await db.membership.findFirst({ where: { userId: user.id, tenantId } });
-    expect(membership).toMatchObject({ role: "WRITER", status: "ACTIVE", displayName: "Grace" });
+    expect(membership).toMatchObject({
+      role: "WRITER",
+      status: "ACTIVE",
+      displayName: "Grace Wanjiku",
+      firstName: "Grace",
+      lastName: "Wanjiku",
+    });
     const invite = await db.invite.findFirst({ where: { email: invitedEmail } });
     expect(invite?.status).toBe("ACCEPTED");
     await expect(createSession(user.id)).resolves.toBeTruthy();

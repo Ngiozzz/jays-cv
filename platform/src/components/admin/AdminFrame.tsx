@@ -10,7 +10,7 @@ import { UserMenu } from "./UserMenu";
 import { adminTrail, SUB_PAGES } from "./admin-nav";
 
 export type FrameNavItem = { href: string; label: string; icon: IconName; phase?: number };
-export type FrameUser = { name: string; roleLabel: string; initials: string };
+export type FrameUser = { name: string; roleLabel: string; initials: string; image: string | null };
 
 type Props = { nav: FrameNavItem[]; user: FrameUser; children: ReactNode };
 

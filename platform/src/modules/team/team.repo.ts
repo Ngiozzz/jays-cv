@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { tenantDb } from "@/lib/tenant-db";
+import { namesFromAccount } from "./profile";
 
 // Sign-in happens before we know which business the person works for, so the invite
 // lookups below search every business by email. Everything else goes through tenantDb.
@@ -19,25 +20,25 @@ export function countActiveMemberships(userId: string) {
 type AcceptedInvite = Awaited<ReturnType<typeof findPendingInvitesByEmail>>[number];
 
 // Turns each invite into a membership in one transaction, so a half-accepted invite can't exist
-export function acceptInvites(userId: string, invites: AcceptedInvite[], now: Date) {
+export function acceptInvites(user: { id: string; name: string | null }, invites: AcceptedInvite[], now: Date) {
   return db.$transaction(
     invites.flatMap((invite) => [
       db.membership.upsert({
-        where: { tenantId_userId: { tenantId: invite.tenantId, userId } },
+        where: { tenantId_userId: { tenantId: invite.tenantId, userId: user.id } },
         // An earlier membership (e.g. removed, then re-invited) takes the new invite's terms
-        update: membershipTerms(invite),
-        create: { tenantId: invite.tenantId, userId, ...membershipTerms(invite) },
+        update: membershipTerms(invite, user.name),
+        create: { tenantId: invite.tenantId, userId: user.id, ...membershipTerms(invite, user.name) },
       }),
       db.invite.update({ where: { id: invite.id }, data: { status: "ACCEPTED", acceptedAt: now } }),
     ]),
   );
 }
 
-function membershipTerms(invite: AcceptedInvite) {
+function membershipTerms(invite: AcceptedInvite, accountName: string | null) {
   return {
     role: invite.role,
     status: "ACTIVE" as const,
-    displayName: invite.name,
+    ...namesFromAccount(accountName, invite.name),
     phone: invite.phone,
     canWrite: invite.canWrite,
     canPostJobs: invite.canPostJobs,
@@ -56,9 +57,8 @@ export function touchLastSeen(tenantId: string, membershipId: string, now: Date)
   return tenantDb(tenantId).membership.update({ where: { id: membershipId }, data: { lastSeenAt: now } });
 }
 
-export async function findUserEmail(userId: string) {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
-  return user?.email ?? null;
+export function findUser(userId: string) {
+  return db.user.findUnique({ where: { id: userId }, select: { id: true, email: true, name: true } });
 }
 
 // ---------- Team screen (always within one business) ----------
@@ -66,7 +66,7 @@ export async function findUserEmail(userId: string) {
 export function findTeamMembers(tenantId: string) {
   return tenantDb(tenantId).membership.findMany({
     where: { status: { not: "REMOVED" } },
-    include: { user: { select: { email: true } } },
+    include: { user: { select: { email: true, image: true } } },
     orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
   });
 }

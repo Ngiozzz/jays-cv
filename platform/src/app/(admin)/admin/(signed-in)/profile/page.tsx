@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Avatar } from "@/components/admin/Avatar";
 import { ProfileForm } from "@/components/admin/ProfileForm";
 import { Icon } from "@/components/icons/Icon";
 import { requireMember } from "@/modules/team/current-member";
@@ -26,9 +27,11 @@ export default async function ProfilePage() {
     <div className="profile-grid">
       <section className="panel">
         <div className="profile-head">
-          <span className={owner ? "avatar owner profile-avatar" : "avatar profile-avatar"}>
-            {initialsOf(profile.name)}
-          </span>
+          <Avatar
+            initials={initialsOf(profile.name)}
+            image={profile.image}
+            className={owner ? "owner profile-avatar" : "profile-avatar"}
+          />
           <div>
             <h2>{profile.name}</h2>
             <p>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { cancelInviteAction, removeMemberAction, setPausedAction } from "@/app/(admin)/admin/(signed-in)/team/actions";
 import { CopyButton } from "@/components/CopyButton";
 import { Icon } from "@/components/icons/Icon";
+import { Avatar } from "../Avatar";
 import { initialsOf, whatsappTo } from "@/modules/team/team.rules";
 import type { TeamData, TeamInviteRow, TeamMemberRow } from "@/modules/team/team.service";
 import { MemberDialog } from "./MemberDialog";
@@ -183,7 +184,7 @@ function MemberRow(props: {
     <tr className={owner ? "row-owner" : paused ? "row-paused" : undefined}>
       <td>
         <div className="member">
-          <span className={owner ? "avatar owner" : "avatar"}>{initialsOf(member.name)}</span>
+          <Avatar initials={initialsOf(member.name)} image={member.image} className={owner ? "owner" : undefined} />
           <div>
             <strong>{member.name}</strong>
             <small>{[member.phone, member.email].filter(Boolean).join(" · ")}</small>

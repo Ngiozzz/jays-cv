@@ -18,6 +18,7 @@ export type TeamMemberRow = {
   id: string;
   name: string;
   email: string;
+  image: string | null;
   phone: string | null;
   role: "OWNER" | "WRITER";
   status: "ACTIVE" | "PAUSED";
@@ -54,6 +55,7 @@ export async function loadTeam(member: CurrentMember) {
     id: m.id,
     name: m.displayName,
     email: m.user.email,
+    image: m.user.image,
     phone: m.phone,
     role: m.role,
     status: m.status === "PAUSED" ? "PAUSED" : "ACTIVE",

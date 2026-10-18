@@ -42,5 +42,5 @@ function frameUser(member: CurrentMember) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  return { name: member.name, roleLabel: member.role === "OWNER" ? "Owner" : "Writer", initials };
+  return { name: member.name, roleLabel: member.role === "OWNER" ? "Owner" : "Writer", initials, image: member.image };
 }

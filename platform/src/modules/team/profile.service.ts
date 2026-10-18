@@ -14,6 +14,7 @@ export async function loadProfile(member: CurrentMember) {
     ...names,
     nickname: membership?.nickname ?? "",
     email: member.email,
+    image: member.image,
     phone: membership?.phone ?? "",
     role: member.role,
     canWrite: member.canWrite,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayNameOf, profileSchema, splitName } from "./profile";
+import { displayNameOf, namesFromAccount, profileSchema, splitName } from "./profile";
 
 const grace = { firstName: "Grace", lastName: "Wanjiku", nickname: "", phone: "" };
 
@@ -29,5 +29,25 @@ describe("splitName", () => {
   it("takes the first word as the first name and the rest as the last name", () => {
     expect(splitName("Grace Wanjiku Kamau")).toEqual({ firstName: "Grace", lastName: "Wanjiku Kamau" });
     expect(splitName("Grace")).toEqual({ firstName: "Grace", lastName: "" });
+  });
+});
+
+describe("namesFromAccount", () => {
+  it("uses the Google account's name, split into first and last", () => {
+    expect(namesFromAccount("Glenn Ngio", "Jay")).toEqual({
+      firstName: "Glenn",
+      lastName: "Ngio",
+      displayName: "Glenn Ngio",
+    });
+  });
+
+  it("falls back to the invite's name when Google gives no usable name", () => {
+    expect(namesFromAccount("", "Grace Wanjiku")).toEqual({
+      firstName: "Grace",
+      lastName: "Wanjiku",
+      displayName: "Grace Wanjiku",
+    });
+    expect(namesFromAccount(null, "Grace").displayName).toBe("Grace");
+    expect(namesFromAccount("grace@gmail.com", "Grace").displayName).toBe("Grace");
   });
 });

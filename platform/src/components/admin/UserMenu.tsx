@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
+import { Avatar } from "./Avatar";
 import { SignOutButton } from "./SignOutButton";
 
-type Props = { name: string; roleLabel: string; initials: string };
+type Props = { name: string; roleLabel: string; initials: string; image: string | null };
 
 // The name in the top bar opens a small menu: View profile, Sign out
-export function UserMenu({ name, roleLabel, initials }: Props) {
+export function UserMenu({ name, roleLabel, initials, image }: Props) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,7 @@ export function UserMenu({ name, roleLabel, initials }: Props) {
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <span className="avatar">{initials}</span>
+        <Avatar initials={initials} image={image} />
         <span className="user-chip-text">
           <strong>{name}</strong>
           <span>{roleLabel}</span>

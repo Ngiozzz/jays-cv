@@ -29,3 +29,12 @@ export function splitName(name: string) {
   const [first = "", ...rest] = name.trim().split(/\s+/);
   return { firstName: first, lastName: rest.join(" ") };
 }
+
+// A new member's names come from their Google account; the name on the invite only fills in when
+// Google gives none (they can change either on their profile)
+export function namesFromAccount(accountName: string | null | undefined, inviteName: string) {
+  const name = accountName?.trim() ?? "";
+  const usable = /\p{L}/u.test(name) && !name.includes("@");
+  const full = usable ? name : inviteName.trim();
+  return { ...splitName(full), displayName: full };
+}
