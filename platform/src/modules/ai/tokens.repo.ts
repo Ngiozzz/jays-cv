@@ -6,9 +6,10 @@ export async function sumTokenDeltas(tenantId: string): Promise<number> {
   return result._sum.delta ?? 0;
 }
 
+// Everything given, less any tokens taken back (a minus correction), so "% left" stays right
 export async function sumGrantedTokens(tenantId: string): Promise<number> {
   const result = await tenantDb(tenantId).tokenLedgerEntry.aggregate({
-    where: { delta: { gt: 0 } },
+    where: { OR: [{ delta: { gt: 0 } }, { kind: "ADJUSTMENT" }] },
     _sum: { delta: true },
   });
   return result._sum.delta ?? 0;

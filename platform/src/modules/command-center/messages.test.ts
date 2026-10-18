@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { callerKind, command, usageEntry, usageQuery } from "./messages";
+import { callerKind, command, tokensToRemove, usageEntry, usageQuery } from "./messages";
 
 describe("callerKind", () => {
   it("names the kind of caller, never the person", () => {
@@ -44,10 +44,20 @@ describe("usageQuery", () => {
 });
 
 describe("command", () => {
-  it("accepts the two commands and refuses anything else", () => {
+  it("accepts the known commands and refuses anything else", () => {
     expect(command.safeParse({ id: "cmd_12345678", type: "add_tokens", tokens: 1_000_000 }).success).toBe(true);
     expect(command.safeParse({ id: "cmd_12345678", type: "set_ai_paused", paused: true }).success).toBe(true);
     expect(command.safeParse({ id: "cmd_12345678", type: "add_tokens", tokens: -5 }).success).toBe(false);
+    expect(command.safeParse({ id: "cmd_12345678", type: "remove_tokens", tokens: 500 }).success).toBe(true);
     expect(command.safeParse({ id: "cmd_12345678", type: "delete_business" }).success).toBe(false);
+  });
+});
+
+describe("tokensToRemove", () => {
+  it("never takes the balance below zero", () => {
+    expect(tokensToRemove(1000, 5000)).toBe(1000);
+    expect(tokensToRemove(9000, 5000)).toBe(5000);
+    expect(tokensToRemove(1000, 0)).toBe(0);
+    expect(tokensToRemove(1000, -20)).toBe(0);
   });
 });

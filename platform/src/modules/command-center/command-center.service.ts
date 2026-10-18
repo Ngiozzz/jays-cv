@@ -3,7 +3,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { tenantDb } from "@/lib/tenant-db";
 import { getTokenBalance } from "@/modules/ai/tokens.service";
 import * as repo from "./command-center.repo";
-import { SETTLE_MS, usageEntry, type Command } from "./messages";
+import { SETTLE_MS, tokensToRemove, usageEntry, type Command } from "./messages";
 import { verify } from "./protocol";
 
 type Business = { id: string; slug: string; name: string };
@@ -71,6 +71,22 @@ export async function runCommand(business: Business, cmd: Command): Promise<Comm
           },
         });
         result = { tokensAdded: cmd.tokens, seq: entry.seq };
+      } else if (cmd.type === "remove_tokens") {
+        const balance = await tx.tokenLedgerEntry.aggregate({ _sum: { delta: true } });
+        const removed = tokensToRemove(cmd.tokens, balance._sum.delta ?? 0);
+        if (removed > 0) {
+          const entry = await tx.tokenLedgerEntry.create({
+            data: {
+              tenantId: business.id,
+              kind: "ADJUSTMENT",
+              delta: -removed,
+              note: cmd.note ?? "Removed from the Command Center",
+            },
+          });
+          result = { tokensRemoved: removed, seq: entry.seq };
+        } else {
+          result = { tokensRemoved: 0 };
+        }
       } else {
         await tx.businessSettings.updateMany({ data: { aiPaused: cmd.paused } });
         result = { aiPaused: cmd.paused };
