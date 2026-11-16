@@ -27,7 +27,7 @@ const oneOf = (choices: readonly number[], message: string) =>
   z.coerce.number().refine((value) => choices.includes(value), message);
 
 // An optional https:// address; left empty, it isn't shown on the website
-const webLink = (hosts: string[], example: string) =>
+export const webLink = (hosts: string[], example: string) =>
   z
     .string()
     .trim()

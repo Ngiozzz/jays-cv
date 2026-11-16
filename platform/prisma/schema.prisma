@@ -784,20 +784,25 @@ model Homepage {
 
 // The About page. The owner edits it in Admin → Website content → About page.
 model AboutPage {
-  id        String   @id @default(cuid())
-  tenantId  String   @unique
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  tenantId   String   @unique
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   // Shown under "About Jay CVS"
-  lead      String
-  ownerName String
-  ownerRole String
+  lead       String
+  ownerName  String
+  ownerRole  String
   // Storage path of the owner's photo ("about-photos" bucket); null shows initials
-  photo     String?
+  photo      String?
   // Markdown, a few short paragraphs
-  story     String
+  story      String
   // [{ value, label }], validated by modules/content/content.schema.ts
-  stats     Json
-  updatedAt DateTime @updatedAt
+  stats      Json
+  // { linkedin, facebook, instagram, x }: the owner's own pages, null when not filled in
+  ownerLinks Json     @default("{}")
+  // [{ id, name, role, note, linkedin, photo }]: the writers credited under "Meet the team" (photos in
+  // "about-photos"), validated by modules/content/admin/about.ts
+  team       Json     @default("[]")
+  updatedAt  DateTime @updatedAt
 }
 
 // Every content edit is recorded with who made it, so it can be undone

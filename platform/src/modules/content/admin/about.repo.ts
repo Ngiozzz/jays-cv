@@ -3,7 +3,16 @@ import { tenantDb } from "@/lib/tenant-db";
 import type { StoredAbout } from "./about";
 import type { Tx } from "./history";
 
-const FIELDS = { lead: true, ownerName: true, ownerRole: true, photo: true, story: true, stats: true } as const;
+const FIELDS = {
+  lead: true,
+  ownerName: true,
+  ownerRole: true,
+  photo: true,
+  story: true,
+  stats: true,
+  ownerLinks: true,
+  team: true,
+} as const;
 
 // null until the owner first saves the About page (the page shows the starting text until then)
 export function findAbout(tenantId: string) {

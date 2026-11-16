@@ -6057,6 +6057,30 @@ kbd {
   border-radius: 12px;
 }
 
+/* The team: one block per person, like the FAQ list */
+.team-admin {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+.team-admin > li {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.team-admin .faq-admin-tools {
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.about-prev-team {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
 /* ---------- Photo cropper ---------- */
 .cropper-dialog {
   max-width: 420px;

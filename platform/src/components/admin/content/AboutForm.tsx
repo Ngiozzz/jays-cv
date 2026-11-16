@@ -4,8 +4,9 @@ import { useState, type FormEvent } from "react";
 import { saveAboutAction } from "@/app/(admin)/admin/(signed-in)/content/actions";
 import { shrinkImage } from "@/components/admin/jobs/shrink-image";
 import { Icon } from "@/components/icons/Icon";
-import { hasPlaceholders, ownerInitials } from "@/modules/content/admin/about";
+import { hasPlaceholders, OWNER_LINKS, ownerInitials, type OwnerLinkName } from "@/modules/content/admin/about";
 import type { AdminAbout } from "@/modules/content/admin/about.service";
+import { AboutTeamEditor, teamRowPhoto, teamRowsOf } from "./AboutTeamEditor";
 import { PhotoCropper } from "./PhotoCropper";
 import { SaveBar, useSave } from "./useSave";
 
@@ -15,7 +16,7 @@ const PHOTO_WIDTH = 800;
 // Phone photos are shrunk before cropping, so dragging stays smooth
 const PICKED_SIZE = { maxSide: 2000, type: "image/jpeg" } as const;
 
-// The About page: the owner's own words, photo and numbers, with a live preview. Nothing changes on
+// The About page: the owner's own words, photo, team and numbers, with a live preview. Nothing changes on
 // the website until "Save & publish".
 export function AboutForm({ about, businessName }: { about: AdminAbout; businessName: string }) {
   const save = useSave();
@@ -26,6 +27,7 @@ export function AboutForm({ about, businessName }: { about: AdminAbout; business
   const [original, setOriginal] = useState<File | null>(null);
   const [cropping, setCropping] = useState<File | null>(null);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const [team, setTeam] = useState(() => teamRowsOf(about.team));
 
   const text = (name: "lead" | "ownerName" | "ownerRole" | "story") => ({
     id: `ab-${name}`,
@@ -33,6 +35,8 @@ export function AboutForm({ about, businessName }: { about: AdminAbout; business
     value: page[name],
     onChange: (event: { target: { value: string } }) => setPage({ ...page, [name]: event.target.value }),
   });
+  const setLink = (name: OwnerLinkName, value: string) =>
+    setPage({ ...page, ownerLinks: { ...page.ownerLinks, [name]: value } });
   const setStat = (index: number, patch: Partial<AdminAbout["stats"][number]>) =>
     setPage({ ...page, stats: page.stats.map((stat, i) => (i === index ? { ...stat, ...patch } : stat)) });
   const cls = (name: string, full = false) =>
@@ -72,6 +76,7 @@ export function AboutForm({ about, businessName }: { about: AdminAbout; business
     // The cropped photo, not the one picked
     form.delete("photo");
     if (photo) form.set("photo", photo.file);
+    for (const row of team) if (row.newPhoto) form.set(`team-photo-${row.id}`, row.newPhoto.file);
     save.run(async () => {
       const result = await saveAboutAction(form);
       if (result.ok) setPhoto(null);
@@ -80,7 +85,7 @@ export function AboutForm({ about, businessName }: { about: AdminAbout; business
   };
 
   const shownPhoto = removePhoto ? null : (photo?.url ?? page.photoUrl);
-  const placeholders = hasPlaceholders(page);
+  const placeholders = hasPlaceholders({ ...page, team });
 
   return (
     <section className="panel editor-grid">
@@ -177,6 +182,32 @@ export function AboutForm({ about, businessName }: { about: AdminAbout; business
           </div>
         </div>
 
+        <h3 className="sub-title">Your links</h3>
+        <p className="hint-sm">
+          Your own pages, shown under your photo (optional). The business&rsquo;s pages and the job channel come from
+          Business settings.
+        </p>
+        <div className="fgrid">
+          {OWNER_LINKS.map((link) => (
+            <div key={link.name} className={cls(`ownerLinks.${link.name}`)}>
+              <label htmlFor={`ab-owner-${link.name}`}>{link.label}</label>
+              <input
+                id={`ab-owner-${link.name}`}
+                type="url"
+                inputMode="url"
+                name={`owner-${link.name}`}
+                value={page.ownerLinks[link.name] ?? ""}
+                onChange={(event) => setLink(link.name, event.target.value)}
+                placeholder={link.name === "linkedin" ? "https://linkedin.com/in/…" : undefined}
+                maxLength={200}
+              />
+              {save.error(`ownerLinks.${link.name}`)}
+            </div>
+          ))}
+        </div>
+
+        <AboutTeamEditor rows={team} onChange={setTeam} save={save} businessName={businessName} />
+
         <h3 className="sub-title">Numbers</h3>
         <div className="stats-edit">
           {page.stats.map((stat, i) => (
@@ -224,6 +255,24 @@ export function AboutForm({ about, businessName }: { about: AdminAbout; business
             .map((paragraph, i) => (
               <p key={i}>{paragraph}</p>
             ))}
+          {team.length > 0 && (
+            <div className="about-prev-team">
+              {team.map((row) => {
+                const shown = teamRowPhoto(row);
+                return (
+                  <div key={row.id} className="about-prev-owner">
+                    <span className="about-avatar">
+                      {shown ? <img src={shown} alt="" /> : ownerInitials(row.name || "?", businessName)}
+                    </span>
+                    <span>
+                      <strong>{row.name || "Name"}</strong>
+                      <small>{row.role}</small>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <div className="home-prev-stats">
             {page.stats.map((stat, i) => (
               <div key={i}>

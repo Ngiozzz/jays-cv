@@ -8,11 +8,13 @@ import {
   describeAboutChanges,
   hasPlaceholders,
   ownerInitials,
+  teamPhotoPath,
 } from "./about";
 
-const form = (fields: Record<string, string>) => {
+const form = (fields: Record<string, string>, teamIds: string[] = []) => {
   const data = new FormData();
   for (const [name, value] of Object.entries(fields)) data.set(name, value);
+  for (const id of teamIds) data.append("team-id", id);
   return data;
 };
 
@@ -44,6 +46,89 @@ describe("aboutSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success)
       expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual(["story", "stats.3.value"]);
+  });
+});
+
+describe("the team", () => {
+  const people = {
+    "team-name-b": "Wanjiru Kamau",
+    "team-role-b": "Senior CV writer",
+    "team-note-b": "With us since 2019",
+    "team-name-a": "Otieno Ouma",
+    "team-role-a": "CV writer",
+    "team-note-a": "",
+    "team-linkedin-b": "https://www.linkedin.com/in/wanjiru-kamau",
+  };
+
+  it("is read in the order the form lists it", () => {
+    const parsed = aboutSchema.parse(aboutFormToInput(form({ ...filled, ...people }, ["b", "a"])));
+    expect(parsed.team).toEqual([
+      {
+        id: "b",
+        name: "Wanjiru Kamau",
+        role: "Senior CV writer",
+        note: "With us since 2019",
+        linkedin: "https://www.linkedin.com/in/wanjiru-kamau",
+      },
+      { id: "a", name: "Otieno Ouma", role: "CV writer", note: "", linkedin: null },
+    ]);
+  });
+
+  it("needs a name and role, and lists each person once", () => {
+    const missing = aboutSchema.safeParse(
+      aboutFormToInput(form({ ...filled, ...people, "team-name-a": "" }, ["b", "a"])),
+    );
+    expect(missing.success).toBe(false);
+    if (!missing.success) expect(missing.error.issues.map((issue) => issue.path.join("."))).toEqual(["team.1.name"]);
+    expect(aboutSchema.safeParse(aboutFormToInput(form({ ...filled, ...people }, ["a", "a"]))).success).toBe(false);
+  });
+
+  it("only takes LinkedIn links", () => {
+    const result = aboutSchema.safeParse(
+      aboutFormToInput(form({ ...filled, ...people, "team-linkedin-a": "https://example.com/otieno" }, ["b", "a"])),
+    );
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual(["team.1.linkedin"]);
+  });
+
+  it("is empty until the owner adds someone", () => {
+    expect(aboutSchema.parse(aboutFormToInput(form(filled))).team).toEqual([]);
+  });
+
+  it("stores photos under the business with a random name", () => {
+    expect(teamPhotoPath("t1", "image/png", "abc")).toBe("t1/team-abc.png");
+  });
+
+  it("describes additions, removals, edits and moves", () => {
+    const wanjiru = { id: "b", name: "Wanjiru Kamau", role: "CV writer", note: "", linkedin: null, photo: null };
+    const otieno = { id: "a", name: "Otieno Ouma", role: "CV writer", note: "", linkedin: null, photo: null };
+    const brian = { id: "c", name: "Brian Kip", role: "CV writer", note: "", linkedin: null, photo: null };
+    const before = { ...DEFAULT_ABOUT, team: [wanjiru, otieno, brian] };
+    expect(describeAboutChanges(DEFAULT_ABOUT, { ...DEFAULT_ABOUT, team: [wanjiru] })).toEqual([
+      "added Wanjiru Kamau to the team",
+    ]);
+    expect(
+      describeAboutChanges(before, { ...DEFAULT_ABOUT, team: [otieno, { ...wanjiru, photo: "t1/team-x.jpg" }] }),
+    ).toEqual(["removed Brian Kip from the team", "changed Wanjiru Kamau on the team", "changed the team order"]);
+  });
+});
+
+describe("the owner's links", () => {
+  it("are optional, and each must be the right site", () => {
+    expect(aboutSchema.parse(aboutFormToInput(form(filled))).ownerLinks).toEqual({
+      linkedin: null,
+      facebook: null,
+      instagram: null,
+      x: null,
+    });
+    const parsed = aboutSchema.safeParse(
+      aboutFormToInput(
+        form({ ...filled, "owner-linkedin": "https://linkedin.com/in/jay", "owner-facebook": "https://x.com/jay" }),
+      ),
+    );
+    expect(parsed.success).toBe(false);
+    if (!parsed.success)
+      expect(parsed.error.issues.map((issue) => issue.path.join("."))).toEqual(["ownerLinks.facebook"]);
   });
 });
 

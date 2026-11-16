@@ -7,8 +7,9 @@ import type { IconName } from "@/components/icons/IconSprite";
 import { CtaBand } from "@/components/site/CtaBand";
 import { PageHero } from "@/components/site/PageHero";
 import { SectionHead } from "@/components/site/SectionHead";
-import { ownerInitials } from "@/modules/content/admin/about";
+import { OWNER_LINKS, ownerInitials } from "@/modules/content/admin/about";
 import { getAboutPage, getFeaturedReviews } from "@/modules/content/content.service";
+import { footerContact } from "@/modules/content/footer";
 import { siteContext } from "../site-context";
 
 export const metadata: Metadata = {
@@ -64,11 +65,17 @@ const HOW_WE_WORK: { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
-// The owner's own words, photo and numbers (edited in Website content → About page), then what the
-// business does and how it works
+// The owner's own words, photo, team and numbers (edited in Website content → About page), then what
+// the business does and how it works
 export default async function AboutPage({ params }: PageProps<"/[tenant]/about">) {
-  const { tenant, freeReviewHref } = await siteContext(params);
+  const { tenant, settings, freeReviewHref } = await siteContext(params);
   const [about, reviews] = await Promise.all([getAboutPage(tenant.id), getFeaturedReviews(tenant.id)]);
+  const ownerLinks = OWNER_LINKS.flatMap((link) =>
+    about.ownerLinks[link.name] ? [{ ...link, href: about.ownerLinks[link.name]! }] : [],
+  );
+  // The business's own pages and the job channel, from Business settings
+  const businessLinks = footerContact(settings).socials.filter((social) => social.href);
+  const followUs = businessLinks.length > 0 || settings.channelLink;
 
   return (
     <>
@@ -87,15 +94,92 @@ export default async function AboutPage({ params }: PageProps<"/[tenant]/about">
             <figcaption>
               <strong>{about.ownerName}</strong>
               <span>{about.ownerRole}</span>
+              {ownerLinks.length > 0 && (
+                <span className="about-links">
+                  {ownerLinks.map((link) => (
+                    <a
+                      key={link.name}
+                      href={link.href}
+                      aria-label={`${about.ownerName} on ${link.label}`}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <Icon name={link.name} />
+                    </a>
+                  ))}
+                </span>
+              )}
             </figcaption>
           </figure>
           <div className="prose about-text">
             <p className="eyebrow">Our story</p>
             {/* Markdown builds React elements only, so text typed in the admin can't inject scripts */}
             <Markdown>{about.story}</Markdown>
+            {followUs && (
+              <div className="about-follow">
+                <p className="eyebrow">Follow {tenant.name}</p>
+                <div className="about-follow-links">
+                  {settings.channelLink && (
+                    <a className="btn btn-wa btn-sm" href={settings.channelLink} target="_blank" rel="noopener">
+                      <Icon name="whatsapp" /> Our WhatsApp job channel
+                    </a>
+                  )}
+                  {businessLinks.length > 0 && (
+                    <span className="about-links">
+                      {businessLinks.map((social) => (
+                        <a
+                          key={social.name}
+                          href={social.href ?? undefined}
+                          aria-label={`${tenant.name} on ${social.label}`}
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          <Icon name={social.name} />
+                        </a>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
+
+      {about.team.length > 0 && (
+        <section className="section section-alt">
+          <div className="container">
+            <SectionHead eyebrow="Our team" title="Meet the people who write your CV" />
+            <ul className="card-grid team-grid">
+              {about.team.map((person) => (
+                <li key={person.id} className="card team-card reveal">
+                  {person.photoUrl ? (
+                    <img src={person.photoUrl} alt={person.name} className="team-photo" />
+                  ) : (
+                    <span className="team-photo about-initials" aria-hidden="true">
+                      {ownerInitials(person.name, tenant.name)}
+                    </span>
+                  )}
+                  <h3>{person.name}</h3>
+                  <span className="team-role">{person.role}</span>
+                  {person.note && <p>{person.note}</p>}
+                  {person.linkedin && (
+                    <a
+                      className="team-linkedin"
+                      href={person.linkedin}
+                      aria-label={`${person.name} on LinkedIn`}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <Icon name="linkedin" /> LinkedIn
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       <section className="stats" aria-label={`${tenant.name} in numbers`}>
         <div className="container stats-inner">

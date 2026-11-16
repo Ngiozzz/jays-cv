@@ -100,11 +100,27 @@ export async function saveAboutAction(form: FormData) {
   const photo = form.get("photo");
   return published(
     member.tenant.id,
-    await saveAbout(member, aboutFormToInput(form), {
-      file: photo instanceof File ? photo : null,
-      remove: form.get("removePhoto") === "on",
-    }),
+    await saveAbout(
+      member,
+      aboutFormToInput(form),
+      {
+        file: photo instanceof File ? photo : null,
+        remove: form.get("removePhoto") === "on",
+      },
+      teamPhotosOf(form),
+    ),
   );
+}
+
+// "team-photo-<id>" is a person's new photo; "team-keepPhoto-<id>" keeps the one they have
+function teamPhotosOf(form: FormData) {
+  const files = new Map<string, File>();
+  const keep = new Set<string>();
+  for (const [name, value] of form.entries()) {
+    if (name.startsWith("team-photo-") && value instanceof File) files.set(name.slice("team-photo-".length), value);
+    if (name.startsWith("team-keepPhoto-")) keep.add(name.slice("team-keepPhoto-".length));
+  }
+  return { files, keep };
 }
 
 export async function saveSettingsAction(form: FormData) {
