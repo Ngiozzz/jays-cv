@@ -1,5 +1,6 @@
 "use client";
 
+import { AskForTokens } from "@/components/admin/AskForTokens";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition, type ChangeEvent, type DragEvent } from "react";
 import { addReadJobsAction } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
@@ -279,6 +280,7 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead, onClear }
           </div>
         </div>
       )}
+      <AskForTokens message={message?.tone === "error" ? message.text : error} />
       {error && (
         <p className="field-error" role="alert">
           {error}

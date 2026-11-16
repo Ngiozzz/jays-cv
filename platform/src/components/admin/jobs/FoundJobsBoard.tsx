@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { readInboxItemAction } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
 import { ProgressBar } from "@/components/ai/AiProgress";
+import { AskForTokens } from "@/components/admin/AskForTokens";
 import { Icon } from "@/components/icons/Icon";
 import type { FoundJob, FoundStatus } from "@/modules/job-sources/found.view";
 import { checkedLabel } from "@/modules/job-sources/labels";
@@ -114,6 +115,7 @@ export function FoundJobsBoard({ jobs, siteUrl }: { jobs: FoundJob[]; siteUrl: s
         />
       )}
       {message && <p className="notice">{message}</p>}
+      <AskForTokens message={message} />
 
       <section className="panel">
         <div className="table-tools">

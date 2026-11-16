@@ -15,6 +15,7 @@ import {
   setJobSourceEnabledAction,
 } from "@/app/(admin)/admin/(signed-in)/job-sources/actions";
 import { AiProgress, ProgressBar } from "@/components/ai/AiProgress";
+import { AskForTokens } from "@/components/admin/AskForTokens";
 import { Icon } from "@/components/icons/Icon";
 import type { JobSourceRow, JobSourcesView, QuickAddResult } from "@/modules/job-sources/job-sources.admin";
 import { checkedLabel, checkSummary } from "@/modules/job-sources/labels";
@@ -112,6 +113,7 @@ function YourSources({ sources, maxFailures }: { sources: JobSourceRow[]; maxFai
         />
       )}
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
+      <AskForTokens message={message?.text} />
       {sources.length ? (
         <ul className="source-list">
           {sources.map((source) => (
@@ -203,6 +205,7 @@ function AddSource() {
           <label htmlFor="src-url">Address of the vacancies page (or job feed)</label>
           <input id="src-url" name="url" type="url" inputMode="url" placeholder="https://www.kra.go.ke/careers" />
           {errors.url && <p className="field-error">{errors.url}</p>}
+          <AskForTokens message={errors.url} />
         </div>
         <button type="submit" className="btn btn-primary" disabled={pending}>
           <Icon name="plus" size={18} />
@@ -212,6 +215,7 @@ function AddSource() {
       <AiProgress active={pending} seconds={20} steps={CHECK_STEPS} />
       {errors.form && <p className="field-error">{errors.form}</p>}
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
+      <AskForTokens message={message?.text} />
     </section>
   );
 }
@@ -304,6 +308,7 @@ function SourceRow({ source, maxFailures, locked }: { source: JobSourceRow; maxF
         </p>
       )}
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
+      <AskForTokens message={message?.text} />
     </li>
   );
 }
@@ -471,6 +476,7 @@ function StarterList({ starters }: { starters: JobSourcesView["starters"] }) {
       )}
       <AiProgress active={pending} seconds={Math.max(2, picked.size * 0.4)} steps={["Saving the sources"]} />
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
+      <AskForTokens message={message?.text} />
     </section>
   );
 }
@@ -554,6 +560,7 @@ function Suggestions({ suggestions }: { suggestions: JobSourcesView["suggestions
         </button>
       )}
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
+      <AskForTokens message={message?.text} />
     </section>
   );
 }

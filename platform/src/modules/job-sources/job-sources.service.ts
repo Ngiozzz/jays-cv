@@ -37,7 +37,7 @@ export async function checkSource(
   if (stopped) {
     return {
       ok: false,
-      error: stopped === "paused" ? "The AI is paused." : "The AI tokens have run out.",
+      error: stopped === "paused" ? "The AI is paused." : "Your AI tokens have run out.",
       counted: false,
     };
   }

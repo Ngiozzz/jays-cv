@@ -1,5 +1,6 @@
 "use client";
 
+import { AskForTokens } from "@/components/admin/AskForTokens";
 import { useRef, useState, useTransition } from "react";
 import { runWriterToolAction } from "@/app/(admin)/admin/(signed-in)/orders/actions";
 import { AiProgress } from "@/components/ai/AiProgress";
@@ -150,6 +151,7 @@ function Tool({ orderId, tool, title, what, reads, needsFile, initial, render }:
         </div>
       </div>
       <AiProgress active={running} seconds={20} steps={STEPS[tool]} className="ai-tool-progress" />
+      <AskForTokens message={error} />
       {error && (
         <p className="field-error" role="alert">
           {error}

@@ -11,6 +11,7 @@ import {
   restoreInboxItemAction,
 } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
 import { CopyButton } from "@/components/CopyButton";
+import { AskForTokens } from "@/components/admin/AskForTokens";
 import { Icon } from "@/components/icons/Icon";
 import { dailyDigest } from "@/modules/inbox/inbox.digest";
 import { NEEDS_CONFIRMING, flagsFor, isClean, type Flag } from "@/modules/inbox/inbox.flags";
@@ -300,6 +301,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
           {notice.text}
         </p>
       )}
+      <AskForTokens message={notice?.text} />
 
       <div className="inbox-bar" ref={barRef}>
         <nav className="tabs inbox-tabs" aria-label="Show">

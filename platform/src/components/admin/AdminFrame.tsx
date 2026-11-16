@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { Icon } from "@/components/icons/Icon";
 import type { IconName } from "@/components/icons/IconSprite";
+import { TokensAccessProvider } from "./AskForTokens";
 import { SignOutButton } from "./SignOutButton";
 import { UserMenu } from "./UserMenu";
 import { adminTrail, SUB_PAGES } from "./admin-nav";
@@ -12,10 +13,10 @@ import { adminTrail, SUB_PAGES } from "./admin-nav";
 export type FrameNavItem = { href: string; label: string; icon: IconName; phase?: number };
 export type FrameUser = { name: string; roleLabel: string; initials: string; image: string | null };
 
-type Props = { nav: FrameNavItem[]; user: FrameUser; children: ReactNode };
+type Props = { nav: FrameNavItem[]; user: FrameUser; canRequestTokens: boolean; children: ReactNode };
 
 // The admin shell from the preview: dark sidebar, top bar with the page title and who is signed in
-export function AdminFrame({ nav, user, children }: Props) {
+export function AdminFrame({ nav, user, canRequestTokens, children }: Props) {
   const pathname = usePathname();
   const [sideOpen, setSideOpen] = useState(false);
   const sub = SUB_PAGES[pathname];
@@ -74,7 +75,7 @@ export function AdminFrame({ nav, user, children }: Props) {
           </div>
         </header>
         <main className="admin-content" id="main">
-          {children}
+          <TokensAccessProvider canRequest={canRequestTokens}>{children}</TokensAccessProvider>
         </main>
       </div>
     </div>

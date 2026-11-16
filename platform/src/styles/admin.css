@@ -7258,3 +7258,18 @@ kbd {
 .d-grid:has(.d-pdf) {
   grid-template-columns: minmax(280px, 1fr) 1.2fr;
 }
+
+/* "Ask for more tokens" under a tokens-ran-out message */
+.ask-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.ask-tokens .hint-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}

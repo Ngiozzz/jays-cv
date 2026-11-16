@@ -20,7 +20,7 @@ export default function SignedInLayout({ children }: { children: ReactNode }) {
 async function Shell({ children }: { children: ReactNode }) {
   const member = await requireMember();
   return (
-    <AdminFrame nav={visibleNav(member)} user={frameUser(member)}>
+    <AdminFrame nav={visibleNav(member)} user={frameUser(member)} canRequestTokens={can(member, "requestTokens")}>
       {children}
     </AdminFrame>
   );

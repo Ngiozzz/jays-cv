@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition, type FormEvent } from "reac
 import { cancelTokenRequestAction, requestTokensAction } from "@/app/(admin)/admin/(signed-in)/actions";
 import { Icon } from "@/components/icons/Icon";
 import { formatNumber } from "@/lib/money";
-import { TOKEN_REQUEST_CHOICES } from "@/modules/ai/token-requests";
+import { MAX_TOKEN_REQUEST, MIN_TOKEN_REQUEST, TOKEN_REQUEST_CHOICES } from "@/modules/ai/token-requests";
 
 // The owner asks the developer for more AI tokens; the request shows in the developer's Command Center
 export function RequestTokensButton() {
@@ -20,10 +20,12 @@ export function RequestTokensButton() {
   );
 }
 
-function RequestDialog({ onClose }: { onClose: () => void }) {
+// Also opened from "Ask for more tokens" wherever the AI says the tokens have run out
+export function RequestDialog({ onClose, onSent }: { onClose: () => void; onSent?: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [other, setOther] = useState(false);
 
   useEffect(() => {
     dialog.current?.showModal();
@@ -34,8 +36,10 @@ function RequestDialog({ onClose }: { onClose: () => void }) {
     setBusy(true);
     const result = await requestTokensAction(new FormData(event.currentTarget));
     setBusy(false);
-    if (result.ok) dialog.current?.close();
-    else setErrors(result.fieldErrors);
+    if (result.ok) {
+      dialog.current?.close();
+      onSent?.();
+    } else setErrors(result.fieldErrors);
   };
 
   const error = (name: string) =>
@@ -54,11 +58,37 @@ function RequestDialog({ onClose }: { onClose: () => void }) {
         <div className="method-picker" role="radiogroup" aria-label="How many tokens">
           {TOKEN_REQUEST_CHOICES.map((tokens) => (
             <label key={tokens}>
-              <input type="radio" name="tokens" value={tokens} defaultChecked={tokens === 1_000_000} />
+              <input
+                type="radio"
+                name="tokens"
+                value={tokens}
+                defaultChecked={tokens === 1_000_000}
+                onChange={() => setOther(false)}
+              />
               {formatNumber(tokens)}
             </label>
           ))}
+          <label>
+            <input type="radio" name="tokens" value="other" onChange={() => setOther(true)} />
+            Other amount
+          </label>
         </div>
+        {other && (
+          <div className="f">
+            <label htmlFor="tr-other">How many tokens?</label>
+            <input
+              id="tr-other"
+              name="otherTokens"
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g. 3,000,000"
+              autoFocus
+            />
+            <small>
+              Between {formatNumber(MIN_TOKEN_REQUEST)} and {formatNumber(MAX_TOKEN_REQUEST)}.
+            </small>
+          </div>
+        )}
         {error("tokens")}
         <div className={errors.note ? "f invalid" : "f"}>
           <label htmlFor="tr-note">Note (optional)</label>
