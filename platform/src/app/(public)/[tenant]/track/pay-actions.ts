@@ -1,5 +1,6 @@
 "use server";
 
+import { requestIp } from "@/lib/request-ip";
 import { PRETEND_OUTCOMES, type PretendOutcome } from "@/modules/payments/mpesa";
 import {
   checkPaymentPrompt,
@@ -13,7 +14,7 @@ import { getRequestTenant } from "@/modules/tenants/tenants.service";
 // checks that this browser holds the order's tracking pass.
 
 export async function sendPromptAction(ref: string, phone: string) {
-  return sendPaymentPrompt(await getRequestTenant(), String(ref), String(phone));
+  return sendPaymentPrompt(await getRequestTenant(), String(ref), String(phone), await requestIp());
 }
 
 export async function checkPromptAction(ref: string, paymentId: string) {

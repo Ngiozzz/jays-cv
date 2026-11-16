@@ -49,6 +49,11 @@ export async function removeTestStaff() {
   await db.$disconnect();
 }
 
+// Forgets the M-Pesa prompts sent so far, so running the tests again soon isn't stopped by the prompt limit
+export async function clearPromptLimits() {
+  await db.trackingAttempt.deleteMany({ where: { key: { startsWith: "prompt" } } });
+}
+
 // Deletes jobs a test created (by title prefix), even when the test failed before its own clean-up
 export async function removeTestJobs(titlePrefix: string) {
   await db.job.deleteMany({ where: { title: { startsWith: titlePrefix } } });

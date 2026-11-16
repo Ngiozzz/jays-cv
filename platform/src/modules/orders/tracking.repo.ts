@@ -67,7 +67,7 @@ export function recordWrongTry(tenantId: string, keys: string[]) {
   return tenantDb(tenantId).trackingAttempt.createMany({ data: keys.map((key) => ({ key, tenantId })) });
 }
 
-// Nightly clean-up: wrong tries only matter for an hour
+// Nightly clean-up of the limits log (the longest limit, M-Pesa prompts per phone, looks back a day)
 export function deleteOldTries(tenantId: string, before: Date) {
   return tenantDb(tenantId).trackingAttempt.deleteMany({ where: { at: { lt: before } } });
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { requestIp } from "@/lib/request-ip";
 import { followCvCheck, pretendCheckPayment, startCvCheck } from "@/modules/cv-check/cv-check.service";
 import { PRETEND_OUTCOMES, type PretendOutcome } from "@/modules/payments/mpesa";
 import { getRequestTenant } from "@/modules/tenants/tenants.service";
@@ -13,6 +14,7 @@ export async function startCvCheckAction(form: FormData) {
     String(form.get("jobSlug") ?? ""),
     String(form.get("phone") ?? ""),
     cv instanceof File ? cv : null,
+    await requestIp(),
   );
 }
 

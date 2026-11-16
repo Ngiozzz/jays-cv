@@ -6,6 +6,7 @@ import { findSettings } from "@/modules/content/content.repo";
 import { deleteOldCheckCvs } from "@/modules/cv-check/cv-check.service";
 import { listTenantIds } from "@/modules/tenants/tenants.repo";
 import type { EventKind } from "./order-events";
+import { deleteOldTries } from "./tracking.repo";
 import {
   autoStepCutoffs,
   DAY,
@@ -182,6 +183,8 @@ export async function nightlyOrderUpkeep(now = new Date()) {
     const deleted = await deleteAbandonedOrders(tenant.id, settings.deleteAbandonedDays, now);
     const files = await deleteExpiredClientFiles(tenant.id, settings.retentionMonths, now);
     const checkCvs = await deleteOldCheckCvs(tenant.id, now);
+    // Limit records (wrong tracking tries, orders placed, M-Pesa prompts) matter for a day at most
+    await deleteOldTries(tenant.id, new Date(now.getTime() - DAY));
     results.push({ tenant: tenant.slug, deleted, files, checkCvs });
   }
   return results;

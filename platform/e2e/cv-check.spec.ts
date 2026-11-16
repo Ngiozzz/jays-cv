@@ -12,6 +12,10 @@ config({ path: ".env.local", quiet: true });
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" }) });
 const PHONE = "0799 000 111";
 
+test.beforeAll(async () => {
+  await db.trackingAttempt.deleteMany({ where: { key: { startsWith: "prompt" } } });
+});
+
 test.afterAll(async () => {
   // The tailored CV order, then the checks and their payments this test made
   const orders = await db.order.findMany({ where: { clientPhone: PHONE }, select: { id: true } });

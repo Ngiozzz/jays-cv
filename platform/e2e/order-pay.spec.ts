@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { createTrackedOrder, removeTestStaff } from "./staff";
+import { clearPromptLimits, createTrackedOrder, removeTestStaff } from "./staff";
 
 // Paying from the tracking page with the pretend M-Pesa (no Safaricom keys in development):
 // the tester plays the client's phone with the buttons under "Check your phone".
 
 const cleanups: (() => Promise<void>)[] = [];
+
+test.beforeAll(clearPromptLimits);
 
 test.afterAll(async () => {
   for (const remove of cleanups) await remove();

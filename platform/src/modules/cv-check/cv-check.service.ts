@@ -9,6 +9,7 @@ import { recordUsage } from "@/modules/ai/tokens.repo";
 import { findSettings } from "@/modules/content/content.repo";
 import { grantCheckPass, hasCheckPass } from "@/modules/orders/tracking-pass";
 import { mpesa } from "@/modules/payments/gateway";
+import { promptLimitRefusal, recordPromptSent } from "@/modules/payments/payments.service";
 import {
   localPhone,
   mpesaPhone,
@@ -67,6 +68,7 @@ export async function startCvCheck(
   jobSlug: string,
   typedPhone: string,
   cv: File | null,
+  ip: string,
 ): Promise<
   { ok: true; checkId: string; paymentId: string; amount: number; phone: string; pretend: boolean } | Refused
 > {
@@ -84,6 +86,8 @@ export async function startCvCheck(
     where: { phone, createdAt: { gte: new Date(Date.now() - CHECK_LIMIT.minutes * 60_000) } },
   });
   if (recent >= CHECK_LIMIT.count) return refuse("You've run several checks just now. Please try again in an hour.");
+  const limited = await promptLimitRefusal(tenant.id, phone, ip, false);
+  if (limited) return refuse(limited);
   if (aiStopped(await getTokenBalance(tenant.id)))
     return refuse("CV checks aren't available right now. Please try again later.");
 
@@ -95,6 +99,7 @@ export async function startCvCheck(
     description: `${tenant.name} CV check`,
   });
   if (!sent.ok) return refuse(sent.error);
+  await recordPromptSent(tenant.id, phone, ip);
 
   const checkId = randomUUID();
   const cvPath = `${tenant.id}/cv-checks/${checkId}.${extensionOf(file!.type)}`;

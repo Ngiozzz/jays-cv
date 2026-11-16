@@ -16,6 +16,7 @@ import {
   type PretendOutcome,
   type PromptOutcome,
 } from "./mpesa";
+import { PHONE_LIMIT, promptLimitProblem, promptPhoneKey, promptVisitorKey, VISITOR_LIMIT } from "./prompt-limit";
 
 // The client paying for their order from the website. Only a browser holding the order's tracking
 // pass (given when the order is placed, or by the tracking link) can start or check a payment.
@@ -50,6 +51,29 @@ async function payableOrder(tenant: CurrentTenant, ref: string) {
   };
 }
 
+// ---------- The limit on prompts (every order and CV check) ----------
+
+const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000);
+
+// What to tell the person when this phone or this visitor has had too many prompts; null when it may go
+export async function promptLimitRefusal(tenantId: string, phone: string, ip: string, paybill: boolean) {
+  // Counted from the attempts log, not payments: unanswered prompts are deleted with abandoned orders
+  const sent = (key: string, minutes: number) =>
+    tenantDb(tenantId).trackingAttempt.count({ where: { key, at: { gte: minutesAgo(minutes) } } });
+  const [phoneRecent, phoneToday, visitorRecent] = await Promise.all([
+    sent(promptPhoneKey(phone), PHONE_LIMIT.minutes),
+    sent(promptPhoneKey(phone), 24 * 60),
+    sent(promptVisitorKey(ip), VISITOR_LIMIT.minutes),
+  ]);
+  return promptLimitProblem({ phoneRecent, phoneToday, visitorRecent }, paybill);
+}
+
+export async function recordPromptSent(tenantId: string, phone: string, ip: string) {
+  await tenantDb(tenantId).trackingAttempt.createMany({
+    data: [promptPhoneKey(phone), promptVisitorKey(ip)].map((key) => ({ tenantId, key })),
+  });
+}
+
 const notYours = refuse("We couldn't find this order in your browser. Open your tracking link and try again.");
 
 // ---------- The prompt (STK Push) ----------
@@ -58,6 +82,7 @@ export async function sendPaymentPrompt(
   tenant: CurrentTenant,
   ref: string,
   typedPhone: string,
+  ip: string,
 ): Promise<{ ok: true; paymentId: string; phone: string; amount: number; pretend: boolean } | Refused> {
   const order = await payableOrder(tenant, ref);
   if (!order) return notYours;
@@ -76,6 +101,8 @@ export async function sendPaymentPrompt(
   });
   if (recent >= PROMPT_LIMIT.count)
     return refuse(`Too many prompts in a few minutes. Wait ${PROMPT_LIMIT.minutes} minutes, or pay by Paybill.`);
+  const limited = await promptLimitRefusal(tenant.id, phone, ip, true);
+  if (limited) return refuse(limited);
 
   const account = accountNumber(order.number);
   const sent = await mpesa.sendPrompt({
@@ -85,6 +112,7 @@ export async function sendPaymentPrompt(
     description: `${tenant.name} order ${ref}`,
   });
   if (!sent.ok) return refuse(sent.error);
+  await recordPromptSent(tenant.id, phone, ip);
 
   const payment = await db.$transaction(async (tx) => {
     const created = await tx.payment.create({
