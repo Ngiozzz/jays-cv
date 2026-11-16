@@ -157,3 +157,14 @@ describe("extraTexts", () => {
     expect(posterPrompt("2026-10-16", { caption: "Apply here", pages: [] })).toContain("advert content only");
   });
 });
+
+describe("a very long advert", () => {
+  it("keeps the first 40 duties and requirements instead of failing", async () => {
+    const { readingToJobInput, PRETEND_READING } = await import("./poster-reading");
+    const many = Array.from({ length: 55 }, (_, i) => `Duty ${i + 1}`);
+    const job = readingToJobInput({ ...PRETEND_READING, responsibilities: many, requirements: [...many, " "] });
+    expect(job.responsibilities).toHaveLength(40);
+    expect(job.responsibilities[39]).toBe("Duty 40");
+    expect(job.requirements).toHaveLength(40);
+  });
+});

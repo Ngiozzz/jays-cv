@@ -264,21 +264,30 @@ function isOneOf<T extends string>(options: readonly T[], value: unknown): value
 
 const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 
-// The AI's reading → the job form's shape. Anything odd (a bad date, empty title) is cleaned up here.
+// At most 40 items of up to 500 characters each, as the job form allows
+const listItems = (items: string[]) =>
+  items
+    .map((item) => item.trim().slice(0, 500))
+    .filter(Boolean)
+    .slice(0, 40);
+
+// The AI's reading → the job form's shape. Anything odd (a bad date, empty title, a list longer than
+// the form allows) is cleaned up here.
 export function readingToJobInput(reading: PosterReading): JobInput {
   return jobDraftSchema.parse({
-    title: reading.title.trim() || "Untitled job",
-    company: reading.company,
+    title: (reading.title.trim() || "Untitled job").slice(0, 160),
+    company: reading.company.slice(0, 160),
     counties: reading.counties,
     town: reading.town,
     country: reading.country,
     category: reading.category === "Unknown" ? "" : reading.category,
     type: reading.type,
     workMode: reading.workMode,
-    salary: reading.salary,
-    summary: reading.summary,
-    responsibilities: reading.responsibilities.map((item) => item.trim()).filter(Boolean),
-    requirements: reading.requirements.map((item) => item.trim()).filter(Boolean),
+    salary: reading.salary.slice(0, 120),
+    summary: reading.summary.slice(0, 1500),
+    // A long advert can list more than the form holds: the first ones are kept
+    responsibilities: listItems(reading.responsibilities),
+    requirements: listItems(reading.requirements),
     tags: reading.tags,
     deadline: isoDate.test(reading.deadline) ? reading.deadline : null,
     openEnded: !isoDate.test(reading.deadline),
