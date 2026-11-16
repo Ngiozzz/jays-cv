@@ -33,7 +33,7 @@ export function AiProgress({ active, seconds, steps, className }: Props) {
 
   if (!active && !finishing) return null;
   const classes = ["ai-progress", finishing ? "done" : "", className ?? ""].filter(Boolean).join(" ");
-  if (finishing) return <Bar className={classes} percent={100} label="Done" />;
+  if (finishing) return <ProgressBar className={classes} percent={100} label="Done" />;
   return <Running key={run} className={classes} seconds={seconds} steps={steps} />;
 }
 
@@ -49,10 +49,21 @@ function Running({ seconds, steps, className }: { seconds: number; steps: string
     elapsed > seconds * 1.5
       ? "Taking a little longer than usual…"
       : `${steps[Math.min(steps.length - 1, Math.floor((percent / 95) * steps.length))]}…`;
-  return <Bar className={className} percent={percent} label={label} />;
+  return <ProgressBar className={className} percent={percent} label={label} />;
 }
 
-function Bar({ percent, label, className }: { percent: number; label: string; className: string }) {
+// The bar itself. Also used on its own where the real progress is known (e.g. "3 of 12 checked").
+export function ProgressBar({
+  percent,
+  label,
+  className = "ai-progress",
+  ariaLabel = "AI progress (estimated)",
+}: {
+  percent: number;
+  label: string;
+  className?: string;
+  ariaLabel?: string;
+}) {
   return (
     <div className={className}>
       <div className="ai-progress-top">
@@ -62,7 +73,7 @@ function Bar({ percent, label, className }: { percent: number; label: string; cl
       <div
         className="ai-progress-bar"
         role="progressbar"
-        aria-label="AI progress (estimated)"
+        aria-label={ariaLabel}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}

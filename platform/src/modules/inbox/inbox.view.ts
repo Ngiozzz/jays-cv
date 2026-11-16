@@ -18,7 +18,11 @@ export type InboxState = "reading" | "check" | "approved" | "discarded";
 export type InboxCard = {
   id: string;
   state: InboxState;
-  posterUrl: string;
+  // Null for a job a job source found on a web page: pageUrl is its advert
+  posterUrl: string | null;
+  pageUrl: string | null;
+  // Our copy of a PDF advert, shown beside the details
+  pdfUrl: string | null;
   posterName: string;
   source: string;
   rawText: string;
@@ -69,7 +73,9 @@ export async function loadInbox(member: CurrentMember) {
     return {
       id: row.id,
       state: row.state.toLowerCase() as InboxState,
-      posterUrl: fileStore.publicUrl("job-posters", row.posterPath),
+      posterUrl: row.posterPath ? fileStore.publicUrl("job-posters", row.posterPath) : null,
+      pageUrl: row.pageUrl,
+      pdfUrl: row.advertPdfPath ? fileStore.publicUrl("job-adverts", row.advertPdfPath) : null,
       posterName: row.posterName,
       source: row.source,
       rawText: row.rawText,

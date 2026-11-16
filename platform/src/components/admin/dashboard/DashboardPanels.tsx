@@ -294,3 +294,50 @@ export function AiUsagePanel({ business }: { business: Business }) {
     </section>
   );
 }
+
+type Sources = NonNullable<DashboardData["sources"]>;
+
+// Jobs the job sources found, waiting in Bulk post, and any source that needs the owner's help
+export function SourcesNotice({ sources, manage }: { sources: Sources; manage: boolean }) {
+  const waiting = sources.toCheck + sources.toRead;
+  const trouble = sources.stopped.length + sources.problems.length;
+  if (!sources.sources || (!waiting && !trouble)) return null;
+  const jobs = (n: number) => `${n} job${n === 1 ? "" : "s"}`;
+  return (
+    <section className="sources-notice">
+      <span className="icon-box">
+        <Icon name="globe" />
+      </span>
+      <div>
+        {waiting > 0 && (
+          <h3>
+            {jobs(waiting)} from your job sources {waiting === 1 ? "is" : "are"} waiting in Bulk post
+          </h3>
+        )}
+        <p>
+          {[
+            sources.foundToday ? `${jobs(sources.foundToday)} found today.` : "",
+            sources.toRead ? `${jobs(sources.toRead)} still being read by the AI.` : "",
+            sources.stopped.length ? `Stopped: ${sources.stopped.join(", ")}.` : "",
+            sources.problems.length ? `Problem on the last check: ${sources.problems.join(", ")}.` : "",
+            manage && !sources.morning ? "The morning check is off: switch it on in Job sources." : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        </p>
+      </div>
+      <div className="sources-notice-actions">
+        {waiting > 0 && (
+          <Link className="btn btn-primary btn-sm" href="/admin/inbox">
+            Open Bulk post
+          </Link>
+        )}
+        {manage && (
+          <Link className="btn btn-ghost btn-sm" href={trouble ? "/admin/job-sources" : "/admin/job-sources/found"}>
+            {trouble ? "Job sources" : "Jobs found"}
+          </Link>
+        )}
+      </div>
+    </section>
+  );
+}

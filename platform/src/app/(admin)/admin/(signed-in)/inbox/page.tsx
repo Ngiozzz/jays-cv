@@ -11,10 +11,10 @@ import { can } from "@/modules/team/permissions";
 
 export const metadata: Metadata = { title: "Bulk post jobs" };
 
-export default async function JobsInboxPage() {
+export default async function JobsInboxPage({ searchParams }: PageProps<"/admin/inbox">) {
   const member = await requireMember();
   if (!can(member, "postJobs")) return <NotAllowed what="the jobs inbox" />;
-  const [data, companies] = await Promise.all([loadInbox(member), listCompanies(member)]);
+  const [data, companies, params] = await Promise.all([loadInbox(member), listCompanies(member), searchParams]);
   return (
     <InboxBoard
       data={data}
@@ -22,6 +22,7 @@ export default async function JobsInboxPage() {
       siteUrl={env.APP_URL}
       aiPretend={aiPretendMode}
       sampleFiles={SAMPLE_POSTER_FILES}
+      initialId={typeof params.item === "string" ? params.item : null}
     />
   );
 }

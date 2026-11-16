@@ -61,6 +61,22 @@ const wordsOf = (text: string) =>
       .filter((w) => w.length > 2 && !/^\d+$/.test(w)),
   );
 
+// Exactly the same words in any order, ignoring case, punctuation and small words ("Sub-Editor" =
+// "Sub Editor", "Energy & Petroleum" = "Energy and Petroleum"); one extra word ("Non-Advocate") differs
+const SMALL_WORDS = new Set(["and", "of", "for", "in", "at", "to", "a", "an"]);
+const titleWords = (text: string) =>
+  new Set(
+    normalise(text)
+      .split(" ")
+      .filter((word) => word && !SMALL_WORDS.has(word)),
+  );
+
+export function sameWords(a: string, b: string): boolean {
+  const left = titleWords(a);
+  const right = titleWords(b);
+  return left.size > 0 && left.size === right.size && [...left].every((word) => right.has(word));
+}
+
 export function similar(a: string, b: string): boolean {
   const left = wordsOf(a);
   const right = wordsOf(b);

@@ -5,6 +5,8 @@ import { sumUsageByFeature } from "@/modules/ai/tokens.repo";
 import { findOpenRequest } from "@/modules/ai/token-requests.repo";
 import { loadFinance } from "@/modules/finance/finance.service";
 import { periodStart } from "@/modules/finance/finance.rules";
+import { sourcesDashboard } from "@/modules/job-sources/job-sources.repo";
+import { startOfNairobiDay } from "@/modules/job-sources/morning.service";
 import { listJobs } from "@/modules/jobs/jobs.service";
 import { todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { listOrders } from "@/modules/orders/orders.service";
@@ -79,12 +81,24 @@ async function jobsSummary(member: CurrentMember) {
 }
 
 export async function loadDashboard(member: CurrentMember, now: Date = new Date()) {
-  const [business, orders, jobs] = await Promise.all([
+  const [business, orders, jobs, sources] = await Promise.all([
     can(member, "manageFinance") ? ownerSummary(member, now) : null,
     can(member, "acceptOrders") ? orderSummary(member, now) : null,
     can(member, "postJobs") ? jobsSummary(member) : null,
+    // Jobs the job sources found (anyone who posts jobs checks them); which sources need help (owners)
+    can(member, "postJobs") ? sourcesDashboard(member.tenant.id, startOfNairobiDay(now)) : null,
   ]);
-  return { owner: member.role === "OWNER", business, orders, jobs };
+  return {
+    owner: member.role === "OWNER",
+    business,
+    orders,
+    jobs,
+    sources: sources && {
+      ...sources,
+      stopped: can(member, "manageJobSources") ? sources.stopped : [],
+      problems: can(member, "manageJobSources") ? sources.problems : [],
+    },
+  };
 }
 
 export type DashboardData = Awaited<ReturnType<typeof loadDashboard>>;

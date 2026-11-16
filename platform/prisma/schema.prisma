@@ -38,6 +38,8 @@ model Tenant {
   jobs            Job[]
   companies       Company[]
   inboxItems      InboxItem[]
+  jobSources      JobSource[]
+  seenJobLinks    SeenJobLink[]
   orders          Order[]
   orderEvents     OrderEvent[]
   orderRevisions  OrderRevision[]
@@ -94,6 +96,12 @@ model BusinessSettings {
   aiWarnPct             Int       @default(20)
   // Set by the platform owner from the Command Center: no AI runs while it is on
   aiPaused              Boolean   @default(false)
+  // Sites the job sources may never read, on top of the built-in list (modules/job-sources/sites.ts)
+  bannedJobSites        String[]  @default([])
+  // Suggested job sources (from the jobs posted) the owner chose to hide
+  ignoredSourceSites    String[]  @default([])
+  // The morning run: job sources are checked and their new jobs read every morning (off until switched on)
+  jobSourcesMorning     Boolean   @default(false)
   paybill               String
   mpesaMode             MpesaMode @default(TEST)
   updatedAt             DateTime  @updatedAt
@@ -210,6 +218,7 @@ model Membership {
   jobsCreated    Job[]
   inboxAdded     InboxItem[]        @relation("InboxAddedBy")
   inboxDecided   InboxItem[]        @relation("InboxDecidedBy")
+  jobSources     JobSource[]
   contentChanges ContentChange[]
   tokenEntries   TokenLedgerEntry[]
   tokenRequests  TokenRequest[]
@@ -906,47 +915,99 @@ enum InboxState {
 }
 
 model InboxItem {
-  id            String      @id @default(cuid())
-  tenantId      String
-  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  state         InboxState  @default(READING)
-  // The poster image (job-posters bucket); on approval it becomes the published job's poster
-  posterPath    String
-  posterName    String
-  posterType    String      @default("image/jpeg")
-  posterBytes   Int         @default(0)
-  source        String      @default("Uploaded")
+  id              String      @id @default(cuid())
+  tenantId        String
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  state           InboxState  @default(READING)
+  // The poster image (job-posters bucket); on approval it becomes the published job's poster.
+  // Null for a job found on a web page by a job source: pageUrl is read instead.
+  posterPath      String?
+  posterName      String
+  posterType      String      @default("image/jpeg")
+  posterBytes     Int         @default(0)
+  source          String      @default("Uploaded")
+  // The job advert's own page (a web page or a PDF), when it came from a job source
+  pageUrl         String?
+  // A copy of the advert when it is a PDF ("job-adverts" bucket); on approval it goes with the published job
+  advertPdfPath   String?
+  advertPdfBytes  Int         @default(0)
+  jobSourceId     String?
+  // Set aside as a sure duplicate of this live job (its slug), found after reading
+  duplicateOfSlug String?
+  jobSource       JobSource?  @relation(fields: [jobSourceId], references: [id], onDelete: SetNull)
   // Text the AI read off the poster (and the text posted with it), used for the scam checks
-  rawText       String      @default("")
+  rawText         String      @default("")
   // The text posted with the poster (WhatsApp/LinkedIn caption); its links are opened for the AI
-  caption       String      @default("")
+  caption         String      @default("")
   // Each link in the caption and whether it could be read: LinkResult[] (modules/ai/links.ts)
-  links         Json?
+  links           Json?
   // A poster listing several jobs gives one item per job: the others point at the first
-  splitFromId   String?
+  splitFromId     String?
   // The AI's second opinion on whether the advert is a scam: "low" | "medium" | "high", and why
-  scamRisk      String?
-  scamReason    String?
+  scamRisk        String?
+  scamReason      String?
   // The job as read (and corrected) so far; shape is JobInput (modules/jobs/jobs.schema.ts)
-  reading       Json?
+  reading         Json?
   // Fields the AI wasn't sure about, and those a person has since confirmed
-  unsure        String[]
-  checked       String[]
-  readError     String?
-  discardReason String?
-  jobId         String?
-  job           Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  inputTokens   Int?
-  outputTokens  Int?
-  addedById     String?
-  addedBy       Membership? @relation("InboxAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
-  decidedById   String?
-  decidedBy     Membership? @relation("InboxDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
-  createdAt     DateTime    @default(now())
-  readAt        DateTime?
-  decidedAt     DateTime?
+  unsure          String[]
+  checked         String[]
+  readError       String?
+  discardReason   String?
+  jobId           String?
+  job             Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  inputTokens     Int?
+  outputTokens    Int?
+  addedById       String?
+  addedBy         Membership? @relation("InboxAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+  decidedById     String?
+  decidedBy       Membership? @relation("InboxDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime    @default(now())
+  readAt          DateTime?
+  decidedAt       DateTime?
 
   @@index([tenantId, state, createdAt])
+}
+
+// A careers page, government vacancies page or job feed the website checks every morning. New
+// jobs found there wait in Bulk post for a person to check; nothing is published by itself.
+model JobSource {
+  id            String        @id @default(cuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  // The vacancies page or feed (RSS/Atom)
+  url           String
+  enabled       Boolean       @default(true)
+  lastCheckedAt DateTime?
+  // How the last check went: jobs added to Bulk post, or why it failed
+  lastAdded     Int           @default(0)
+  lastError     String?
+  // Failed checks in a row; at 3 the source is switched off and the owner is told
+  failures      Int           @default(0)
+  addedById     String?
+  addedBy       Membership?   @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+  inboxItems    InboxItem[]
+  seenLinks     SeenJobLink[]
+
+  @@index([tenantId, enabled])
+}
+
+// Every link a job source has already looked at, so a job is never added (or paid for) twice.
+// isJob false: the AI said it isn't a job advert (a menu link, "About us"), so it is skipped too.
+model SeenJobLink {
+  id          String    @id @default(cuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  jobSourceId String
+  jobSource   JobSource @relation(fields: [jobSourceId], references: [id], onDelete: Cascade)
+  url         String
+  isJob       Boolean
+  seenAt      DateTime  @default(now())
+
+  @@unique([jobSourceId, url])
+  @@index([tenantId, seenAt])
+  @@index([tenantId, url])
 }
 
 // The writer's AI helper on an order: CV analysis, summary drafts and the final check. Kept so the

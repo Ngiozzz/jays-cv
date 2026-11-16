@@ -46,6 +46,12 @@ export default async function JobsPage({ searchParams }: PageProps<"/admin/jobs"
           <Icon name="inbox" size={18} />
           Bulk post jobs
         </Link>
+        {can(member, "manageJobSources") && (
+          <Link className="btn btn-ghost" href="/admin/job-sources">
+            <Icon name="globe" size={18} />
+            Job sources
+          </Link>
+        )}
       </div>
       <section className="panel">
         <div className="table-tools">

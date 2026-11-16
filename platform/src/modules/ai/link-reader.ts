@@ -15,7 +15,7 @@ const MAX_HOPS = 6;
 // Less readable text than this means the page only works in a browser (or is a sign-in wall)
 const MIN_TEXT = 300;
 
-class Unreadable extends Error {}
+export class Unreadable extends Error {}
 
 export async function readLinks(urls: string[]): Promise<LinkPage[]> {
   return Promise.all(urls.map(readLink));
@@ -70,7 +70,7 @@ async function readLink(url: string): Promise<LinkPage> {
 }
 
 // Only http(s) on the usual ports, and only addresses on the public internet
-async function safeUrl(raw: string): Promise<URL> {
+export async function safeUrl(raw: string): Promise<URL> {
   let url: URL;
   try {
     url = new URL(raw);

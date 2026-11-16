@@ -43,7 +43,7 @@ export async function claimForReading(tenantId: string, id: string): Promise<boo
 export function findOldDiscarded(tenantId: string, before: Date) {
   return tenantDb(tenantId).inboxItem.findMany({
     where: { state: "DISCARDED", decidedAt: { lt: before } },
-    select: { id: true, posterPath: true },
+    select: { id: true, posterPath: true, advertPdfPath: true },
   });
 }
 
@@ -52,10 +52,23 @@ export async function takeUndecidedSplits(tenantId: string, splitFromId: string)
   const db = tenantDb(tenantId);
   const splits = await db.inboxItem.findMany({
     where: { splitFromId, state: { in: ["READING", "CHECK"] } },
-    select: { id: true, posterPath: true },
+    select: { id: true, posterPath: true, advertPdfPath: true },
   });
   if (splits.length) await db.inboxItem.deleteMany({ where: { id: { in: splits.map((s) => s.id) } } });
   return splits;
+}
+
+// Jobs already read and waiting to be checked (other than this one), to spot the same job twice
+// (jobs split off the same advert are different jobs, so they're left out: `advertId` is the first one)
+export function findReadWaiting(tenantId: string, exceptId: string, advertId: string) {
+  return tenantDb(tenantId).inboxItem.findMany({
+    where: {
+      state: "CHECK",
+      id: { notIn: [exceptId, advertId] },
+      OR: [{ splitFromId: null }, { splitFromId: { not: advertId } }],
+    },
+    select: { id: true, reading: true },
+  });
 }
 
 export function deleteInboxItems(tenantId: string, ids: string[]) {

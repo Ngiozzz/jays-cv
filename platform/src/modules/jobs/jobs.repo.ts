@@ -1,4 +1,5 @@
 import "server-only";
+import type { FileKind } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { tenantDb } from "@/lib/tenant-db";
 
@@ -53,11 +54,24 @@ export function findPosters(tenantId: string, jobId: string) {
   });
 }
 
+// A job's files: its poster, and the PDF advert of a job found by a job source
+const JOB_FILE_KINDS: FileKind[] = ["JOB_POSTER", "JOB_ADVERT"];
+
 export function createPosterRecord(
   tenantId: string,
   poster: { jobId: string; storagePath: string; name: string; mimeType: string; sizeBytes: number; uploadedBy: string },
 ) {
   return tenantDb(tenantId).storedFile.create({ data: { ...poster, tenantId, kind: "JOB_POSTER" } });
+}
+
+// A job source's PDF advert, kept with the published job ("job-adverts" bucket)
+export function createAdvertPdfRecord(
+  tenantId: string,
+  advert: { jobId: string; storagePath: string; name: string; sizeBytes: number; uploadedBy: string },
+) {
+  return tenantDb(tenantId).storedFile.create({
+    data: { ...advert, tenantId, kind: "JOB_ADVERT", mimeType: "application/pdf" },
+  });
 }
 
 export function deleteFileRecords(tenantId: string, ids: string[]) {
@@ -86,11 +100,12 @@ const publicFields = {
   apply: true,
   source: true,
   companyRef: { select: { logoPath: true } },
+  // The poster and the PDF advert (newest first; a job has at most a few)
   files: {
-    where: { kind: "JOB_POSTER", deletedAt: null },
+    where: { kind: { in: JOB_FILE_KINDS }, deletedAt: null },
     orderBy: { createdAt: "desc" },
-    take: 1,
-    select: { storagePath: true },
+    take: 6,
+    select: { storagePath: true, kind: true },
   },
 } as const;
 
@@ -118,7 +133,12 @@ export type PublishedJobRow = Awaited<ReturnType<typeof findPublishedJobs>>[numb
 
 export function findPostersWithJobs(tenantId: string) {
   return tenantDb(tenantId).storedFile.findMany({
-    where: { kind: "JOB_POSTER", deletedAt: null, jobId: { not: null } },
-    select: { id: true, storagePath: true, job: { select: { status: true, deadline: true, updatedAt: true } } },
+    where: { kind: { in: JOB_FILE_KINDS }, deletedAt: null, jobId: { not: null } },
+    select: {
+      id: true,
+      kind: true,
+      storagePath: true,
+      job: { select: { status: true, deadline: true, updatedAt: true } },
+    },
   });
 }

@@ -29,6 +29,8 @@ export const SUB_PAGES: Record<string, { title: string; under?: string }> = {
   "/admin/profile": { title: "Your profile" },
   "/admin/jobs/new": { title: "Post a job", under: "/admin/jobs" },
   "/admin/inbox": { title: "Bulk post jobs", under: "/admin/jobs" },
+  "/admin/job-sources": { title: "Job sources", under: "/admin/jobs" },
+  "/admin/job-sources/found": { title: "Jobs found", under: "/admin/jobs" },
 };
 
 // Website content tabs, as the breadcrumb and the tab bar name them

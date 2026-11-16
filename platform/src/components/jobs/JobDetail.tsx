@@ -101,6 +101,14 @@ export function JobDetail({ job, today, pageUrl, draftTime, cvHelpHref, check, t
             </section>
           )}
 
+          {job.advertPdfUrl && (
+            <p className="job-advert-pdf">
+              <a href={job.advertPdfUrl} target="_blank" rel="noopener noreferrer" download>
+                Download the original advert (PDF)
+              </a>
+            </p>
+          )}
+
           <p className="job-source">
             {job.source ? `Source: ${job.source} · ` : ""}Posted {postedLabel(job.postedDay, today).toLowerCase()}
           </p>

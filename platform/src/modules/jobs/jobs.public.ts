@@ -32,6 +32,8 @@ export type PublicJob = {
   apply: ApplyDetails;
   source: string | null;
   posterUrl: string | null;
+  // The original advert as a PDF (jobs found by a job source)
+  advertPdfUrl: string | null;
   logoUrl: string | null;
 };
 
@@ -41,9 +43,19 @@ function toPublicJob({ files, deadline, postedAt, apply, companyRef, ...job }: r
     deadline: deadline ? deadline.toISOString().slice(0, 10) : null,
     postedDay: todayInNairobi(postedAt),
     apply: applySchema.catch(applySchema.parse({})).parse(apply),
-    posterUrl: files[0] ? fileStore.publicUrl("job-posters", files[0].storagePath) : null,
+    posterUrl: fileUrl(files, "JOB_POSTER", "job-posters"),
+    advertPdfUrl: fileUrl(files, "JOB_ADVERT", "job-adverts"),
     logoUrl: logoUrl(companyRef?.logoPath ?? null),
   };
+}
+
+function fileUrl(
+  files: repo.PublishedJobRow["files"],
+  kind: "JOB_POSTER" | "JOB_ADVERT",
+  bucket: "job-posters" | "job-adverts",
+): string | null {
+  const file = files.find((f) => f.kind === kind);
+  return file ? fileStore.publicUrl(bucket, file.storagePath) : null;
 }
 
 const isOpen = (job: PublicJob, today: string) => !job.deadline || daysUntil(job.deadline, today) >= 0;

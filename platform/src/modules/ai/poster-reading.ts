@@ -120,6 +120,16 @@ export function extraTexts(extras: PosterExtras | null): string[] {
   ];
 }
 
+// Rules shared by every way a job advert is read (a poster image, a web page, a PDF)
+export const countyRule = (what: string) =>
+  `For where the job is, choose counties from the list of Kenya's 47 counties. Put the town or area the ${what} names in town, as written, and choose the county it is in (e.g. Tala → town "Tala", county Machakos; Westlands → town "Westlands", county Nairobi). Choose several counties if the job is in several places; choose "${ALL_COUNTIES}" if it is nationwide or in many counties. For a job outside Kenya choose "${OUTSIDE_KENYA}", put the city in town and the country in country. Leave country empty for jobs in Kenya. If the ${what} doesn't say where the job is, choose "${NO_LOCATION}" and leave town empty: never guess a place from the company's name or phone number. If you are not sure which county a town is in, add "location" to unsureFields.`;
+
+export const TAGS_RULE =
+  'Add 3 to 6 search tags, each 1 to 3 words, for the job seeker searching Google: the profession or qualification (e.g. "CPA", "Mechanical engineer", "Nurse"), the field (e.g. "Engineering"), the town (e.g. "Kericho"), and the level (e.g. "Entry level", "Internship", "Senior"). Each tag is shown as "<tag> jobs in Kenya", so never include the words "jobs" or "Kenya" in a tag. No hashtags.';
+
+export const SCAM_RULE =
+  "Judge whether the advert looks like a scam. Set scamRisk to high when it asks applicants to pay any fee or send money, promises pay far above the role with no experience needed, or hides the employer behind a personal number or free email for a big company; medium when something is unusual but could be genuine; otherwise low. In scamReason, say why in one plain sentence (empty when low).";
+
 export function posterPrompt(today: string, extras: PosterExtras | null = null): string {
   const hasExtras = Boolean(extras && (extras.caption.trim() || extras.pages.length));
   return [
@@ -133,14 +143,14 @@ export function posterPrompt(today: string, extras: PosterExtras | null = null):
       : []),
     `Today is ${today}. Write the application deadline as YYYY-MM-DD; if the poster gives no deadline, use an empty string.`,
     "Copy names, emails, phone numbers and links exactly as printed. Use an empty string for anything the poster doesn't say; never guess.",
-    `For where the job is, choose counties from the list of Kenya's 47 counties. Put the town or area the poster names in town, as written, and choose the county it is in (e.g. Tala → town "Tala", county Machakos; Westlands → town "Westlands", county Nairobi). Choose several counties if the job is in several places; choose "${ALL_COUNTIES}" if it is nationwide or in many counties. For a job outside Kenya choose "${OUTSIDE_KENYA}", put the city in town and the country in country. Leave country empty for jobs in Kenya. If the poster doesn't say where the job is, choose "${NO_LOCATION}" and leave town empty: never guess a place from the company's name or phone number. If you are not sure which county a town is in, add "location" to unsureFields.`,
+    countyRule("poster"),
     "Write the summary for job seekers, as one or two plain sentences in your own words about the job itself. Never mention the poster, the advert, the image or what details are missing. List responsibilities and requirements one item each, as printed.",
     'Choose the closest category, job type and work setting; use "Unknown" for the category if none fits.',
     "For how to apply, pick the method the poster asks for. Put any special instructions (e.g. 'state your expected salary') in notes.",
     "Put all the text printed on the poster, word for word, in rawText (the poster only, not the posted text or pages).",
     "List in unsureFields any field you could not read confidently (blurry, cut off or ambiguous), so a person checks it.",
-    'Add 3 to 6 search tags, each 1 to 3 words, for the job seeker searching Google: the profession or qualification (e.g. "CPA", "Mechanical engineer", "Nurse"), the field (e.g. "Engineering"), the town (e.g. "Kericho"), and the level (e.g. "Entry level", "Internship", "Senior"). Each tag is shown as "<tag> jobs in Kenya", so never include the words "jobs" or "Kenya" in a tag. No hashtags.',
-    "Judge whether the advert looks like a scam. Set scamRisk to high when it asks applicants to pay any fee or send money, promises pay far above the role with no experience needed, or hides the employer behind a personal number or free email for a big company; medium when something is unusual but could be genuine; otherwise low. In scamReason, say why in one plain sentence (empty when low).",
+    TAGS_RULE,
+    SCAM_RULE,
     "If the image is not a job advert, set isJobAdvert to false and leave jobs empty.",
   ].join("\n");
 }

@@ -2,6 +2,7 @@ import "server-only";
 import { fileStore } from "@/lib/storage";
 import { findSettings } from "@/modules/content/content.repo";
 import { deleteInboxItems, findOldDiscarded } from "@/modules/inbox/inbox.repo";
+import { deleteOldSeenLinks } from "@/modules/job-sources/job-sources.repo";
 import { listTenantIds } from "@/modules/tenants/tenants.repo";
 import * as repo from "./jobs.repo";
 import { todayInNairobi } from "./jobs.rules";
@@ -29,13 +30,16 @@ export async function cleanUpOldPosters(now = new Date()): Promise<{ tenant: str
           settings.posterRetentionMonths,
         ),
     );
-    for (const poster of expired) await fileStore.remove("job-posters", poster.storagePath);
+    for (const file of expired)
+      await fileStore.remove(file.kind === "JOB_ADVERT" ? "job-adverts" : "job-posters", file.storagePath);
     if (expired.length)
       await repo.deleteFileRecords(
         tenant.id,
         expired.map((poster) => poster.id),
       );
     const discarded = await deleteOldDiscardedPosters(tenant.id, now);
+    // Job sources forget links after about 6 months, so a re-advertised job is picked up again
+    await deleteOldSeenLinks(tenant.id, now);
     results.push({ tenant: tenant.slug, deleted: expired.length + discarded });
   }
   return results;
@@ -46,7 +50,10 @@ const DISCARD_KEEP_MS = 7 * 86_400_000;
 
 async function deleteOldDiscardedPosters(tenantId: string, now: Date): Promise<number> {
   const old = await findOldDiscarded(tenantId, new Date(now.getTime() - DISCARD_KEEP_MS));
-  for (const item of old) await fileStore.remove("job-posters", item.posterPath);
+  for (const item of old) {
+    if (item.posterPath) await fileStore.remove("job-posters", item.posterPath);
+    if (item.advertPdfPath) await fileStore.remove("job-adverts", item.advertPdfPath);
+  }
   if (old.length)
     await deleteInboxItems(
       tenantId,

@@ -9,6 +9,7 @@ import {
   OpenOrdersPanel,
   QuickPost,
   RecentJobs,
+  SourcesNotice,
 } from "@/components/admin/dashboard/DashboardPanels";
 import { ProgressPanel, type ProgressCv } from "@/components/admin/dashboard/ProgressPanel";
 import { Icon } from "@/components/icons/Icon";
@@ -25,7 +26,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const member = await requireMember();
   const now = new Date();
-  const { owner, business, orders, jobs } = await loadDashboard(member, now);
+  const { owner, business, orders, jobs, sources } = await loadDashboard(member, now);
   const firstName = member.name.split(" ")[0];
   const open = orders?.open ?? [];
 
@@ -85,6 +86,7 @@ export default async function DashboardPage() {
       )}
       {business && <BusinessCards business={business} notAccepted={open.length} />}
       {orders && !owner && <OpenOrdersPanel open={open.map((order) => ({ order, waiting: waitingFor(order, now) }))} />}
+      {sources && <SourcesNotice sources={sources} manage={can(member, "manageJobSources")} />}
       {jobs && <JobStats jobs={jobs} />}
 
       {orders && (

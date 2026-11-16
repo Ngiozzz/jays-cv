@@ -21,6 +21,16 @@ import {
 } from "./poster-reading";
 import { pretendReadingFor } from "./pretend-readings";
 import {
+  jobPagePrompt,
+  jobPageText,
+  linkPickPrompt,
+  linkPickSchema,
+  pickedLinks,
+  pretendPick,
+  type JobPage,
+} from "./page-reading";
+import type { FoundLink } from "@/modules/job-sources/discover";
+import {
   analysisPrompt,
   cvAnalysisSchema,
   finalCheckPrompt,
@@ -114,6 +124,72 @@ export async function readJobPoster(
   const reading = parsePosterAnswer(raw);
   if (!reading) {
     console.error("[ai] poster reading: unexpected answer", JSON.stringify(raw).slice(0, 2000));
+    throw new AiUnavailableError("The AI's answer couldn't be read. Please try again.");
+  }
+  return {
+    data: reading,
+    usage: {
+      model: response.model,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
+}
+
+// Job sources: which links on a vacancies page lead to job adverts (cheap: words and addresses only)
+export async function pickJobLinks(
+  sourceName: string,
+  pageUrl: string,
+  links: FoundLink[],
+): Promise<AiResult<FoundLink[]>> {
+  if (!client) return { data: pretendPick(links), usage: null };
+  const response = await ask(client, {
+    model: env.ANTHROPIC_POSTER_MODEL,
+    max_tokens: 4000,
+    output_config: { effort: "low", format: betaZodOutputFormat(linkPickSchema) },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [{ role: "user", content: linkPickPrompt(sourceName, pageUrl, links) }],
+  });
+  return {
+    data: pickedLinks(answerJson(response, "link check"), links),
+    usage: {
+      model: response.model,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
+}
+
+// Job sources: one job advert's own page (its text) or PDF, read like a poster
+export async function readJobPage(page: JobPage, sourceName: string, today: string): Promise<AiResult<PosterAnswer>> {
+  if (!client) return { data: singleJobAnswer(pretendReadingFor(page.url, today)), usage: null };
+  const text = jobPageText(page);
+  const response = await ask(client, {
+    model: env.ANTHROPIC_POSTER_MODEL,
+    max_tokens: 16000,
+    output_config: { effort: "low", format: betaZodOutputFormat(posterAnswerSchema) },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [
+      {
+        role: "user",
+        content: [
+          page.kind === "pdf"
+            ? ({
+                type: "document",
+                source: { type: "base64", media_type: "application/pdf", data: page.base64 },
+              } as const)
+            : ({ type: "text", text: text ?? "" } as const),
+          { type: "text", text: jobPagePrompt(today, page, sourceName) },
+        ],
+      },
+    ],
+  });
+  const raw = answerJson(response, "job page reading");
+  const reading = parsePosterAnswer(raw);
+  if (!reading) {
+    console.error("[ai] job page reading: unexpected answer", JSON.stringify(raw).slice(0, 2000));
     throw new AiUnavailableError("The AI's answer couldn't be read. Please try again.");
   }
   return {

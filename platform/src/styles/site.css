@@ -6022,3 +6022,28 @@ button.final-file {
 .check-reading .ai-progress {
   margin: 14px auto 0;
 }
+
+/* Job page: the original PDF advert (jobs found by a job source) */
+.job-advert-pdf {
+  margin: 16px 0 0;
+}
+.job-advert-pdf a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--black);
+  font-weight: 700;
+  text-decoration: none;
+}
+.job-advert-pdf a::before {
+  content: "PDF";
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--black);
+  color: var(--gold-light);
+}

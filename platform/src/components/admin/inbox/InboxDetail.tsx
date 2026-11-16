@@ -74,7 +74,7 @@ export function InboxDetail(props: Props) {
       </button>
     </div>
   );
-  const poster = (
+  const poster = card.posterUrl ? (
     <figure className={card.state === "reading" ? "d-poster scanning" : "d-poster"}>
       <img src={card.posterUrl} alt={`Job poster as received${job?.title ? `: ${job.title}` : ""}`} />
       <figcaption>
@@ -83,6 +83,26 @@ export function InboxDetail(props: Props) {
           Open full size
         </a>
       </figcaption>
+    </figure>
+  ) : (
+    // A job a job source found on a web page: no poster, the advert's own page instead
+    <figure className={card.state === "reading" ? "d-page scanning" : "d-page"}>
+      <p className="d-page-from">From: {card.source}</p>
+      <p className="d-page-name">{card.posterName}</p>
+      {card.pdfUrl && (
+        <>
+          <iframe className="d-pdf" src={`${card.pdfUrl}#view=FitH`} title="The PDF advert" loading="lazy" />
+          <a className="d-pdf-open" href={card.pdfUrl} target="_blank" rel="noopener noreferrer">
+            Open the PDF full size ↗
+          </a>
+        </>
+      )}
+      {card.pageUrl && (
+        <a className="btn btn-ghost" href={card.pageUrl} target="_blank" rel="noopener noreferrer">
+          Open the original advert ↗
+        </a>
+      )}
+      <figcaption>Check the details against the original before publishing.</figcaption>
     </figure>
   );
 

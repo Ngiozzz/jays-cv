@@ -5,11 +5,12 @@ import { createClient } from "@supabase/supabase-js";
 import { env } from "./env";
 
 // File storage behind one interface, so the app runs without keys and the provider can be swapped.
-// Buckets: "job-posters", "company-logos", "sample-cvs" and "about-photos" are public (they appear on the website).
+// Buckets: "job-posters", "job-adverts" (PDF adverts found by job sources), "company-logos", "sample-cvs" and
+// "about-photos" are public (they appear on the website).
 // "order-files" (client CVs, drafts, finals) is private: never given a public address, only read by
 // the server after checking who is asking (see modules/orders/order-files).
 
-export type Bucket = "job-posters" | "company-logos" | "sample-cvs" | "about-photos" | "order-files";
+export type Bucket = "job-posters" | "job-adverts" | "company-logos" | "sample-cvs" | "about-photos" | "order-files";
 export type PublicBucket = Exclude<Bucket, "order-files">;
 
 const IMAGES = ["image/jpeg", "image/png", "image/webp"];
@@ -22,6 +23,7 @@ export const DOCUMENT_TYPES = [
 
 const BUCKETS: Record<Bucket, { public: boolean; limit: string; types: string[] }> = {
   "job-posters": { public: true, limit: "6MB", types: IMAGES },
+  "job-adverts": { public: true, limit: "10MB", types: ["application/pdf"] },
   "company-logos": { public: true, limit: "1MB", types: IMAGES },
   "sample-cvs": { public: true, limit: "4MB", types: IMAGES },
   "about-photos": { public: true, limit: "4MB", types: IMAGES },

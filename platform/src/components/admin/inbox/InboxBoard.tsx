@@ -45,6 +45,8 @@ type Props = {
   siteUrl: string;
   aiPretend: boolean;
   sampleFiles: string[];
+  // Opens on this item (from Jobs found: "Check in Bulk post")
+  initialId?: string | null;
 };
 
 // Blank lines typed into "Requirements" are dropped before publishing
@@ -59,11 +61,42 @@ const tidy = (job: JobInput): JobInput => ({
 const withSource = (job: JobInput | null, source: string): JobInput | null =>
   job && !job.source && source !== "Uploaded" ? { ...job, source } : job;
 
-export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }: Props) {
+export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, initialId = null }: Props) {
   const router = useRouter();
-  const { cards, liveJobs, today } = data;
-  const [chosenView, setView] = useState<View>("check");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { liveJobs, today } = data;
+  // Approve and discard show at once: the job leaves "To check" / "Flagged" before the page refreshes
+  const [decided, setDecided] = useState<Record<string, "approved" | "discarded">>({});
+  const cards = useMemo(
+    () =>
+      data.cards.map((card) => {
+        const state = decided[card.id];
+        return state && card.state !== state ? { ...card, state, decidedToday: true } : card;
+      }),
+    [data.cards, decided],
+  );
+  // "Drop today's posters here" folds away; open at the start only when there's nothing yet
+  const [addOpen, setAddOpen] = useState(data.cards.length === 0);
+  // The tabs stay in view while scrolling, just under the admin's top bar
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const top = document.querySelector<HTMLElement>(".admin-top");
+    const bar = barRef.current;
+    const root = document.documentElement;
+    const measure = () => {
+      root.style.setProperty("--admin-top-h", `${top?.offsetHeight ?? 0}px`);
+      root.style.setProperty("--inbox-bar-h", `${bar?.offsetHeight ?? 0}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (top) observer.observe(top);
+    if (bar) observer.observe(bar);
+    return () => observer.disconnect();
+  }, []);
+  const opening = initialId ? cards.find((card) => card.id === initialId) : undefined;
+  const [chosenView, setView] = useState<View>(
+    opening?.state === "reading" ? "reading" : opening?.state === "discarded" ? "discarded" : "check",
+  );
+  const [selectedId, setSelectedId] = useState<string | null>(opening?.id ?? null);
   // Corrections and "Looks right" ticks made on this screen, ahead of the next refresh
   const [edits, setEdits] = useState<Record<string, JobInput>>({});
   const [confirmed, setConfirmed] = useState<Record<string, string[]>>({});
@@ -176,6 +209,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
         setNotice({ tone: "error", text: result.error });
         return false;
       }
+      setDecided((current) => ({ ...current, [card.id]: "approved" }));
       if (!quiet) {
         setNotice({ tone: "ok", text: `Published: ${job.title}. Added to today's channel post.` });
         setSelectedId(nextAfter(card)?.id ?? null);
@@ -193,6 +227,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
     setBusy(false);
     setDiscardOpen(false);
     if (!result.ok) return setNotice({ tone: "error", text: result.error });
+    setDecided((current) => ({ ...current, [card.id]: "discarded" }));
     setNotice({ tone: "ok", text: `Discarded: ${DISCARD_LABEL[reason] ?? reason}.` });
     setSelectedId(nextAfter(card)?.id ?? null);
     refresh();
@@ -241,16 +276,24 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
 
   return (
     <>
-      <IntakePanel
-        aiPretend={aiPretend}
-        sampleFiles={sampleFiles}
-        tokens={data.tokens}
-        onAdded={(count) => {
-          setNotice({ tone: "ok", text: `${count} poster${count > 1 ? "s" : ""} added. Reading now…` });
-          setView("reading");
-          refresh();
-        }}
-      />
+      <details className="intake-toggle" open={addOpen} onToggle={(event) => setAddOpen(event.currentTarget.open)}>
+        <summary>
+          <Icon name="upload" size={18} />
+          <span>Add posters</span>
+          <small>Drop today&apos;s posters, screenshots or photos</small>
+        </summary>
+        <IntakePanel
+          aiPretend={aiPretend}
+          sampleFiles={sampleFiles}
+          tokens={data.tokens}
+          onAdded={(count) => {
+            setNotice({ tone: "ok", text: `${count} poster${count > 1 ? "s" : ""} added. Reading now…` });
+            setView("reading");
+            setAddOpen(false);
+            refresh();
+          }}
+        />
+      </details>
 
       {notice && (
         <p className={notice.tone === "ok" ? "notice" : "notice notice-error"} role="status">
@@ -258,7 +301,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
         </p>
       )}
 
-      <div className="inbox-bar">
+      <div className="inbox-bar" ref={barRef}>
         <nav className="tabs inbox-tabs" aria-label="Show">
           {VIEWS.map(({ key, label }) => (
             <button
@@ -330,6 +373,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles }:
               onDiscard={(reason) => void discard(selected, reason)}
               onRestore={async () => {
                 await restoreInboxItemAction(selected.id);
+                setDecided(({ [selected.id]: _was, ...rest }) => rest);
                 setView("check");
                 refresh();
               }}
@@ -386,11 +430,17 @@ function QueueItem(props: {
         aria-current={props.selected}
         onClick={props.onSelect}
       >
-        <img src={card.posterUrl} alt="" loading="lazy" />
+        {card.posterUrl ? (
+          <img src={card.posterUrl} alt="" loading="lazy" />
+        ) : (
+          <span className="q-page" aria-hidden="true">
+            {card.pageUrl && /\.pdf(\?|#|$)/i.test(card.pageUrl) ? "PDF" : "Web"}
+          </span>
+        )}
         <span className="q-main">
           {card.state === "reading" ? (
             <>
-              <strong className="q-reading">Reading poster…</strong>
+              <strong className="q-reading">{card.posterUrl ? "Reading poster…" : "Reading job page…"}</strong>
               <small>{card.source}</small>
             </>
           ) : (

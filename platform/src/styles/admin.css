@@ -3760,6 +3760,13 @@ body.embed .admin-content {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
+  /* Stays in view while scrolling, just under the admin's top bar (heights measured in InboxBoard) */
+  position: sticky;
+  top: var(--admin-top-h, 0px);
+  z-index: 15;
+  padding: 10px 0;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--line);
 }
 .inbox-layout {
   display: grid;
@@ -3769,8 +3776,8 @@ body.embed .admin-content {
 }
 .inbox-queue {
   position: sticky;
-  top: 16px;
-  max-height: calc(100vh - 120px);
+  top: calc(var(--admin-top-h, 0px) + var(--inbox-bar-h, 0px) + 12px);
+  max-height: calc(100vh - var(--admin-top-h, 0px) - var(--inbox-bar-h, 0px) - 28px);
   overflow: auto;
 }
 .queue {
@@ -6797,4 +6804,457 @@ kbd {
 }
 .avatar:has(img) {
   background: none;
+}
+
+/* Bulk post: a job a job source found on a web page (no poster image) */
+.q-page {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 58px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.d-page {
+  position: sticky;
+  top: 16px;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--bg-alt);
+}
+.d-page-from {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.d-page-name {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.d-page figcaption {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.d-page.scanning::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 36%;
+  top: -36%;
+  background: linear-gradient(180deg, transparent, rgba(184, 145, 63, 0.4), transparent);
+  animation: scan 1.1s linear infinite;
+}
+@media (max-width: 1100px) {
+  .d-page {
+    position: static;
+  }
+}
+
+/* Job sources (owner): websites checked every morning for new jobs */
+.sources-intro {
+  margin: 0 0 16px;
+}
+.sources-panel {
+  margin-bottom: 18px;
+}
+.source-add {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(220px, 2fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+.source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.source-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+.source-row.is-off {
+  background: var(--bg-alt);
+}
+.source-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.source-main a {
+  color: var(--gold-text);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+.source-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
+  font-size: 0.86rem;
+}
+.source-stats small {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.source-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+}
+.source-status::before {
+  content: "CF  ";
+}
+.source-status.ok {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.source-status.warn {
+  color: #7a4b00;
+  background: #fff7e6;
+  border-color: #f5d28a;
+}
+.source-status.bad {
+  color: #9b1c1c;
+  background: #fdecec;
+  border-color: #f3b4b4;
+}
+.source-status.off {
+  color: var(--muted);
+}
+.source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.source-error,
+.source-row .notice,
+.source-row .field-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.source-error {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 0.84rem;
+  color: #9b1c1c;
+}
+.banned-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.banned-list li {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-alt);
+  font-size: 0.8rem;
+}
+.banned-list li.is-extra {
+  background: var(--white);
+  border-color: var(--gold-border);
+}
+@media (max-width: 820px) {
+  .source-add,
+  .source-row {
+    grid-template-columns: 1fr;
+  }
+}
+.source-progress {
+  grid-column: 1 / -1;
+}
+
+.starter-group {
+  border: 0;
+  margin: 0 0 14px;
+  padding: 0;
+}
+.starter-group legend {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.86rem;
+  margin-bottom: 8px;
+}
+.starter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 6px 14px;
+}
+.starter-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.suggest-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.suggest-list li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.suggest-main {
+  flex: 1;
+  display: grid;
+  min-width: 0;
+}
+.suggest-main small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.starter-all {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 700;
+}
+.sources-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sources-head .editor-title {
+  margin: 0;
+}
+.sources-panel .ai-progress {
+  margin: 0 0 12px;
+}
+
+/* Jobs found by the job sources */
+.found-progress {
+  margin: 0 0 16px;
+}
+.found-source select {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  max-width: 260px;
+}
+.found-table td {
+  vertical-align: top;
+}
+.found-sub {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.found-unread {
+  font-weight: 600;
+  color: var(--muted);
+  font-style: italic;
+}
+.found-problem {
+  color: #9b1c1c;
+}
+.found-status {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.found-status.waiting {
+  color: var(--muted);
+}
+.found-status.check {
+  color: #7a4b00;
+  background: #fff7e6;
+  border-color: #f5d28a;
+}
+.found-status.published {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.found-status.discarded {
+  color: var(--muted);
+  background: var(--bg-alt);
+}
+.found-links {
+  white-space: nowrap;
+}
+.found-links a {
+  display: block;
+  color: var(--gold-text);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.found-empty {
+  padding: 18px;
+}
+.found-dup {
+  color: var(--gold-text);
+  font-weight: 700;
+}
+
+/* Bulk post: "Add posters" folds away */
+.intake-toggle {
+  margin-bottom: 16px;
+}
+.intake-toggle > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.intake-toggle > summary::-webkit-details-marker {
+  display: none;
+}
+.intake-toggle > summary::after {
+  content: "\25BE";
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+.intake-toggle[open] > summary::after {
+  transform: rotate(180deg);
+}
+.intake-toggle > summary small {
+  font-weight: 500;
+  color: var(--muted);
+}
+.intake-toggle[open] > summary {
+  margin-bottom: 12px;
+}
+.d-grid .d-poster,
+.d-grid .d-page {
+  top: calc(var(--admin-top-h, 0px) + var(--inbox-bar-h, 0px) + 12px);
+}
+@media (max-width: 1100px) {
+  .inbox-bar {
+    position: static;
+  }
+}
+
+/* Job sources: the morning check switch */
+.morning-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+.morning-switch.is-on {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+.morning-switch > div {
+  flex: 1 1 320px;
+}
+.morning-switch p {
+  margin: 4px 0 0;
+}
+/* Dashboard: jobs from the job sources */
+.sources-notice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--gold-border);
+  background: var(--white);
+}
+.sources-notice > div:first-of-type {
+  flex: 1 1 300px;
+}
+.sources-notice h3 {
+  margin: 0 0 2px;
+  font-size: 1rem;
+}
+.sources-notice p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.sources-notice .icon-box {
+  margin: 0;
+}
+.sources-notice-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Bulk post: a PDF advert shown beside the details */
+.d-pdf {
+  width: 100%;
+  height: min(70vh, 640px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+}
+.d-pdf-open {
+  color: var(--gold-text);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.d-grid:has(.d-pdf) {
+  grid-template-columns: minmax(280px, 1fr) 1.2fr;
 }
