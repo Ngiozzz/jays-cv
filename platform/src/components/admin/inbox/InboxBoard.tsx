@@ -10,6 +10,7 @@ import {
   rereadInboxItemAction,
   restoreInboxItemAction,
 } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
+import { ProgressBar } from "@/components/ai/AiProgress";
 import { CopyButton } from "@/components/CopyButton";
 import { AskForTokens } from "@/components/admin/AskForTokens";
 import { Icon } from "@/components/icons/Icon";
@@ -18,13 +19,14 @@ import { NEEDS_CONFIRMING, flagsFor, isClean, type Flag } from "@/modules/inbox/
 import type { InboxCard, InboxData } from "@/modules/inbox/inbox.view";
 import type { JobInput } from "@/modules/jobs/jobs.schema";
 import type { KnownCompany } from "@/components/admin/jobs/CompanyLogoField";
+import { formatDay } from "@/modules/jobs/jobs.rules";
 import { DISCARD_LABEL, InboxDetail } from "./InboxDetail";
 import type { ChosenLogo } from "./QuickForm";
 import { IntakePanel } from "./IntakePanel";
 
 type View = "check" | "flagged" | "reading" | "approved" | "discarded";
 const VIEWS: { key: View; label: string }[] = [
-  { key: "check", label: "To check" },
+  { key: "check", label: "Ready to publish" },
   { key: "flagged", label: "Flagged" },
   { key: "reading", label: "Reading" },
   { key: "approved", label: "Approved today" },
@@ -39,6 +41,10 @@ const EMPTY: Record<View, string> = {
 };
 // The AI reads a few posters at once: quick, without flooding the server
 const READ_AT_ONCE = 3;
+
+type Sort = "oldest" | "newest" | "closing" | "source";
+type AiFilter = "" | "job" | "unsure" | "none";
+const DISCARD_CHOICES = ["not-a-job", "expired", "duplicate", "scam", "other"] as const;
 
 type Props = {
   data: InboxData;
@@ -107,6 +113,14 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
   const [discardOpen, setDiscardOpen] = useState(false);
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const reading = useRef(new Set<string>());
+  // The table: filters, sort, search and ticked rows
+  const [source, setSource] = useState("");
+  const [aiFilter, setAiFilter] = useState<AiFilter>("");
+  const [sort, setSort] = useState<Sort>("oldest");
+  const [search, setSearch] = useState("");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [bulkReason, setBulkReason] = useState<string>("not-a-job");
+  const [bulk, setBulk] = useState<{ done: number; total: number; verb: string } | null>(null);
 
   const jobOf = useCallback((card: InboxCard) => edits[card.id] ?? withSource(card.job, card.source), [edits]);
   const flagsOf = useCallback(
@@ -151,9 +165,50 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
   // When everything has been read, show what needs checking instead of an empty "Reading" tab
   const view: View =
     chosenView === "reading" && !lists.reading.length ? (lists.check.length ? "check" : "flagged") : chosenView;
-  const list = lists[view];
-  const selected = cards.find((card) => card.id === selectedId) ?? list[0] ?? null;
+  const sources = useMemo(() => [...new Set(cards.map((card) => card.source))].sort(), [cards]);
+  const list = useMemo(() => {
+    const words = search.trim().toLowerCase();
+    const kept = lists[view].filter((card) => {
+      const job = jobOf(card);
+      if (source && card.source !== source) return false;
+      if (aiFilter && (aiFilter === "none" ? card.aiCheck : card.aiCheck !== aiFilter)) return false;
+      if (words && !`${job?.title ?? ""} ${job?.company ?? ""} ${card.source}`.toLowerCase().includes(words))
+        return false;
+      return true;
+    });
+    if (sort === "newest") return [...kept].reverse();
+    if (sort === "closing") {
+      const due = (card: InboxCard) => {
+        const job = jobOf(card);
+        return job && !job.openEnded && job.deadline ? job.deadline : "9999";
+      };
+      return [...kept].sort((a, b) => due(a).localeCompare(due(b)));
+    }
+    if (sort === "source") return [...kept].sort((a, b) => a.source.localeCompare(b.source));
+    return kept;
+  }, [lists, view, source, aiFilter, search, sort, jobOf]);
+  // The panel is open only for a job someone clicked
+  const selected = selectedId ? (cards.find((card) => card.id === selectedId) ?? null) : null;
   const position = { index: selected ? Math.max(0, list.indexOf(selected)) : 0, total: list.length };
+  const pickable = list.filter((card) => card.state === "check");
+  const pickedCards = cards.filter((card) => picked.has(card.id) && card.state === "check");
+  const allPicked = pickable.length > 0 && pickable.every((card) => picked.has(card.id));
+  const togglePick = (id: string) =>
+    setPicked((now) => {
+      const next = new Set(now);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const pickAll = (on: boolean) =>
+    setPicked((now) => {
+      const next = new Set(now);
+      for (const card of pickable) {
+        if (on) next.add(card.id);
+        else next.delete(card.id);
+      }
+      return next;
+    });
 
   const refresh = useCallback(() => router.refresh(), [router]);
 
@@ -221,24 +276,73 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
     [flagsOf, jobOf, list, logos],
   );
 
-  const discard = async (card: InboxCard, reason: string) => {
-    setBusy(true);
+  const discardQuietly = async (card: InboxCard, reason: string) => {
     const job = jobOf(card);
     const result = await discardInboxItemAction(card.id, reason, job ? tidy(job) : null);
+    if (result.ok) setDecided((current) => ({ ...current, [card.id]: "discarded" }));
+    return result;
+  };
+
+  const discard = async (card: InboxCard, reason: string) => {
+    setBusy(true);
+    const result = await discardQuietly(card, reason);
     setBusy(false);
     setDiscardOpen(false);
     if (!result.ok) return setNotice({ tone: "error", text: result.error });
-    setDecided((current) => ({ ...current, [card.id]: "discarded" }));
     setNotice({ tone: "ok", text: `Discarded: ${DISCARD_LABEL[reason] ?? reason}.` });
     setSelectedId(nextAfter(card)?.id ?? null);
     refresh();
   };
 
-  const approveAllClean = async () => {
-    if (!window.confirm(`Publish all ${lists.check.length} posters that are ready to approve?`)) return;
+  // ---------- ticked rows: publish or discard them all, with a progress bar ----------
+  const publishPicked = async () => {
+    const chosen = pickedCards;
+    if (!chosen.length) return;
+    const risky = chosen.filter((card) => flagsOf(card).some((flag) => NEEDS_CONFIRMING.includes(flag.key)));
+    const question = risky.length
+      ? `${risky.length} of these ${risky.length === 1 ? "has" : "have"} a scam, duplicate or deadline warning (${risky
+          .slice(0, 3)
+          .map((card) => jobOf(card)?.title ?? "")
+          .join(", ")}${risky.length > 3 ? "…" : ""}). Publish all ${chosen.length} anyway?`
+      : `Publish these ${chosen.length} job${chosen.length === 1 ? "" : "s"} on the website now?`;
+    if (!window.confirm(question)) return;
+    setBulk({ done: 0, total: chosen.length, verb: "Publishing" });
     let published = 0;
-    for (const card of lists.check) if (await approve(card, true)) published++;
-    setNotice({ tone: "ok", text: `Published ${published} job${published === 1 ? "" : "s"}.` });
+    const failed: string[] = [];
+    for (const [index, card] of chosen.entries()) {
+      if (await approve(card, true)) published++;
+      else failed.push(jobOf(card)?.title || "A job");
+      setBulk({ done: index + 1, total: chosen.length, verb: "Publishing" });
+    }
+    setBulk(null);
+    setPicked(new Set());
+    setNotice({
+      tone: failed.length && !published ? "error" : "ok",
+      text: [
+        `Published ${published} job${published === 1 ? "" : "s"}. They're in today's channel post below.`,
+        failed.length ? `Not published (open them to see why): ${failed.join(", ")}.` : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+    });
+    refresh();
+  };
+
+  const discardPicked = async () => {
+    const chosen = pickedCards;
+    if (!chosen.length) return;
+    setBulk({ done: 0, total: chosen.length, verb: "Discarding" });
+    let discarded = 0;
+    for (const [index, card] of chosen.entries()) {
+      if ((await discardQuietly(card, bulkReason)).ok) discarded++;
+      setBulk({ done: index + 1, total: chosen.length, verb: "Discarding" });
+    }
+    setBulk(null);
+    setPicked(new Set());
+    setNotice({
+      tone: "ok",
+      text: `Discarded ${discarded} job${discarded === 1 ? "" : "s"} (${DISCARD_LABEL[bulkReason] ?? bulkReason}). Restore any of them from the Discarded tab.`,
+    });
     refresh();
   };
 
@@ -250,6 +354,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
+      if (!selected) return;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || event.metaKey || event.ctrlKey || busy) return;
       const key = event.key.toLowerCase();
       if (key === "j") go(1);
@@ -315,90 +420,204 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
                 setView(key);
                 setSelectedId(null);
                 setDiscardOpen(false);
+                setPicked(new Set());
               }}
             >
               {label} <span>{lists[key].length}</span>
             </button>
           ))}
         </nav>
-        {view === "check" && lists.check.length > 1 && (
-          <button type="button" className="btn btn-ghost btn-sm" onClick={approveAllClean} disabled={busy}>
-            Approve all {lists.check.length} ready
-          </button>
-        )}
       </div>
 
-      <div className="inbox-layout">
-        <aside className="panel inbox-queue" aria-label="Posters">
-          <ul className="queue">
-            {list.length ? (
-              list.map((card) => (
-                <QueueItem
-                  key={card.id}
-                  card={card}
-                  job={jobOf(card)}
-                  flags={flagsOf(card)}
-                  selected={card.id === selected?.id}
-                  onSelect={() => {
-                    setSelectedId(card.id);
-                    setDiscardOpen(false);
-                  }}
-                />
-              ))
-            ) : (
-              <li className="q-empty">{EMPTY[view]}</li>
-            )}
-          </ul>
-        </aside>
-        <section className="panel inbox-detail" aria-live="polite">
-          {selected ? (
-            <InboxDetail
-              card={selected}
-              job={jobOf(selected)}
-              flags={flagsOf(selected)}
-              unsure={selected.unsure.filter(
-                (field) => !selected.checked.includes(field) && !(confirmed[selected.id] ?? []).includes(field),
-              )}
-              position={position}
-              busy={busy}
-              onStep={go}
-              onChange={(job) => setEdits((current) => ({ ...current, [selected.id]: job }))}
-              companies={companies}
-              today={data.today}
-              logo={logos[selected.id] ?? null}
-              onLogo={(logo) => setLogos((current) => ({ ...current, [selected.id]: logo }))}
-              onConfirm={(field) => {
-                setConfirmed((current) => ({ ...current, [selected.id]: [...(current[selected.id] ?? []), field] }));
-                void confirmInboxFieldAction(selected.id, field);
-              }}
-              onApprove={() => void onApproveSelected()}
-              onDiscard={(reason) => void discard(selected, reason)}
-              onRestore={async () => {
-                await restoreInboxItemAction(selected.id);
-                setDecided(({ [selected.id]: _was, ...rest }) => rest);
-                setView("check");
-                refresh();
-              }}
-              onReread={async (caption) => {
-                const result = await rereadInboxItemAction(selected.id, caption);
-                if (!result.ok) return setNotice({ tone: "error", text: result.error });
-                // The new reading replaces any corrections made to the old one
-                setEdits(({ [selected.id]: _old, ...rest }) => rest);
-                setConfirmed(({ [selected.id]: _done, ...rest }) => rest);
-                refresh();
-              }}
-              discardOpen={discardOpen}
-              setDiscardOpen={setDiscardOpen}
+      <section className="panel inbox-table-panel">
+        <div className="inbox-filters">
+          <label className="inbox-search">
+            <Icon name="search" size={16} />
+            <span className="sr-only">Search</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search title, employer, source…"
             />
-          ) : (
-            <EmptyDetail hasPosters={cards.length > 0} waiting={lists.check.length + lists.flagged.length} />
-          )}
-        </section>
-      </div>
+          </label>
+          <label>
+            <span>Source</span>
+            <select value={source} onChange={(event) => setSource(event.target.value)}>
+              <option value="">All</option>
+              {sources.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>AI check</span>
+            <select value={aiFilter} onChange={(event) => setAiFilter(event.target.value as AiFilter)}>
+              <option value="">Any</option>
+              <option value="job">Real jobs</option>
+              <option value="unsure">Not sure</option>
+              <option value="none">Not checked</option>
+            </select>
+          </label>
+          <label>
+            <span>Sort</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value as Sort)}>
+              <option value="oldest">Oldest first</option>
+              <option value="newest">Newest first</option>
+              <option value="closing">Closing soonest</option>
+              <option value="source">By source</option>
+            </select>
+          </label>
+        </div>
 
-      <p className="kbd-help">
-        Shortcuts: <kbd>J</kbd>/<kbd>K</kbd> next / previous · <kbd>A</kbd> approve &amp; publish · <kbd>D</kbd> discard
-      </p>
+        {pickable.length > 0 && (
+          <div className={pickedCards.length ? "inbox-bulk is-active" : "inbox-bulk"}>
+            <label className="inbox-check-all">
+              <input type="checkbox" checked={allPicked} onChange={(event) => pickAll(event.target.checked)} />
+              {pickedCards.length ? `${pickedCards.length} selected` : `Select all ${pickable.length}`}
+            </label>
+            {pickedCards.length > 0 && (
+              <div className="inbox-bulk-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={publishPicked}
+                  disabled={Boolean(bulk) || busy}
+                >
+                  <Icon name="upload" size={16} />
+                  Publish {pickedCards.length}
+                </button>
+                <select
+                  aria-label="Why discard"
+                  value={bulkReason}
+                  onChange={(event) => setBulkReason(event.target.value)}
+                >
+                  {DISCARD_CHOICES.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {DISCARD_LABEL[reason] ?? reason}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={discardPicked}
+                  disabled={Boolean(bulk) || busy}
+                >
+                  <Icon name="trash" size={16} />
+                  Discard {pickedCards.length}
+                </button>
+                <button type="button" className="link-btn" onClick={() => setPicked(new Set())}>
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {bulk && (
+          <ProgressBar
+            className="ai-progress inbox-progress"
+            percent={Math.round((bulk.done / Math.max(1, bulk.total)) * 100)}
+            label={`${bulk.verb} ${bulk.done} of ${bulk.total}…`}
+            ariaLabel="Jobs done"
+          />
+        )}
+
+        {list.length ? (
+          <div className="table-wrap-admin">
+            <table className="admin-table inbox-table">
+              <thead>
+                <tr>
+                  <th className="inbox-col-pick">
+                    <span className="sr-only">Select</span>
+                  </th>
+                  <th className="inbox-col-thumb">
+                    <span className="sr-only">Advert</span>
+                  </th>
+                  <th>Job</th>
+                  <th>Location</th>
+                  <th>Deadline</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((card) => (
+                  <InboxRow
+                    key={card.id}
+                    card={card}
+                    job={jobOf(card)}
+                    flags={flagsOf(card)}
+                    picked={picked.has(card.id)}
+                    onPick={() => togglePick(card.id)}
+                    onOpen={() => {
+                      setSelectedId(card.id);
+                      setDiscardOpen(false);
+                    }}
+                    siteUrl={siteUrl}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyTable
+            view={view}
+            filtered={lists[view].length > 0}
+            hasPosters={cards.length > 0}
+            waiting={lists.check.length + lists.flagged.length}
+          />
+        )}
+      </section>
+
+      {selected && (
+        <JobPanel onClose={() => setSelectedId(null)}>
+          <InboxDetail
+            card={selected}
+            job={jobOf(selected)}
+            flags={flagsOf(selected)}
+            unsure={selected.unsure.filter(
+              (field) => !selected.checked.includes(field) && !(confirmed[selected.id] ?? []).includes(field),
+            )}
+            position={position}
+            busy={busy}
+            onStep={go}
+            onChange={(job) => setEdits((current) => ({ ...current, [selected.id]: job }))}
+            companies={companies}
+            today={data.today}
+            logo={logos[selected.id] ?? null}
+            onLogo={(logo) => setLogos((current) => ({ ...current, [selected.id]: logo }))}
+            onConfirm={(field) => {
+              setConfirmed((current) => ({ ...current, [selected.id]: [...(current[selected.id] ?? []), field] }));
+              void confirmInboxFieldAction(selected.id, field);
+            }}
+            onApprove={() => void onApproveSelected()}
+            onDiscard={(reason) => void discard(selected, reason)}
+            onRestore={async () => {
+              await restoreInboxItemAction(selected.id);
+              setDecided(({ [selected.id]: _was, ...rest }) => rest);
+              setSelectedId(null);
+              setView("check");
+              refresh();
+            }}
+            onReread={async (caption) => {
+              const result = await rereadInboxItemAction(selected.id, caption);
+              if (!result.ok) return setNotice({ tone: "error", text: result.error });
+              // The new reading replaces any corrections made to the old one
+              setEdits(({ [selected.id]: _old, ...rest }) => rest);
+              setConfirmed(({ [selected.id]: _done, ...rest }) => rest);
+              refresh();
+            }}
+            discardOpen={discardOpen}
+            setDiscardOpen={setDiscardOpen}
+          />
+          <p className="kbd-help">
+            Shortcuts: <kbd>J</kbd>/<kbd>K</kbd> next / previous · <kbd>A</kbd> approve &amp; publish · <kbd>D</kbd>{" "}
+            discard · <kbd>Esc</kbd> back to the list
+          </p>
+        </JobPanel>
+      )}
 
       {digest && (
         <section className="panel digest">
@@ -416,74 +635,141 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
   );
 }
 
-function QueueItem(props: {
+function InboxRow(props: {
   card: InboxCard;
   job: JobInput | null;
   flags: Flag[];
-  selected: boolean;
-  onSelect: () => void;
+  picked: boolean;
+  onPick: () => void;
+  onOpen: () => void;
+  siteUrl: string;
 }) {
   const { card, job, flags } = props;
+  const warnings = flags.filter((flag) => flag.level !== "info");
+  const reading = card.state === "reading";
   return (
-    <li>
-      <button
-        type="button"
-        className={props.selected ? "q-item is-sel" : "q-item"}
-        aria-current={props.selected}
-        onClick={props.onSelect}
-      >
-        {card.posterUrl ? (
-          <img src={card.posterUrl} alt="" loading="lazy" />
-        ) : (
-          <span className="q-page" aria-hidden="true">
-            {card.pageUrl && /\.pdf(\?|#|$)/i.test(card.pageUrl) ? "PDF" : "Web"}
-          </span>
+    <tr className={props.picked ? "is-picked" : undefined}>
+      <td className="inbox-col-pick">
+        {card.state === "check" && (
+          <input
+            type="checkbox"
+            aria-label={`Select ${job?.title ?? "job"}`}
+            checked={props.picked}
+            onChange={props.onPick}
+          />
         )}
-        <span className="q-main">
-          {card.state === "reading" ? (
-            <>
-              <strong className="q-reading">{card.posterUrl ? "Reading poster…" : "Reading job page…"}</strong>
-              <small>{card.source}</small>
-            </>
+      </td>
+      <td className="inbox-col-thumb">
+        <button type="button" className="inbox-thumb" onClick={props.onOpen} tabIndex={-1} aria-hidden="true">
+          {card.posterUrl ? (
+            <img src={card.posterUrl} alt="" loading="lazy" />
           ) : (
-            <>
-              <strong>{job?.title || "Untitled poster"}</strong>
-              <small>
-                {job?.company || "—"} · {card.source}
-                {card.part && ` · Job ${card.part.index} of ${card.part.total}`}
-              </small>
-            </>
+            <span className="q-page">{card.pageUrl && /\.pdf(\?|#|$)/i.test(card.pageUrl) ? "PDF" : "Web"}</span>
           )}
-          <span className="q-flags">
-            {card.state === "check" &&
-              flags.map((flag) => (
-                <span key={flag.key} className={`iflag ${flag.level}`}>
-                  {flag.level === "critical" ? "⚠ " : flag.level === "warning" ? "! " : "⏱ "}
+        </button>
+      </td>
+      <td>
+        {reading ? (
+          <strong className="q-reading">{card.posterUrl ? "Reading poster…" : "Reading job page…"}</strong>
+        ) : (
+          <button type="button" className="inbox-title" onClick={props.onOpen}>
+            {job?.title || "Untitled job"}
+          </button>
+        )}
+        {!reading && <small className="inbox-sub">{job?.company || "Employer not set"}</small>}
+        <span className="q-flags">
+          {card.state === "check" &&
+            (warnings.length ? (
+              warnings.map((flag) => (
+                <span key={flag.key + flag.text} className={`iflag ${flag.level}`} title={flag.more}>
+                  {flag.level === "critical" ? "⚠ " : "! "}
                   {flag.text}
                 </span>
-              ))}
-            {card.state === "approved" && <span className="iflag live">✓ Live</span>}
-            {card.state === "discarded" && (
-              <span className="iflag gone">{DISCARD_LABEL[card.discardReason ?? "other"]}</span>
-            )}
-          </span>
+              ))
+            ) : (
+              <span className="iflag ok">✓ Ready</span>
+            ))}
+          {card.state === "approved" &&
+            (card.jobSlug ? (
+              <a
+                className="iflag live"
+                href={`${props.siteUrl}/jobs/${card.jobSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                ✓ Live ↗
+              </a>
+            ) : (
+              <span className="iflag live">✓ Live</span>
+            ))}
+          {card.state === "discarded" && (
+            <span className="iflag gone">{DISCARD_LABEL[card.discardReason ?? "other"]}</span>
+          )}
+          {card.aiCheckReason && card.state !== "approved" && (
+            <span className={card.aiCheck === "job" ? "inbox-ai ok" : "inbox-ai"} title={card.aiCheckReason}>
+              AI: {card.aiCheckReason}
+            </span>
+          )}
         </span>
-      </button>
-    </li>
+      </td>
+      <td className="inbox-col-text">{reading ? "" : job?.location || "Not specified"}</td>
+      <td className="inbox-col-text">
+        {reading ? "" : job?.openEnded || !job?.deadline ? "Open" : formatDay(job.deadline)}
+      </td>
+      <td className="inbox-col-text">
+        {card.source}
+        {card.part && (
+          <small className="inbox-sub">
+            Job {card.part.index} of {card.part.total}
+          </small>
+        )}
+      </td>
+    </tr>
   );
 }
 
-function EmptyDetail({ hasPosters, waiting }: { hasPosters: boolean; waiting: number }) {
+// One job, opened from the table: the full edit form with the poster or advert beside it
+function JobPanel({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!dialog.current?.open) dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog ref={dialog} className="admin-dialog inbox-panel" onClose={onClose} aria-label="Job">
+      <button
+        type="button"
+        className="icon-btn inbox-panel-close"
+        onClick={() => dialog.current?.close()}
+        title="Back to the list (Esc)"
+      >
+        <Icon name="x" />
+      </button>
+      <div className="inbox-panel-body">{children}</div>
+    </dialog>
+  );
+}
+
+function EmptyTable(props: { view: View; filtered: boolean; hasPosters: boolean; waiting: number }) {
   return (
     <div className="d-empty">
       <Icon name="inbox" />
-      <h2>{hasPosters ? (waiting ? "Pick a poster on the left" : "All caught up") : "No posters yet"}</h2>
+      <h2>
+        {props.filtered
+          ? "Nothing matches these filters"
+          : !props.hasPosters
+            ? "No jobs yet"
+            : props.waiting
+              ? EMPTY[props.view]
+              : "All caught up"}
+      </h2>
       <p>
-        {hasPosters
-          ? waiting
-            ? `${waiting} poster${waiting > 1 ? "s are" : " is"} still waiting.`
-            : "Every poster has been approved or discarded. Copy today's channel post below."
-          : "Drop today's posters above to get started."}
+        {props.filtered
+          ? "Clear the search or pick another source."
+          : !props.hasPosters
+            ? "Add posters above, or let your job sources find some."
+            : props.waiting
+              ? `${props.waiting} job${props.waiting > 1 ? "s are" : " is"} waiting in the other tabs.`
+              : "Every job has been published or discarded. Copy today's channel post below."}
       </p>
     </div>
   );

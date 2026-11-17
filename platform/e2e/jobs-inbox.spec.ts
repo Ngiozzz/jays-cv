@@ -24,7 +24,7 @@ test("posters are read, flagged, approved or discarded, and today's channel post
       async () => {
         const texts = await page.locator(".inbox-tabs button").allTextContents();
         const count = (name: string) => Number(texts.find((t) => t.startsWith(name))?.replace(/[^0-9]/g, "") ?? 0);
-        return count("Reading") === 0 && count("To check") + count("Flagged") === 8;
+        return count("Reading") === 0 && count("Ready to publish") + count("Flagged") === 8;
       },
       { timeout: 150_000 },
     )
@@ -35,8 +35,9 @@ test("posters are read, flagged, approved or discarded, and today's channel post
   await page.getByRole("button", { name: "Discard as scam" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Discarded: Possible scam" })).toBeVisible();
 
-  // A clean poster is approved and goes live
-  await tab("To check").click();
+  // A clean poster is approved and goes live (the job opens in a panel over the list; Esc closes it)
+  await page.keyboard.press("Escape");
+  await tab("Ready to publish").click();
   await page.getByRole("button", { name: /Accounts Assistant/ }).click();
   await expect(page.getByText("✓ Ready to approve")).toBeVisible();
   await page.getByRole("button", { name: /Approve & publish/ }).click();
@@ -48,6 +49,7 @@ test("posters are read, flagged, approved or discarded, and today's channel post
   await expect(page.locator(".digest-text")).toContainText("/jobs/accounts-assistant");
 
   // The discarded scam can be found under Discarded
+  await page.keyboard.press("Escape");
   await tab("Discarded").click();
   await expect(page.getByRole("button", { name: /Airport jobs/ })).toBeVisible();
 });
