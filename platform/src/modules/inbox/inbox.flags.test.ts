@@ -99,3 +99,37 @@ describe("unsure and missing fields", () => {
     ]);
   });
 });
+
+describe("only what matters is flagged", () => {
+  it("blocks on doubts about the title, company, deadline or how to apply", () => {
+    const flags = flagsFor(job(), { ...context, unsure: ["deadline", "title"] });
+    expect(flags.map((f) => [f.key, f.level])).toEqual([["unsure", "warning"]]);
+    expect(isClean(flags)).toBe(false);
+  });
+
+  it("only notes doubts about the work setting, job type, category or summary", () => {
+    const flags = flagsFor(job(), { ...context, unsure: ["workMode", "type", "category"] });
+    expect(flags.map((f) => [f.key, f.level])).toEqual([["unsure", "info"]]);
+    expect(isClean(flags)).toBe(true);
+  });
+
+  it("doesn't call a field that isn't in the advert at all 'unsure'", () => {
+    const noDeadline = job({ deadline: null, openEnded: true, requirements: [] });
+    expect(keys(noDeadline, { unsure: ["deadline", "requirements"] })).toEqual([]);
+  });
+});
+
+describe("duplicate titles", () => {
+  it("needs most of the words of the longer title", async () => {
+    const { similarTitle } = await import("./inbox.flags");
+    expect(similarTitle("Accounts Assistant", "Accounts Assistant (2)")).toBe(true);
+    expect(similarTitle("Senior Accountant", "Accountant - Senior")).toBe(true);
+    expect(similarTitle("Student Attachment – Licensing", "Student Attachment – Enforcement")).toBe(false);
+    const cma = { company: "Capital Markets Authority", postedDay: "2026-10-10" };
+    expect(
+      keys(job({ title: "Student Attachment – Licensing", company: "Capital Markets Authority" }), {
+        earlierPosters: [{ ...cma, title: "Student Attachment – Enforcement" }],
+      }),
+    ).toEqual([]);
+  });
+});

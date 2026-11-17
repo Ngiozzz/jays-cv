@@ -1,5 +1,5 @@
 import type { ReadingField, ScamRisk } from "@/modules/ai/poster-reading";
-import { OUTSIDE_KENYA } from "@/modules/jobs/counties";
+import { NO_LOCATION, OUTSIDE_KENYA } from "@/modules/jobs/counties";
 import { daysUntil, formatDay } from "@/modules/jobs/jobs.rules";
 import type { ApplyMethod, JobInput } from "@/modules/jobs/jobs.schema";
 
@@ -88,8 +88,21 @@ export function similar(a: string, b: string): boolean {
   return shared / Math.min(left.size, right.size) >= 0.6;
 }
 
+// Titles count as the same job when most of the words of the LONGER one are shared: "Accounts Assistant"
+// = "Accounts Assistant (2)", but "Student Attachment – Licensing" ≠ "Student Attachment – Enforcement"
+export function similarTitle(a: string, b: string): boolean {
+  const left = wordsOf(a);
+  const right = wordsOf(b);
+  if (!left.size || !right.size) return false;
+  let shared = 0;
+  left.forEach((word) => {
+    if (right.has(word)) shared++;
+  });
+  return shared / Math.max(left.size, right.size) >= 0.75;
+}
+
 const sameJob = (a: { title: string; company: string }, b: { title: string; company: string }) =>
-  similar(a.company, b.company) && similar(a.title, b.title);
+  similar(a.company, b.company) && similarTitle(a.title, b.title);
 
 // ---------- scams: two or more warning signs together ----------
 
@@ -139,6 +152,33 @@ export function scamFlag(rawText: string, salary: string, ai: AiScamOpinion | nu
 }
 
 // ---------- missing details ----------
+
+// The fields that decide whether the advert is right: who, what, until when and how to apply
+const IMPORTANT_FIELDS: ReadingField[] = ["title", "company", "deadline", "apply"];
+const isImportant = (field: string) => (IMPORTANT_FIELDS as string[]).includes(field);
+
+// Whether the AI filled the field in: one that isn't in the advert at all isn't "unsure", just empty
+// (a missing deadline becomes "Open until filled"; missing essentials show under "Missing details")
+function filledIn(job: JobInput, field: string): boolean {
+  switch (field) {
+    case "title":
+      return Boolean(job.title.trim());
+    case "company":
+      return Boolean(job.company.trim());
+    case "deadline":
+      return Boolean(job.deadline);
+    case "apply":
+      return Boolean(job.apply[APPLY_TARGET[job.apply.method]].trim());
+    case "summary":
+      return Boolean(job.summary.trim());
+    case "requirements":
+      return job.requirements.length > 0;
+    case "location":
+      return job.counties.length > 0 && job.counties[0] !== NO_LOCATION;
+    default:
+      return true;
+  }
+}
 
 export function missingDetails(job: JobInput): string[] {
   const missing: string[] = [];
@@ -205,14 +245,26 @@ export function flagsFor(job: JobInput, context: FlagContext): Flag[] {
   const deadline = deadlineFlag(job, context.today);
   if (deadline) flags.push(deadline);
 
+  // Only the fields that decide whether the advert is right (and that the AI did fill in) need a person
+  // before publishing; doubts about the rest (work setting, job type, category…) are a note
   const unsure = context.unsure.filter((field) => !context.checked.includes(field));
-  if (unsure.length) {
-    const labels = unsure.map((field) => FIELD_LABEL[field as ReadingField] ?? field);
+  const important = unsure.filter((field) => isImportant(field) && filledIn(job, field));
+  const minor = unsure.filter((field) => !important.includes(field) && filledIn(job, field));
+  const label = (fields: string[]) => fields.map((field) => FIELD_LABEL[field as ReadingField] ?? field).join(", ");
+  if (important.length) {
     flags.push({
       key: "unsure",
       level: "warning",
-      text: `Check ${unsure.length} field${unsure.length > 1 ? "s" : ""}`,
-      more: `The AI wasn't sure about: ${labels.join(", ")}. Compare with the poster.`,
+      text: `Check ${important.length} field${important.length > 1 ? "s" : ""}`,
+      more: `The AI wasn't sure about: ${label(important)}. Compare with the advert.`,
+    });
+  }
+  if (minor.length) {
+    flags.push({
+      key: "unsure",
+      level: "info",
+      text: "AI unsure of some details",
+      more: `Worth a glance: ${label(minor)}. This doesn't stop it being published.`,
     });
   }
 

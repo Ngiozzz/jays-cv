@@ -9,6 +9,7 @@ import {
   addPosters,
   addReadJobs,
   approveInboxItem,
+  decideMany,
   confirmInboxField,
   discardInboxItem,
   readInboxItem,
@@ -114,4 +115,17 @@ export async function restoreInboxItemAction(id: string) {
 export async function confirmInboxFieldAction(id: string, field: string) {
   const member = await requirePermission("postJobs");
   return confirmInboxField(member, id, field);
+}
+
+// Publish or discard several jobs at once (Jobs found list, or one from its full view)
+export async function decideManyAction(ids: string[], decision: string) {
+  const member = await requirePermission("postJobs");
+  const choice =
+    decision === "publish" || DISCARD_REASONS.includes(decision as DiscardReason)
+      ? (decision as "publish" | DiscardReason)
+      : null;
+  if (!choice || !Array.isArray(ids)) return { done: [], failed: [{ id: "", title: "", error: "Nothing to do." }] };
+  const result = await decideMany(member, ids.map(String), choice);
+  if (choice === "publish" && result.done.length) updateTag(jobsTag(member.tenant.id));
+  return result;
 }

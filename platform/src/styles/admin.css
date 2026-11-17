@@ -7300,3 +7300,233 @@ kbd {
   border: 1px solid #a7f3d0;
   background: #ecfdf5;
 }
+
+/* Jobs found: review table */
+.found-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.found-filters label {
+  display: grid;
+  gap: 2px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.found-filters select,
+.found-bulk select,
+.found-discard select {
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--black);
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+}
+.found-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-alt);
+}
+.found-bulk.is-active {
+  position: sticky;
+  top: var(--admin-top-h, 0px);
+  z-index: 5;
+  background: var(--primary-soft);
+}
+.found-check-all {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.found-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.found-col-pick {
+  width: 36px;
+}
+.found-table tr.is-picked td {
+  background: var(--primary-soft);
+}
+.found-title {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  color: var(--black);
+  cursor: pointer;
+}
+.found-title:hover {
+  color: var(--gold-text);
+  text-decoration: underline;
+}
+.found-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.found-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: #7a4b00;
+  background: #fff7e6;
+}
+.found-chip.ok {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.found-chip.critical {
+  color: #9b1c1c;
+  background: #fdecec;
+  border-color: #f3b4b4;
+}
+.found-links .link-btn {
+  display: block;
+  font-size: 0.82rem;
+}
+/* Jobs found: one job in full */
+.found-panel {
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.found-panel[open] {
+  display: flex;
+}
+.found-panel-head {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 22px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.found-panel-head h2 {
+  margin: 2px 0 0;
+  font-size: 1.3rem;
+}
+.found-panel-from,
+.found-panel-company {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+.found-panel-from a {
+  color: var(--gold-text);
+  font-weight: 700;
+}
+.found-panel-nav {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.found-panel-body {
+  overflow: auto;
+  padding: 16px 22px;
+  display: grid;
+  gap: 14px;
+}
+.found-panel-body h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+.found-panel-body ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+.found-panel-body section p {
+  margin: 0;
+}
+.found-panel-flags {
+  display: grid;
+  gap: 6px;
+}
+.found-flag {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 0.86rem;
+  border: 1px solid #f5d28a;
+  background: #fff7e6;
+  color: #5c3a00;
+}
+.found-flag.critical {
+  border-color: #f3b4b4;
+  background: #fdecec;
+  color: #7f1d1d;
+}
+.found-flag.info {
+  border-color: var(--line);
+  background: var(--bg-alt);
+  color: var(--muted);
+}
+.found-flag.ok {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+.found-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.found-facts dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.found-facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+.found-tags {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.found-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 12px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--white);
+}
+.found-discard {
+  display: flex;
+  gap: 6px;
+  margin-right: auto;
+}

@@ -407,6 +407,36 @@ export async function discardInboxItem(
   return { ok: true };
 }
 
+// Several jobs at once (the Jobs found list): each published exactly as read, or discarded with one
+// reason. The same checks as one at a time; a job that can't be published says why and stays.
+export const MAX_DECIDE_AT_ONCE = 100;
+export type ManyDecision = "publish" | DiscardReason;
+
+export async function decideMany(
+  member: CurrentMember,
+  ids: string[],
+  decision: ManyDecision,
+): Promise<{ done: string[]; failed: { id: string; title: string; error: string }[] }> {
+  assertCan(member, "postJobs");
+  const done: string[] = [];
+  const failed: { id: string; title: string; error: string }[] = [];
+  for (const id of [...new Set(ids)].slice(0, MAX_DECIDE_AT_ONCE)) {
+    const item = await repo.findInboxItem(member.tenant.id, id);
+    const title = (item?.reading as { title?: string } | null)?.title || item?.posterName || "A job";
+    if (!item || item.state !== "CHECK") {
+      failed.push({ id, title, error: "It has already been dealt with." });
+      continue;
+    }
+    const result =
+      decision === "publish"
+        ? await approveInboxItem(member, id, item.reading)
+        : await discardInboxItem(member, id, decision, null);
+    if (result.ok) done.push(id);
+    else failed.push({ id, title, error: result.error });
+  }
+  return { done, failed };
+}
+
 // Brings a discarded poster back for checking (within the week it's kept)
 export async function restoreInboxItem(member: CurrentMember, id: string): Promise<Result> {
   assertCan(member, "postJobs");
