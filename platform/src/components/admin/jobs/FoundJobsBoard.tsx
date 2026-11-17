@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { readInboxItemAction } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
+import { checkFindsAction } from "@/app/(admin)/admin/(signed-in)/job-sources/actions";
 import { ProgressBar } from "@/components/ai/AiProgress";
 import { AskForTokens } from "@/components/admin/AskForTokens";
 import { Icon } from "@/components/icons/Icon";
@@ -32,12 +33,13 @@ type Filter = "all" | FoundStatus;
 type ReadRun = { done: number; total: number; failed: number };
 
 // Every job the sources found lately, what it is, and where it got to
-export function FoundJobsBoard({ jobs, siteUrl }: { jobs: FoundJob[]; siteUrl: string }) {
+export function FoundJobsBoard({ jobs, unchecked, siteUrl }: { jobs: FoundJob[]; unchecked: number; siteUrl: string }) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [source, setSource] = useState("");
   const [run, setRun] = useState<ReadRun | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [check, setCheck] = useState<{ done: number; total: number } | null>(null);
 
   const counts = useMemo(() => {
     const result: Record<Filter, number> = { all: jobs.length, waiting: 0, check: 0, published: 0, discarded: 0 };
@@ -82,6 +84,35 @@ export function FoundJobsBoard({ jobs, siteUrl }: { jobs: FoundJob[]; siteUrl: s
     router.refresh();
   };
 
+  // AI check: batch after batch until every found job waiting to be checked has had a second look
+  const aiCheck = async () => {
+    setMessage(null);
+    const state = { done: 0, total: unchecked, setAside: 0 };
+    setCheck({ done: 0, total: unchecked });
+    let error: string | null = null;
+    for (let round = 0; round < 50; round++) {
+      const result = await checkFindsAction().catch(() => ({ ok: false as const, error: "The check didn't finish." }));
+      if (!result.ok) {
+        error = result.error;
+        break;
+      }
+      state.done += result.checked;
+      state.setAside += result.setAside;
+      setCheck({ done: Math.min(state.done, state.total), total: state.total });
+      if (!result.left || !result.checked) break;
+    }
+    setCheck(null);
+    setMessage(
+      [
+        `AI checked ${state.done} job${state.done === 1 ? "" : "s"}: ${state.setAside} set aside (not a job, closed or staff only), ${state.done - state.setAside} left for you.`,
+        error ? `Stopped: ${error}` : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+    router.refresh();
+  };
+
   return (
     <>
       <div className="board-actions">
@@ -93,6 +124,12 @@ export function FoundJobsBoard({ jobs, siteUrl }: { jobs: FoundJob[]; siteUrl: s
           <Icon name="inbox" size={18} />
           Bulk post jobs
         </Link>
+        {unchecked > 0 && (
+          <button type="button" className="btn btn-primary" onClick={aiCheck} disabled={Boolean(run) || Boolean(check)}>
+            <Icon name="shield" size={18} />
+            {check ? "Checking…" : `AI check (${unchecked})`}
+          </button>
+        )}
         {waiting.length > 0 && (
           <button type="button" className="btn btn-primary" onClick={readAll} disabled={Boolean(run)}>
             <Icon name="sparkle" size={18} />
@@ -113,6 +150,21 @@ export function FoundJobsBoard({ jobs, siteUrl }: { jobs: FoundJob[]; siteUrl: s
           label={`Reading ${Math.min(run.done + 1, run.total)} of ${run.total}…`}
           ariaLabel="Jobs read"
         />
+      )}
+      {check && (
+        <ProgressBar
+          className="ai-progress found-progress"
+          percent={Math.round((check.done / Math.max(1, check.total)) * 100)}
+          label={`AI checking ${check.done} of ${check.total}…`}
+          ariaLabel="Jobs checked by the AI"
+        />
+      )}
+      {unchecked > 0 && !check && (
+        <p className="hint-sm">
+          AI check takes a second look at the {unchecked} found job{unchecked === 1 ? "" : "s"} waiting for you and sets
+          aside the ones that aren&apos;t real, open jobs (lists of links, old or staff-only adverts), with the reason.
+          About KES 0.05 a job. You can restore any of them in Bulk post.
+        </p>
       )}
       {message && <p className="notice">{message}</p>}
       <AskForTokens message={message} />
@@ -169,6 +221,11 @@ export function FoundJobsBoard({ jobs, siteUrl }: { jobs: FoundJob[]; siteUrl: s
                       <span className={`found-status ${job.status}`}>{STATUS_LABEL[job.status]}</span>
                       {job.status === "discarded" && job.discardReason && (
                         <small className="found-sub">{DISCARD_LABEL[job.discardReason] ?? job.discardReason}</small>
+                      )}
+                      {job.aiCheck && job.aiCheckReason && (
+                        <small className={job.aiCheck === "job" ? "found-sub found-ai ok" : "found-sub found-ai"}>
+                          AI: {job.aiCheckReason}
+                        </small>
                       )}
                       {job.duplicateOfSlug && (
                         <a

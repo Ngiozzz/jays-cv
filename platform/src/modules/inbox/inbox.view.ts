@@ -23,6 +23,9 @@ export type InboxCard = {
   pageUrl: string | null;
   // Our copy of a PDF advert, shown beside the details
   pdfUrl: string | null;
+  // The AI check's verdict on a found job, and why
+  aiCheck: string | null;
+  aiCheckReason: string | null;
   posterName: string;
   source: string;
   rawText: string;
@@ -76,6 +79,8 @@ export async function loadInbox(member: CurrentMember) {
       posterUrl: row.posterPath ? fileStore.publicUrl("job-posters", row.posterPath) : null,
       pageUrl: row.pageUrl,
       pdfUrl: row.advertPdfPath ? fileStore.publicUrl("job-adverts", row.advertPdfPath) : null,
+      aiCheck: row.aiCheck,
+      aiCheckReason: row.aiCheckReason,
       posterName: row.posterName,
       source: row.source,
       rawText: row.rawText,

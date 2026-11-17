@@ -6,6 +6,7 @@ import { readClaimedItem } from "@/modules/inbox/inbox.service";
 import { todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { listTenantIds } from "@/modules/tenants/tenants.repo";
 import type { RobotsCache } from "./fetch";
+import { checkNextFinds } from "./find-check.service";
 import { checkSource } from "./job-sources.service";
 import * as repo from "./job-sources.repo";
 
@@ -22,6 +23,9 @@ export type MorningResult = {
   checked: number;
   added: number;
   read: number;
+  // Jobs the AI check looked at, and how many it set aside
+  aiChecked: number;
+  setAside: number;
   // Why it stopped early, if it did ("time", "tokens")
   stopped: string | null;
 };
@@ -36,7 +40,15 @@ export async function morningRun(deadline: number, now = new Date()): Promise<Mo
   const timeLeft = () => Date.now() < deadline;
   for (const tenant of await listTenantIds()) {
     if (!(await repo.morningRunOn(tenant.id))) continue;
-    const result: MorningResult = { tenant: tenant.slug, checked: 0, added: 0, read: 0, stopped: null };
+    const result: MorningResult = {
+      tenant: tenant.slug,
+      checked: 0,
+      added: 0,
+      read: 0,
+      aiChecked: 0,
+      setAside: 0,
+      stopped: null,
+    };
     results.push(result);
 
     // 1. Check the sources: three different sites at a time (each site is still read one page at a time)
@@ -76,6 +88,18 @@ export async function morningRun(deadline: number, now = new Date()): Promise<Mo
       }
     };
     await Promise.all(Array.from({ length: AT_ONCE }, reader));
+
+    // 3. The AI's second look: lists of links, old and staff-only adverts are set aside
+    while (timeLeft() && !result.stopped) {
+      const outcome = await checkNextFinds(tenant.id, null);
+      if (!outcome.ok) {
+        if (/tokens|paused/i.test(outcome.error)) result.stopped = "tokens";
+        break;
+      }
+      result.aiChecked += outcome.checked;
+      result.setAside += outcome.setAside;
+      if (!outcome.left || !outcome.checked) break;
+    }
     if (!result.stopped && !timeLeft()) result.stopped = "time";
   }
   return results;

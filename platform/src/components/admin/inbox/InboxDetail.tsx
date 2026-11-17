@@ -89,6 +89,9 @@ export function InboxDetail(props: Props) {
     <figure className={card.state === "reading" ? "d-page scanning" : "d-page"}>
       <p className="d-page-from">From: {card.source}</p>
       <p className="d-page-name">{card.posterName}</p>
+      {card.aiCheck && card.aiCheckReason && (
+        <p className={card.aiCheck === "job" ? "d-ai-check ok" : "d-ai-check"}>AI check: {card.aiCheckReason}</p>
+      )}
       {card.pdfUrl && (
         <>
           <iframe className="d-pdf" src={`${card.pdfUrl}#view=FitH`} title="The PDF advert" loading="lazy" />

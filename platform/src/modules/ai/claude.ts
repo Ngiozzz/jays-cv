@@ -31,6 +31,14 @@ import {
 } from "./page-reading";
 import type { FoundLink } from "@/modules/job-sources/discover";
 import {
+  findCheckPrompt,
+  findCheckSchema,
+  parseFindCheck,
+  pretendFindCheck,
+  type FindCheck,
+  type FindToCheck,
+} from "./find-check";
+import {
   analysisPrompt,
   cvAnalysisSchema,
   finalCheckPrompt,
@@ -153,6 +161,28 @@ export async function pickJobLinks(
   });
   return {
     data: pickedLinks(answerJson(response, "link check"), links),
+    usage: {
+      model: response.model,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
+}
+
+// Job sources: a second look at jobs already read (real and open, or a list page, an old or an
+// internal advert?), a batch at a time from the details already read
+export async function checkFinds(items: FindToCheck[], today: string): Promise<AiResult<FindCheck[]>> {
+  if (!client) return { data: pretendFindCheck(items.length), usage: null };
+  const response = await ask(client, {
+    model: env.ANTHROPIC_POSTER_MODEL,
+    max_tokens: 6000,
+    output_config: { effort: "low", format: betaZodOutputFormat(findCheckSchema) },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [{ role: "user", content: findCheckPrompt(today, items) }],
+  });
+  return {
+    data: parseFindCheck(answerJson(response, "job check"), items.length),
     usage: {
       model: response.model,
       inputTokens: response.usage.input_tokens,

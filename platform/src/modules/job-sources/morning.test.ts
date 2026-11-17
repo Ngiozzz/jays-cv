@@ -6,6 +6,7 @@ vi.mock("@/modules/inbox/inbox.repo", () => ({}));
 vi.mock("@/modules/inbox/inbox.service", () => ({}));
 vi.mock("@/modules/tenants/tenants.repo", () => ({}));
 vi.mock("./job-sources.service", () => ({}));
+vi.mock("./find-check.service", () => ({}));
 vi.mock("./job-sources.repo", () => ({}));
 
 describe("the morning run's day", () => {

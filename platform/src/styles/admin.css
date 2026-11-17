@@ -7273,3 +7273,18 @@ kbd {
   gap: 6px;
   margin: 0;
 }
+
+/* AI check verdicts on found jobs */
+.found-ai {
+  color: #7a4b00;
+}
+.found-ai.ok,
+.d-ai-check.ok {
+  color: #065f46;
+}
+.d-ai-check {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #7a4b00;
+}

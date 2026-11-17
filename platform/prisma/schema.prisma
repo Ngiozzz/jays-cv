@@ -931,6 +931,10 @@ model InboxItem {
   // A copy of the advert when it is a PDF ("job-adverts" bucket); on approval it goes with the published job
   advertPdfPath   String?
   advertPdfBytes  Int         @default(0)
+  // The AI's second look at a job found by a source: "job" | "not-a-job" | "closed" | "internal" | "unsure", and why
+  aiCheck         String?
+  aiCheckReason   String?
+  aiCheckedAt     DateTime?
   jobSourceId     String?
   // Set aside as a sure duplicate of this live job (its slug), found after reading
   duplicateOfSlug String?

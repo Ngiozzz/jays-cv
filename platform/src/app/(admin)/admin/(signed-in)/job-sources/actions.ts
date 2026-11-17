@@ -11,6 +11,7 @@ import {
   saveBannedSites,
   setJobSourceEnabled,
 } from "@/modules/job-sources/job-sources.admin";
+import { checkNextFinds } from "@/modules/job-sources/find-check.service";
 import { requirePermission } from "@/modules/team/current-member";
 
 // Thin wrappers: who is asking, then the job sources service. The screen refreshes itself afterwards.
@@ -58,4 +59,10 @@ export async function hideSuggestionAction(site: string) {
 export async function setMorningRunAction(on: boolean) {
   const member = await requirePermission("manageJobSources");
   return setMorningRun(member, on === true);
+}
+
+// AI check: the next batch of found jobs (the screen calls it again until none are left)
+export async function checkFindsAction() {
+  const member = await requirePermission("manageJobSources");
+  return checkNextFinds(member.tenant.id, member.id);
 }

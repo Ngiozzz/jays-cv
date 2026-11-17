@@ -25,6 +25,9 @@ export type FoundJob = {
   jobSlug: string | null;
   // Set aside because this live job is the same one
   duplicateOfSlug: string | null;
+  // What the AI check thought ("job", "not-a-job", "closed", "internal", "unsure") and why
+  aiCheck: string | null;
+  aiCheckReason: string | null;
   foundAt: string;
 };
 
@@ -50,6 +53,8 @@ export async function loadFoundJobs(member: CurrentMember): Promise<FoundJob[]> 
       discardReason: true,
       pageUrl: true,
       duplicateOfSlug: true,
+      aiCheck: true,
+      aiCheckReason: true,
       createdAt: true,
       job: { select: { slug: true } },
     },
@@ -79,6 +84,8 @@ export async function loadFoundJobs(member: CurrentMember): Promise<FoundJob[]> 
       pageUrl: row.pageUrl,
       jobSlug: row.job?.slug ?? null,
       duplicateOfSlug: row.duplicateOfSlug,
+      aiCheck: row.aiCheck,
+      aiCheckReason: row.aiCheckReason,
       foundAt: row.createdAt.toISOString(),
     };
   });
