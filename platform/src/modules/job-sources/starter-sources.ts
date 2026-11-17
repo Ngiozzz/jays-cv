@@ -39,7 +39,6 @@ export const STARTER_SOURCES: StarterSource[] = [
     group: "Government",
   },
   { id: "cma", name: "Capital Markets Authority careers", url: "https://www.cma.or.ke/careers/", group: "Government" },
-  { id: "ira", name: "Insurance Regulatory Authority careers", url: "https://ira.go.ke/careers/", group: "Government" },
   { id: "epra", name: "EPRA vacancies", url: "https://epra.go.ke/vacancies", group: "Government" },
   { id: "kippra", name: "KIPPRA careers", url: "https://kippra.or.ke/careers/", group: "Government" },
   { id: "jsc", name: "Judicial Service Commission jobs", url: "https://jsc.go.ke/jobs-2/", group: "Government" },
