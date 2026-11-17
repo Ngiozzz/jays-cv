@@ -40,6 +40,8 @@ export function FoundJobsBoard({ jobs, unchecked, siteUrl }: { jobs: FoundJob[];
   const [run, setRun] = useState<ReadRun | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [check, setCheck] = useState<{ done: number; total: number } | null>(null);
+  // After the AI check: how many real jobs are left for a person, with the way to Bulk post
+  const [checkedDone, setCheckedDone] = useState(false);
 
   const counts = useMemo(() => {
     const result: Record<Filter, number> = { all: jobs.length, waiting: 0, check: 0, published: 0, discarded: 0 };
@@ -102,6 +104,7 @@ export function FoundJobsBoard({ jobs, unchecked, siteUrl }: { jobs: FoundJob[];
       if (!result.left || !result.checked) break;
     }
     setCheck(null);
+    setCheckedDone(true);
     setMessage(
       [
         `AI checked ${state.done} job${state.done === 1 ? "" : "s"}: ${state.setAside} set aside (not a job, closed or staff only), ${state.done - state.setAside} left for you.`,
@@ -167,6 +170,16 @@ export function FoundJobsBoard({ jobs, unchecked, siteUrl }: { jobs: FoundJob[];
         </p>
       )}
       {message && <p className="notice">{message}</p>}
+      {checkedDone && !check && counts.check > 0 && (
+        <div className="found-next">
+          <span>
+            <strong>{counts.check}</strong> job{counts.check === 1 ? "" : "s"} ready for you to check and publish.
+          </span>
+          <Link className="btn btn-primary" href="/admin/inbox">
+            Next: check them in Bulk post →
+          </Link>
+        </div>
+      )}
       <AskForTokens message={message} />
 
       <section className="panel">
