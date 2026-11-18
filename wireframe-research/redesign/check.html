@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check your CV for this job · Jay CVS</title>
+<meta name="description" content="Upload your CV and see how well it fits a job advert, with a match score and what to change first.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<!-- Jay CVS: unslop redesign mockup. Built from _src/ by _src/build.py, edit the source there.
+     Redesign method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0. -->
+<style>
+  .check { padding: 40px 0 96px; }
+  .check-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; align-items: start; margin-top: 24px; }
+  .check h1 { font-size: 40px; line-height: 46px; }
+  .for-job { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--text-2); }
+  .for-job a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Step rail */
+  .steps-rail { display: flex; gap: 8px; margin: 32px 0 24px; }
+  .steps-rail li { flex: 1; }
+  .steps-rail i { display: block; height: 4px; border-radius: 2px; background: var(--line-strong); transition: background-color 300ms var(--ease); }
+  .steps-rail li.done i { background: var(--text-2); }
+  .steps-rail li.now i { background: var(--gold); }
+  .steps-rail span { display: block; margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .steps-rail li.now span { color: var(--text); font-weight: 500; }
+
+  .panel { padding: 32px; }
+  .panel[hidden] { display: none; }
+  .panel h2 { font: 500 24px/32px var(--serif); letter-spacing: -0.01em; }
+  .panel > p { margin-top: 6px; color: var(--text-2); }
+
+  .drop { display: grid; place-items: center; gap: 8px; margin-top: 24px; padding: 40px 24px; border-radius: 14px; border: 1.5px dashed var(--line-strong); background: var(--alt); text-align: center; cursor: pointer; transition: border-color 140ms var(--ease), background-color 140ms var(--ease); }
+  .drop:hover, .drop.over { border-color: var(--gold); background: #f7f3ea; }
+  .drop svg { width: 28px; height: 28px; color: var(--muted); }
+  .drop b { font-weight: 500; }
+  .drop small { font-size: 13px; color: var(--muted); }
+  .file-row { display: none; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; margin-top: 24px; padding: 12px 16px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .file-row.on { display: grid; }
+  .file-row .ic { width: 36px; height: 44px; border-radius: 4px; background: #fff; box-shadow: inset 0 0 0 1px var(--line-strong); display: grid; place-items: center; font: 600 9px/1 var(--sans); color: var(--pen); }
+  .file-row b { font-weight: 500; display: block; }
+  .file-row small { font-size: 13px; color: var(--muted); }
+  .file-row button { font-size: 14px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+  .panel .go { margin-top: 24px; }
+
+  .pay-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 24px; }
+  .pay-row .field .pre { font-size: 15px; color: var(--text-2); padding-right: 8px; border-right: 1px solid var(--line-strong); }
+  .mpesa { display: flex; align-items: center; gap: 12px; margin-top: 16px; font-size: 14px; color: var(--text-2); }
+  .mpesa .tag { font: 600 12px/1 var(--sans); color: #fff; background: #3fa45b; padding: 5px 7px; border-radius: 5px; }
+  .phone-wait { display: none; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; align-items: center; margin-top: 24px; padding: 16px; border-radius: 14px; background: var(--alt); }
+  .phone-wait.on { display: grid; }
+  .phone-wait .ph { width: 40px; height: 64px; margin: 0 auto; border-radius: 8px; border: 2px solid var(--text-2); position: relative; }
+  .phone-wait .ph::after { content: ""; position: absolute; left: 6px; right: 6px; top: 14px; height: 18px; border-radius: 3px; background: #3fa45b; }
+  .phone-wait b { font-weight: 500; display: block; }
+  .phone-wait span { font-size: 14px; color: var(--text-2); }
+
+  .reading { display: grid; gap: 4px; margin-top: 24px; }
+  .reading li { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 16px; border-radius: 10px; color: var(--muted); transition: color 200ms var(--ease), background-color 200ms var(--ease); }
+  .reading li .dot { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line-strong); display: grid; place-items: center; flex: none; }
+  .reading li.now { color: var(--text); background: var(--alt); }
+  .reading li.now .dot { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .reading li.now .dot::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .reading li.done { color: var(--text-2); }
+  .reading li.done .dot { background: var(--text-2); box-shadow: none; }
+  .reading li.done .dot::after { content: ""; width: 7px; height: 4px; border-left: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: translateY(-1px) rotate(-45deg); }
+
+  /* The moment: the result, read like a marked-up draft */
+  .result[hidden] { display: none; }
+  .score { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 32px; align-items: center; padding: 32px; }
+  .ring { position: relative; width: 148px; height: 148px; }
+  .ring svg { width: 148px; height: 148px; transform: rotate(-90deg); }
+  .ring .arc { transition: stroke-dashoffset 1200ms var(--ease); }
+  .ring b { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font: 500 44px/1 var(--serif); font-variant-numeric: tabular-nums; }
+  .ring b small { display: block; margin-top: 6px; font: 400 13px/1 var(--sans); color: var(--muted); }
+  .score .band { font-size: 14px; font-weight: 500; color: var(--gold-ink); }
+  .score .verdict { margin-top: 6px; font: 500 24px/32px var(--serif); letter-spacing: -0.01em; }
+  .score .meta { margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .two .card { padding: 24px; }
+  .two h3, .tips h3, .kw h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; margin-bottom: 12px; }
+  .fits li, .gaps li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; padding: 8px 0; font-size: 15px; line-height: 23px; color: var(--text-2); }
+  .fits li + li, .gaps li + li { border-top: 1px solid var(--line); }
+  .fits svg { margin-top: 3px; color: var(--good); }
+  .gaps .mk { margin-top: 2px; font: italic 400 15px/1 'Segoe Script', 'Bradley Hand', cursive; color: var(--pen); }
+  .kw { margin-top: 16px; padding: 24px; }
+  .kw .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .kw .chips span { height: 30px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 8px; border: 1px dashed rgba(180, 35, 24, 0.45); color: var(--text); font-size: 14px; }
+  .kw p { margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .tips { margin-top: 16px; padding: 24px; }
+  .tips ol { counter-reset: t; display: grid; gap: 12px; }
+  .tips li { counter-increment: t; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; font-size: 15px; line-height: 24px; color: var(--text-2); }
+  .tips li::before { content: counter(t); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); color: var(--text); font: 500 12px/1 var(--mono); }
+  .upsell { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; margin-top: 16px; padding: 24px 28px; border-radius: 16px; background: var(--ink); color: var(--on-ink); }
+  .upsell b { font: 500 20px/28px var(--serif); }
+  .upsell p { margin-top: 4px; font-size: 15px; color: var(--ink-2); }
+  .result .note { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+  /* Aside */
+  .side { position: sticky; top: 88px; display: grid; gap: 16px; }
+  .side .card { padding: 20px; font-size: 14px; line-height: 22px; }
+  .side h3 { font-size: 15px; margin-bottom: 8px; }
+  .side ul.gets { display: grid; gap: 8px; }
+  .side ul.gets li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; color: var(--text-2); }
+  .side ul.gets svg { margin-top: 3px; color: var(--muted); }
+  .side .price { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--line); }
+  .side .price b { font: 500 22px/28px var(--serif); font-variant-numeric: tabular-nums; }
+  .side p { color: var(--text-2); }
+  .side .alt a { font-weight: 500; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+  .demo { font-size: 13px; color: var(--muted); }
+  .demo button { text-decoration: underline; text-underline-offset: 3px; color: var(--text-2); }
+
+  @media (max-width: 1040px) {
+    .check-grid { grid-template-columns: minmax(0, 1fr); }
+    .side { position: static; grid-row: 1; }
+    .side .card.how { display: none; }
+  }
+  @media (max-width: 640px) {
+    .check h1 { font-size: 30px; line-height: 36px; }
+    .panel { padding: 20px 16px; }
+    .steps-rail span { font-size: 12px; }
+    .pay-row { grid-template-columns: 1fr; }
+    .score { grid-template-columns: 1fr; justify-items: start; padding: 24px 16px; gap: 20px; }
+    .two { grid-template-columns: 1fr; }
+    .upsell { grid-template-columns: 1fr; padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M3 13h18"/></symbol>
+    <symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16M20 20v-4h-4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></symbol>
+    <symbol id="i-facebook" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4A4 4 0 1 1 12.6 8 4 4 0 0 1 16 11.4zM17.5 6.5h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="jobs.html" aria-current="page">Find a job</a>
+      <a href="services.html">Services</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="samples.html">Samples</a>
+      <a href="blog.html">Career tips</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="head-actions">
+      <a class="quiet" href="track.html">Track an order</a>
+      <a class="btn btn-primary btn-sm" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20help%20with%20my%20CV" target="_blank" rel="noopener">WhatsApp us</a>
+      <button class="menu-btn" aria-label="Open menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<section class="check">
+  <div class="wrap">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><a href="jobs.html">Find a job</a><span>/</span><a href="#" data-job-link data-job-title>Job</a><span>/</span><span>Check my CV</span></nav>
+    <div class="check-grid">
+      <div>
+        <h1 data-head>How well does your CV fit this job?</h1>
+        <p class="for-job"><svg class="i s16"><use href="#i-briefcase"/></svg><a href="#" data-job-link data-job-label>Job</a></p>
+
+        <ol class="steps-rail" aria-label="Steps">
+          <li class="now"><i></i><span>Upload</span></li>
+          <li><i></i><span>Pay</span></li>
+          <li><i></i><span>Reading</span></li>
+          <li><i></i><span>Feedback</span></li>
+        </ol>
+
+        <!-- 1. Upload -->
+        <section class="card panel" data-step="0">
+          <h2>Upload your CV</h2>
+          <p>The CV you'd send for this job, as it is today.</p>
+          <label class="drop" data-drop>
+            <svg class="i"><use href="#i-upload"/></svg>
+            <b>Choose your CV or drop it here</b>
+            <small>A PDF, a Word file or a clear photo of it · up to 10 MB</small>
+            <input type="file" accept=".pdf,.doc,.docx,image/*" class="sr-only" data-file>
+          </label>
+          <div class="file-row" data-file-row>
+            <span class="ic">PDF</span>
+            <div><b data-file-name>Wanjiru_Kamau_CV.pdf</b><small>214 KB · ready</small></div>
+            <button type="button" data-remove>Change</button>
+          </div>
+          <button class="btn btn-primary go" type="button" data-next disabled>Continue to payment</button>
+        </section>
+
+        <!-- 2. Pay -->
+        <section class="card panel" data-step="1" hidden>
+          <h2>Pay <span data-price>KES 10</span> by M-Pesa</h2>
+          <p>We'll send a prompt to your phone. Enter your M-Pesa PIN and your feedback starts straight away.</p>
+          <div class="pay-row">
+            <label class="field"><span class="pre">+254</span><span class="sr-only">M-Pesa number</span><input type="tel" inputmode="numeric" value="712 345 678" data-phone></label>
+            <button class="btn btn-primary" type="button" data-pay>Send the prompt</button>
+          </div>
+          <p class="mpesa"><span class="tag">M-PESA</span>Pay Bill 4027127 · Jay CVS</p>
+          <div class="phone-wait" data-wait>
+            <span class="ph" aria-hidden="true"></span>
+            <div><b>Check your phone</b><span>Enter your PIN on the prompt from Jay CVS. This page moves on by itself once it's paid.</span></div>
+          </div>
+        </section>
+
+        <!-- 3. Reading -->
+        <section class="card panel" data-step="2" hidden>
+          <h2>Reading your CV</h2>
+          <p>Usually under a minute. You can leave this page; we'll send the link to your phone too.</p>
+          <ol class="reading" data-reading>
+            <li><span class="dot"></span>Opening your CV</li>
+            <li><span class="dot"></span>Reading your CV</li>
+            <li><span class="dot"></span>Comparing it with the job</li>
+            <li><span class="dot"></span>Writing your feedback</li>
+          </ol>
+        </section>
+
+        <!-- 4. Feedback -->
+        <div class="result" data-step="3" hidden>
+          <section class="card score">
+            <div class="ring" aria-label="Match score 64 out of 100">
+              <svg viewBox="0 0 148 148" aria-hidden="true">
+                <circle cx="74" cy="74" r="64" fill="none" stroke="var(--raised)" stroke-width="10"/>
+                <circle class="arc" cx="74" cy="74" r="64" fill="none" stroke="var(--gold)" stroke-width="10" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="402" data-arc/>
+              </svg>
+              <b><span data-score>0</span><small>out of 100</small></b>
+            </div>
+            <div>
+              <p class="band">A fair fit, with clear gaps</p>
+              <p class="verdict">You have the support and networking experience this job needs, but your CV hides the warehouse and CCTV work it asks for.</p>
+              <p class="meta">Wanjiru_Kamau_CV.pdf · checked 18 Nov, 14:32</p>
+            </div>
+          </section>
+
+          <div class="two">
+            <section class="card">
+              <h3><svg class="i s16"><use href="#i-check"/></svg>What already fits</h3>
+              <ul class="fits">
+                <li><svg class="i s16"><use href="#i-check"/></svg>BSc in Information Technology, as the advert asks</li>
+                <li><svg class="i s16"><use href="#i-check"/></svg>Six years in IT support, above the five required</li>
+                <li><svg class="i s16"><use href="#i-check"/></svg>Hands-on with routers, switches and LAN set-up</li>
+                <li><svg class="i s16"><use href="#i-check"/></svg>Has trained staff on new systems</li>
+              </ul>
+            </section>
+            <section class="card">
+              <h3><svg class="i s16"><use href="#i-pen"/></svg>What the job asks for that your CV doesn't show</h3>
+              <ul class="gaps">
+                <li><span class="mk">?</span>Any warehouse or multi-site work</li>
+                <li><span class="mk">?</span>CCTV or security systems</li>
+                <li><span class="mk">?</span>Supervising an IT team</li>
+                <li><span class="mk">?</span>Working to support SLAs</li>
+              </ul>
+            </section>
+          </div>
+
+          <section class="card kw">
+            <h3>Words recruiters will search for</h3>
+            <div class="chips"><span>CCTV</span><span>WMS</span><span>Multi-site</span><span>UPS</span><span>Firewalls</span><span>Access control</span><span>SLA</span></div>
+            <p>In the advert, missing from your CV. Use them only where they're true for you.</p>
+          </section>
+
+          <section class="card tips">
+            <h3>What to change first</h3>
+            <ol>
+              <li>Add a line under your current job for the branches you support. If any are warehouses or stores, say so: "Support 3 sites, including the Ruiru warehouse."</li>
+              <li>If you've set up or maintained CCTV, give it its own bullet. It's the second thing this advert lists.</li>
+              <li>Put a number on your support work, like tickets per week or the response time you hit.</li>
+              <li>Move your training of staff higher and call it what it was: "Trained 40 staff on the new ERP."</li>
+            </ol>
+          </section>
+
+          <div class="upsell">
+            <div><b>Rather we did it for you?</b><p>A writer tailors your CV to this job using everything above. Your details are filled in for you.</p></div>
+            <a class="btn btn-light" href="#" data-tailor>Let us tailor it · KES 1,000</a>
+          </div>
+          <p class="note">This is feedback only. We don't rewrite your CV unless you ask us to. Your CV is kept for 30 days, then deleted.</p>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <h3>What you get</h3>
+          <ul class="gets">
+            <li><svg class="i s16"><use href="#i-target"/></svg>Your match for this job, out of 100</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>What already fits, and what the job asks for that your CV doesn't show</li>
+            <li><svg class="i s16"><use href="#i-search"/></svg>The keywords recruiters look for, and what to change first</li>
+          </ul>
+          <div class="price"><span class="soft">One check</span><b data-price>KES 10</b></div>
+        </div>
+        <div class="card alt">
+          <h3>Rather we did it for you?</h3>
+          <p>A writer tailors your CV to this advert, with a first draft within 48 hours. <a href="#" data-tailor>Let us tailor it · KES 1,000</a></p>
+        </div>
+        <p class="demo">Mockup: <button type="button" data-skip>skip to the feedback</button></p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script src="js/jobs-data.js"></script>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+  const params = new URLSearchParams(location.search);
+  const job = window.JOBS.find((j) => j.id === (params.get('id') || 'kilimall-it-specialist')) || window.JOBS[0];
+  $$('[data-job-link]').forEach((a) => (a.href = `job.html?id=${job.id}`));
+  $$('[data-job-title]').forEach((a) => (a.textContent = job.title));
+  $$('[data-job-label]').forEach((a) => (a.textContent = `${job.title} at ${job.company}`));
+  $$('[data-tailor]').forEach((a) => (a.href = `order.html?job=${job.id}`));
+
+  const rail = $$('.steps-rail li'), panels = $$('[data-step]');
+  const go = (n) => {
+    panels.forEach((p) => (p.hidden = +p.dataset.step !== n));
+    rail.forEach((li, i) => li.className = i < n ? 'done' : i === n ? 'now' : '');
+    $('[data-head]').textContent = n === 3 ? 'Your CV feedback' : 'How well does your CV fit this job?';
+    if (n === 2) read();
+    if (n === 3) score(64);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 1. Upload
+  const fileRow = $('[data-file-row]'), next = $('[data-next]'), drop = $('[data-drop]');
+  const picked = (name) => { $('[data-file-name]').textContent = name; fileRow.classList.add('on'); drop.style.display = 'none'; next.disabled = false; };
+  $('[data-file]').addEventListener('change', (e) => e.target.files[0] && picked(e.target.files[0].name));
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); e.dataTransfer.files[0] && picked(e.dataTransfer.files[0].name); });
+  $('[data-remove]').addEventListener('click', () => { fileRow.classList.remove('on'); drop.style.display = ''; next.disabled = true; });
+  next.addEventListener('click', () => go(1));
+
+  // 2. Pay (mock: the prompt "succeeds" after a moment)
+  $('[data-pay]').addEventListener('click', (e) => {
+    e.target.disabled = true; e.target.textContent = 'Prompt sent';
+    $('[data-wait]').classList.add('on');
+    setTimeout(() => go(2), 2200);
+  });
+
+  // 3. Reading
+  function read() {
+    const items = $$('[data-reading] li');
+    items.forEach((li) => (li.className = ''));
+    items.forEach((li, i) => setTimeout(() => {
+      items.forEach((x, j) => (x.className = j < i ? 'done' : j === i ? 'now' : ''));
+      if (i === items.length - 1) setTimeout(() => go(3), 1000);
+    }, i * 900));
+  }
+
+  // 4. Score: the ring fills and the number counts up
+  function score(n) {
+    const arc = $('[data-arc]'), out = $('[data-score]');
+    requestAnimationFrame(() => (arc.style.strokeDashoffset = 402 * (1 - n / 100)));
+    const t0 = performance.now();
+    const tick = (t) => { const k = Math.min(1, (t - t0) / 1200); out.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  }
+
+  $('[data-skip]').addEventListener('click', () => go(3));
+  if (params.get('step') === 'feedback') go(3);
+})();
+</script>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+        <p class="about">CV writing and career services, helping Kenyans land the jobs they want since 2018.</p>
+        <div class="socials">
+          <a href="#" aria-label="LinkedIn"><svg class="i s16"><use href="#i-linkedin"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg class="i s16"><use href="#i-facebook"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg class="i s16"><use href="#i-instagram"/></svg></a>
+          <a href="#" aria-label="X"><svg class="i s16"><use href="#i-x"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#cv-writing">CV writing</a></li>
+          <li><a href="services.html#cover-letters">Cover letters</a></li>
+          <li><a href="services.html#linkedin">LinkedIn revamp</a></li>
+          <li><a href="services.html#career-coaching">Career coaching</a></li>
+          <li><a href="services.html#job-applications">Job applications</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Jay</a></li>
+          <li><a href="jobs.html">Find a job</a></li>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="samples.html">Samples</a></li>
+          <li><a href="blog.html">Career tips</a></li>
+          <li><a href="track.html">Track an order</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get in touch</h4>
+        <ul>
+          <li><a class="num" href="tel:+254725912186">+254 725 912 186</a></li>
+          <li><a href="mailto:info@jaycvs.co.ke">info@jaycvs.co.ke</a></li>
+          <li>Nairobi, Kenya</li>
+          <li class="pay">M-Pesa Pay Bill <span class="mono">4027127</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2018–2026 Jay CVS HR Consultancy</p>
+      <p><a href="#">Privacy policy</a></p>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-tab" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS" target="_blank" rel="noopener"><span class="dot" aria-hidden="true"></span>Chat with us</a>
+</body>
+</html>

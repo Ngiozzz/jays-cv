@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Services · Jay CVS</title>
+<meta name="description" content="CV writing, cover letters, LinkedIn revamps, career coaching and job application help from Jay CVS in Nairobi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<!-- Jay CVS: unslop redesign mockup. Built from _src/ by _src/build.py, edit the source there.
+     Redesign method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0. -->
+<style>
+  .jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .jump a { height: 36px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 14px; color: var(--text-2); transition: color 140ms var(--ease), background-color 140ms var(--ease); }
+  .jump a:hover { color: var(--text); background: var(--raised); }
+
+  /* Chooser: the first step of ordering, without a second wizard */
+  .chooser { margin-top: 48px; padding: 28px; border-radius: 20px; background: var(--alt); }
+  .chooser h2 { font-size: 24px; line-height: 32px; }
+  .chooser > p { margin-top: 4px; color: var(--text-2); }
+  .choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+  .choice { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow 140ms var(--ease); }
+  .choice:hover { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .choice b { font-weight: 500; }
+  .choice span { font-size: 14px; line-height: 21px; color: var(--text-2); }
+  .choice small { margin-top: auto; padding-top: 12px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+  .choice small em { font-style: normal; color: var(--gold-ink); font-weight: 500; }
+
+  /* Services */
+  .svc-list { padding-top: 40px; padding-bottom: 32px; }
+  .svc { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 64px; align-items: center; padding: 56px 0; border-top: 1px solid var(--line); scroll-margin-top: 72px; }
+  .svc:first-child { border-top: 0; }
+  .svc.flip > :first-child { order: 2; }
+  .svc .n { font: 500 13px/1 var(--mono); color: var(--muted); }
+  .svc h2 { margin-top: 12px; }
+  .svc .intro { margin-top: 12px; font-size: 17px; line-height: 28px; color: var(--text-2); }
+  .ticks { display: grid; gap: 8px; margin-top: 20px; }
+  .ticks li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; color: var(--text-2); }
+  .ticks svg { margin-top: 4px; color: var(--gold-ink); }
+  .meta { display: flex; flex-wrap: wrap; gap: 0; margin-top: 24px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .meta div { flex: 1 1 120px; padding: 12px 16px; }
+  .meta div + div { border-left: 1px solid var(--line); }
+  .meta span { display: block; font-size: 13px; color: var(--muted); }
+  .meta b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .svc .acts { display: flex; gap: 12px; margin-top: 24px; }
+  .svc figure img { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; border-radius: 20px; }
+  .svc figure figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+  /* The job-tailored service: shown with a job row, because that's where it's ordered from */
+  .tailor-art { padding: 24px; border-radius: 20px; background: var(--desk); }
+  .tailor-art .jobrow { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; align-items: center; padding: 16px; border-radius: 14px; background: var(--card); box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06); }
+  .tailor-art .tile { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--raised); font: 500 13px/1 var(--mono); color: var(--text-2); }
+  .tailor-art .jobrow b { display: block; font-weight: 500; }
+  .tailor-art .jobrow span { font-size: 14px; color: var(--text-2); }
+  .tailor-art .runway { margin-top: 8px; }
+  .tailor-art .arrow { display: grid; place-items: center; height: 32px; color: var(--muted); }
+  .tailor-art .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tailor-art .opt { padding: 16px; border-radius: 14px; background: var(--ink); color: var(--on-ink); font-size: 14px; line-height: 20px; }
+  .tailor-art .opt.light { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06); }
+  .tailor-art .opt b { display: block; font-weight: 500; font-size: 15px; }
+  .tailor-art .opt span { color: var(--ink-2); }
+  .tailor-art .opt.light span { color: var(--text-2); }
+  .tailor-art .opt em { display: block; margin-top: 10px; font-style: normal; font-variant-numeric: tabular-nums; color: var(--gold-light); }
+  .tailor-art .opt.light em { color: var(--gold-ink); }
+
+  /* Packages table */
+  .table { width: 100%; border-collapse: collapse; border-radius: 16px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 15px; }
+  .table th, .table td { padding: 18px 20px; text-align: left; border-top: 1px solid var(--line); }
+  .table thead th { border-top: 0; font-size: 13px; font-weight: 400; color: var(--muted); background: var(--raised); }
+  .table tbody th { font-weight: 500; }
+  .table tbody th small { display: block; font-weight: 400; font-size: 13px; color: var(--gold-ink); }
+  .table td { color: var(--text-2); }
+  .table .p { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .table .main { background: #fdfbf6; }
+  .table-note { margin-top: 16px; color: var(--text-2); }
+  .table-note a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (max-width: 1040px) {
+    .choices { grid-template-columns: 1fr 1fr; }
+    .svc { grid-template-columns: 1fr; gap: 32px; padding: 48px 0; }
+    .svc.flip > :first-child { order: 0; }
+    .svc figure { max-width: 560px; }
+  }
+  @media (max-width: 640px) {
+    .chooser { padding: 20px 16px; margin-top: 32px; }
+    .choices { grid-template-columns: 1fr; }
+    .svc .acts { flex-direction: column; }
+    .meta div + div { border-left: 0; border-top: 1px solid var(--line); }
+    .meta div { flex-basis: 100%; }
+    .tailor-art { padding: 16px; } .tailor-art .pair { grid-template-columns: 1fr; }
+    .table thead { display: none; }
+    .table tr { display: grid; grid-template-columns: 1fr auto; padding: 16px; border-top: 1px solid var(--line); }
+    .table tr:first-child { border-top: 0; }
+    .table th, .table td { padding: 2px 0; border: 0; }
+    .table td.best, .table td.draft, .table td.rev { grid-column: 1 / -1; font-size: 14px; }
+    .table td:last-child { grid-column: 1 / -1; margin-top: 12px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M3 13h18"/></symbol>
+    <symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16M20 20v-4h-4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></symbol>
+    <symbol id="i-facebook" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4A4 4 0 1 1 12.6 8 4 4 0 0 1 16 11.4zM17.5 6.5h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="jobs.html">Find a job</a>
+      <a href="services.html" aria-current="page">Services</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="samples.html">Samples</a>
+      <a href="blog.html">Career tips</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="head-actions">
+      <a class="quiet" href="track.html">Track an order</a>
+      <a class="btn btn-primary btn-sm" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20help%20with%20my%20CV" target="_blank" rel="noopener">WhatsApp us</a>
+      <button class="menu-btn" aria-label="Open menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap rise">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Services</span></nav>
+    <h1>Services for your next move</h1>
+    <p class="lead">A sharper CV, a stronger LinkedIn profile or help preparing for interviews. Written by HR consultants who know what Kenyan and international recruiters look for.</p>
+    <nav class="jump" aria-label="On this page">
+      <a href="#cv-writing">CV writing</a><a href="#tailored">CV for one job</a><a href="#cover-letters">Cover letters</a><a href="#linkedin">LinkedIn</a><a href="#career-coaching">Career coaching</a><a href="#job-applications">Job applications</a><a href="#packages">Packages</a>
+    </nav>
+
+    <div class="chooser">
+      <h2>What do you need?</h2>
+      <p>Pick the closest match and we'll take you to the right order, already filled in.</p>
+      <div class="choices">
+        <a class="choice" href="order.html?pkg=basic"><b>A professional CV</b><span>A new CV, or a rewrite of your current one</span><small>Basic CV <em>KES 1,500</em></small></a>
+        <a class="choice" href="order.html?pkg=professional"><b>CV and cover letter</b><span>Everything you need to start applying</span><small>Professional <em>KES 3,000</em></small></a>
+        <a class="choice" href="order.html?pkg=executive"><b>A full career makeover</b><span>CV, cover letter, LinkedIn and a coaching call</span><small>Executive <em>KES 6,000</em></small></a>
+        <a class="choice" href="pricing.html#single"><b>Just one service</b><span>Cover letter, LinkedIn, coaching, interview practice</span><small>From <em>KES 700</em></small></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap svc-list">
+  <article class="svc" id="cv-writing">
+    <div>
+      <span class="n">01</span>
+      <h2>CV writing and design</h2>
+      <p class="intro">A recruiter gives your CV a few seconds before deciding. We rewrite it around what you achieved, not just your duties, and lay it out so screening software (ATS) can read it.</p>
+      <ul class="ticks">
+        <li><svg class="i s16"><use href="#i-check"/></svg>A one-on-one consultation with your writer</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Tailored to your industry, level and target roles</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>A layout recruiters can scan quickly</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Editable Word and PDF files</li>
+      </ul>
+      <div class="meta"><div><span>From</span><b>KES 1,500</b></div><div><span>First draft</span><b>24 to 48 hours</b></div><div><span>Revisions</span><b>1 round to 14 days</b></div></div>
+      <div class="acts"><a class="btn btn-primary" href="order.html?pkg=professional">Order a CV</a><a class="btn btn-ghost" href="samples.html">See samples</a></div>
+    </div>
+    <figure><img src="../img/photos/service-cv-writing.jpg" alt="A writer making notes beside a laptop" loading="lazy"></figure>
+  </article>
+
+  <article class="svc flip" id="tailored">
+    <div>
+      <span class="n">02</span>
+      <h2>A CV for one specific job</h2>
+      <p class="intro">Found the advert? Send it with your CV and we'll rewrite it for that job, matching the words and requirements the employer listed. Or check it yourself first and see your match out of 100.</p>
+      <ul class="ticks">
+        <li><svg class="i s16"><use href="#i-check"/></svg>Order it straight from any job on our board</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Rewritten around that advert's requirements</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>First draft within 48 hours, before most deadlines</li>
+      </ul>
+      <div class="meta"><div><span>Tailored by a writer</span><b>KES 1,000</b></div><div><span>Check it yourself</span><b>KES 10</b></div><div><span>First draft</span><b>48 hours</b></div></div>
+      <div class="acts"><a class="btn btn-primary" href="jobs.html">Find the job first</a><a class="btn btn-ghost" href="order.html?item=tailored">I have the advert</a></div>
+    </div>
+    <div class="tailor-art" aria-hidden="true">
+      <div class="jobrow"><span class="tile">SF</span><div><b>Accounts Assistant</b><span>Savanna Fresh Foods Ltd · Nairobi</span><div class="runway soon"><span style="width:14%"></span></div></div></div>
+      <div class="arrow"><svg class="i s16"><use href="#i-down"/></svg></div>
+      <div class="pair">
+        <div class="opt light"><b>Check it yourself</b><span>Your match out of 100 and what to change</span><em>KES 10</em></div>
+        <div class="opt"><b>Let us tailor it</b><span>A writer rewrites it for this advert</span><em>KES 1,000</em></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="svc" id="cover-letters">
+    <div>
+      <span class="n">03</span>
+      <h2>Cover and motivation letters</h2>
+      <p class="intro">A strong letter explains why you fit this role. We write each one for a specific job, scholarship or programme, so it never reads like a template.</p>
+      <ul class="ticks">
+        <li><svg class="i s16"><use href="#i-check"/></svg>Cover letters for one specific job</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Scholarship and university motivation letters</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Statements of purpose and personal statements</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Follow-up and thank-you emails after interviews</li>
+      </ul>
+      <div class="meta"><div><span>Cover letter</span><b>KES 800</b></div><div><span>Motivation letter</span><b>KES 1,000</b></div><div><span>First draft</span><b>24 to 48 hours</b></div></div>
+      <div class="acts"><a class="btn btn-primary" href="order.html?item=cover-letter">Order a letter</a></div>
+    </div>
+    <figure><img src="../img/photos/service-cover-letters.jpg" alt="Writing a letter in a notebook" loading="lazy"></figure>
+  </article>
+
+  <article class="svc flip" id="linkedin">
+    <div>
+      <span class="n">04</span>
+      <h2>LinkedIn profile revamp</h2>
+      <p class="intro">Recruiters search LinkedIn every day. We make your profile easy to find and convincing to read, so opportunities come to you.</p>
+      <ul class="ticks">
+        <li><svg class="i s16"><use href="#i-check"/></svg>A keyword-rich headline and About section</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Experience rewritten around achievements</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Skills, featured section and settings set up</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Tips for growing your network</li>
+      </ul>
+      <div class="meta"><div><span>Price</span><b>KES 2,000</b></div><div><span>Ready in</span><b>3 days</b></div><div><span>In a package</span><b>Executive</b></div></div>
+      <div class="acts"><a class="btn btn-primary" href="order.html?item=linkedin">Revamp my LinkedIn</a></div>
+    </div>
+    <figure><img src="../img/photos/service-linkedin.jpg" alt="A professional updating her profile at her desk" loading="lazy"></figure>
+  </article>
+
+  <article class="svc" id="career-coaching">
+    <div>
+      <span class="n">05</span>
+      <h2>Career coaching and mock interviews</h2>
+      <p class="intro">One-on-one sessions with an HR professional, in person in Nairobi or online. Get clear on your next move and walk into interviews prepared.</p>
+      <ul class="ticks">
+        <li><svg class="i s16"><use href="#i-check"/></svg>Career direction and change planning</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Mock interviews with written feedback</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Preparing for salary negotiation</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>A job search plan for local and international roles</li>
+      </ul>
+      <div class="meta"><div><span>Coaching session</span><b>KES 2,500</b></div><div><span>Mock interview</span><b>KES 2,000</b></div><div><span>Length</span><b>60 minutes</b></div></div>
+      <div class="acts"><a class="btn btn-primary" href="order.html?item=coaching">Book a session</a></div>
+    </div>
+    <figure><img src="../img/photos/service-coaching.jpg" alt="A coaching session at a table by the window" loading="lazy"></figure>
+  </article>
+
+  <article class="svc flip" id="job-applications">
+    <div>
+      <span class="n">06</span>
+      <h2>Job applications and assessments</h2>
+      <p class="intro">Online portals can be confusing and slow. We guide you through each step and help you prepare for the aptitude tests that often come next.</p>
+      <ul class="ticks">
+        <li><svg class="i s16"><use href="#i-check"/></svg>Help with online application portals</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Answers to application and competency questions</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Aptitude and psychometric test preparation</li>
+        <li><svg class="i s16"><use href="#i-check"/></svg>Local, NGO, UN and overseas applications</li>
+      </ul>
+      <div class="meta"><div><span>Per application</span><b>KES 1,000</b></div><div><span>International CV format</span><b>KES 2,500</b></div></div>
+      <div class="acts"><a class="btn btn-primary" href="order.html?item=applications">Get application help</a></div>
+    </div>
+    <figure><img src="../img/photos/service-job-applications.jpg" alt="Filling in an online application on a laptop" loading="lazy"></figure>
+  </article>
+</div>
+
+<section class="section alt" id="packages">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Most clients start with a package</h2>
+        <p>Packages combine the services above for one payment by M-Pesa or card.</p>
+      </div>
+    </div>
+    <table class="table">
+      <thead><tr><th>Package</th><th>Best for</th><th>First draft</th><th>Revisions</th><th>Price</th><th><span class="sr-only">Order</span></th></tr></thead>
+      <tbody>
+        <tr><th>Basic CV</th><td class="best">Graduates and entry-level roles</td><td class="draft num">48 hours</td><td class="rev">1 round</td><td class="p">KES 1,500</td><td><a class="btn btn-ghost btn-sm" href="order.html?pkg=basic">Order</a></td></tr>
+        <tr class="main"><th>Professional<small>Chosen most often</small></th><td class="best">Mid-level professionals</td><td class="draft num">24 hours</td><td class="rev">2 rounds</td><td class="p">KES 3,000</td><td><a class="btn btn-primary btn-sm" href="order.html?pkg=professional">Order</a></td></tr>
+        <tr><th>Executive</th><td class="best">Senior leaders and career changers</td><td class="draft num">24 hours</td><td class="rev">Unlimited for 14 days</td><td class="p">KES 6,000</td><td><a class="btn btn-ghost btn-sm" href="order.html?pkg=executive">Order</a></td></tr>
+      </tbody>
+    </table>
+    <p class="table-note">See everything each package includes on the <a href="pricing.html">pricing page</a></p>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <div>
+      <h2>Not sure which one you need?</h2>
+      <p>Send your current CV on WhatsApp and we'll recommend the right service, free.</p>
+    </div>
+    <div class="ctas">
+      <a class="btn btn-light" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27m%20not%20sure%20which%20service%20I%20need" target="_blank" rel="noopener">Ask on WhatsApp</a>
+      <a class="btn btn-ghost-dark" href="pricing.html">See all prices</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+        <p class="about">CV writing and career services, helping Kenyans land the jobs they want since 2018.</p>
+        <div class="socials">
+          <a href="#" aria-label="LinkedIn"><svg class="i s16"><use href="#i-linkedin"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg class="i s16"><use href="#i-facebook"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg class="i s16"><use href="#i-instagram"/></svg></a>
+          <a href="#" aria-label="X"><svg class="i s16"><use href="#i-x"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#cv-writing">CV writing</a></li>
+          <li><a href="services.html#cover-letters">Cover letters</a></li>
+          <li><a href="services.html#linkedin">LinkedIn revamp</a></li>
+          <li><a href="services.html#career-coaching">Career coaching</a></li>
+          <li><a href="services.html#job-applications">Job applications</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Jay</a></li>
+          <li><a href="jobs.html">Find a job</a></li>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="samples.html">Samples</a></li>
+          <li><a href="blog.html">Career tips</a></li>
+          <li><a href="track.html">Track an order</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get in touch</h4>
+        <ul>
+          <li><a class="num" href="tel:+254725912186">+254 725 912 186</a></li>
+          <li><a href="mailto:info@jaycvs.co.ke">info@jaycvs.co.ke</a></li>
+          <li>Nairobi, Kenya</li>
+          <li class="pay">M-Pesa Pay Bill <span class="mono">4027127</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2018–2026 Jay CVS HR Consultancy</p>
+      <p><a href="#">Privacy policy</a></p>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-tab" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS" target="_blank" rel="noopener"><span class="dot" aria-hidden="true"></span>Chat with us</a>
+</body>
+</html>

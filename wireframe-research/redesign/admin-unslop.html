@@ -1,0 +1,2182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jay CVS Admin · Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!--
+  Jay CVS admin — unslop redesign mockup (static, click the sidebar to switch screens).
+  Direction: steady, editorial, an owner's ledger. World: a writer's desk, paper drafts and a
+  ledger book. Moments: the order board where each order is a sheet moving through the desk,
+  and the CV draft on the order page. Signature: the five-step stage track on every order.
+  Redesign method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+-->
+<style>
+  :root {
+    --bg: #fafaf9; --side: #f4f3f1; --card: #ffffff; --raised: #f2f1ee;
+    --text: #1c1b19; --text-2: #57534e; --muted: #78716c;
+    --line: rgba(28, 27, 25, 0.08); --line-strong: rgba(28, 27, 25, 0.14);
+    --gold: #b8913f; --gold-ink: #7a5e22; --gold-soft: rgba(184, 145, 63, 0.12);
+    --bad: #b42318; --bad-soft: rgba(180, 35, 24, 0.07);
+    --good: #15803d; --good-soft: rgba(21, 128, 61, 0.09);
+    --btn: #1c1b19; --on-btn: #fafaf9;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+    --mono: ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 14px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .ref { font: 500 12px/16px var(--mono); color: var(--text-2); letter-spacing: 0; }
+  .muted { color: var(--muted); }
+  .soft { color: var(--text-2); }
+  svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── Shell ── */
+  .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+  aside { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 16px 12px; background: var(--side); border-right: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px; margin-bottom: 16px; }
+  .brand .mark { width: 28px; height: 28px; border-radius: 7px; background: var(--gold); color: #1c1b19; display: grid; place-items: center; font: 600 17px/1 var(--serif); }
+  .brand .word { font: 600 19px/1 var(--serif); letter-spacing: -0.01em; }
+  .brand .word span { color: var(--gold-ink); }
+  .nav-label { padding: 0 8px; margin: 20px 0 6px; font-size: 12px; color: var(--muted); }
+  .nav a { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 8px; border-radius: 8px; color: var(--text-2); transition: background-color 140ms var(--ease), color 140ms var(--ease); }
+  .nav a + a { margin-top: 2px; }
+  .nav a:hover { background: var(--raised); color: var(--text); }
+  .nav a[aria-current="page"] { background: var(--card); color: var(--text); font-weight: 500; box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(28, 27, 25, 0.04); }
+  .nav a[aria-current="page"] svg { color: var(--gold-ink); }
+  .nav .count { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .nav .count.alert { color: var(--bad); }
+  .side-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+  .me { display: flex; align-items: center; gap: 10px; padding: 8px; margin-top: 8px; }
+  .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); color: var(--text-2); font-size: 11px; font-weight: 500; box-shadow: inset 0 0 0 1px var(--line-strong); flex: none; }
+  .av.dark { background: #1c1b19; color: #e6c877; box-shadow: none; }
+  .me .n { font-size: 13px; font-weight: 500; } .me .r { font-size: 12px; color: var(--muted); }
+
+  main { min-width: 0; width: 100%; max-width: 1760px; margin: 0 auto; padding: 0 32px 64px; }
+  .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 32px 0 24px; }
+  .crumb { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .crumb a:hover { color: var(--text); }
+  h1 { font: 500 32px/1.15 var(--serif); letter-spacing: -0.015em; }
+  .sub { margin-top: 6px; color: var(--text-2); }
+  .actions { display: flex; gap: 8px; flex: none; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 8px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: background-color 140ms var(--ease), opacity 140ms var(--ease), transform 120ms var(--ease); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--btn); color: var(--on-btn); }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .btn-ghost:hover { background: var(--raised); }
+  .btn-sm { height: 30px; padding: 0 10px; font-size: 13px; border-radius: 7px; }
+
+  .card { background: var(--card); border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; }
+  .card-head h2 { font-size: 15px; line-height: 22px; font-weight: 600; }
+  .card-head .hint { font-size: 13px; color: var(--muted); }
+  .card-head a.more { font-size: 13px; color: var(--text-2); }
+  .card-head a.more:hover { color: var(--text); }
+  .grid { display: grid; gap: 16px; }
+
+  /* Attention strip: one, quiet, specific */
+  .attention { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; background: var(--bad-soft); box-shadow: inset 0 0 0 1px rgba(180, 35, 24, 0.14); margin-bottom: 16px; }
+  .attention .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); flex: none; }
+  .attention .t { flex: 1; color: var(--text); }
+  .attention .t b { font-weight: 500; }
+  .attention .t span { color: var(--text-2); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stat { padding: 16px 20px 18px; }
+  .stat + .stat { border-left: 1px solid var(--line); }
+  .stat .l { font-size: 13px; color: var(--text-2); }
+  .stat .v { display: block; margin-top: 8px; font-size: 28px; line-height: 32px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .stat .v small { font-size: 15px; font-weight: 500; color: var(--muted); margin-right: 4px; letter-spacing: 0; }
+  .stat .v.key { color: var(--gold-ink); }
+  .stat .c { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .owner-note { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+
+  /* Signature: the five-step stage track */
+  .track { display: inline-flex; align-items: center; gap: 3px; }
+  .track i { width: 12px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+  .track i.done { background: var(--text-2); }
+  .track i.now { background: var(--gold); }
+  .track.bad i.now { background: var(--bad); }
+
+  /* The moment: order board — each order is a sheet on the desk */
+  .board { display: grid; grid-template-columns: repeat(6, minmax(168px, 1fr)); gap: 12px; padding: 0 20px 20px; overflow-x: auto; }
+  .col h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 500; color: var(--text-2); padding: 0 2px 8px; }
+  .col h3 span { color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .col .lane { display: grid; gap: 8px; padding: 8px; min-height: 196px; border-radius: 10px; background: var(--raised); align-content: start; }
+  .sheet { position: relative; display: block; padding: 12px 12px 10px; border-radius: 6px; background: var(--card); box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06), inset 0 0 0 1px var(--line); transition: box-shadow 140ms var(--ease), transform 140ms var(--ease); }
+  .sheet::after { content: ""; position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: linear-gradient(225deg, var(--raised) 50%, #ebe8e2 50%); border-bottom-left-radius: 3px; }
+  .sheet:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(28, 27, 25, 0.08), inset 0 0 0 1px var(--line-strong); }
+  .sheet .who { margin-top: 4px; font-weight: 500; }
+  .sheet .pk { font-size: 13px; color: var(--text-2); }
+  .sheet .pk .pr { display: block; color: var(--muted); font-size: 12px; }
+  .sheet .lines { display: grid; gap: 4px; margin: 10px 0; }
+  .sheet .lines i { display: block; height: 3px; border-radius: 2px; background: var(--raised); }
+  .sheet .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .sheet .foot .late { color: var(--bad); font-weight: 500; }
+  .sheet .foot span { white-space: nowrap; }
+  .sheet.flag { box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06), inset 0 0 0 1.5px rgba(180, 35, 24, 0.45); }
+  .sheet.dim { opacity: 0.72; }
+  /* Overflow: more than three in a column folds into a stack */
+  .stack { position: relative; display: block; margin-bottom: 8px; padding: 12px; border-radius: 6px; background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--line), 0 4px 0 -1px var(--card), 0 4px 0 0 var(--line-strong), 0 8px 0 -2px var(--card), 0 8px 0 -1px var(--line);
+    transition: transform 140ms var(--ease); }
+  .stack:hover { transform: translateY(-1px); }
+  .stack .more { font-weight: 500; }
+  .stack .who-has { margin-top: 4px; font-size: 13px; color: var(--text-2); }
+  .stack .due { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .stack .due b { color: var(--text); font-weight: 500; }
+  .stack .see { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12px; font-weight: 500; color: var(--gold-ink); }
+  .lane-note { font-size: 12px; color: var(--muted); padding: 0 2px; }
+  .see { display: block; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12px; font-weight: 500; color: var(--gold-ink); }
+  /* At volume: columns become gauges */
+  .health { display: flex; gap: 2px; height: 4px; border-radius: 2px; overflow: hidden; margin: 0 2px 6px; }
+  .health i { display: block; }
+  .health .late { background: var(--bad); } .health .today { background: var(--gold); } .health .ok { background: var(--line-strong); }
+  .health-key { font-size: 12px; line-height: 16px; color: var(--muted); padding: 0 2px 8px; min-height: 40px; }
+  .health-key .late { color: var(--bad); font-weight: 400; }
+  .sum { display: block; padding: 12px; border-radius: 6px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .sum .big { font-size: 20px; line-height: 24px; font-weight: 500; }
+  .sum .s { margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--muted); }
+  .sum .act { margin-top: 10px; width: 100%; justify-content: center; white-space: normal; height: auto; min-height: 30px; padding: 6px 8px; text-align: center; }
+  .load { list-style: none; }
+  .load li { display: grid; grid-template-columns: 160px minmax(0, 1fr) 80px 72px; align-items: center; gap: 16px; height: 48px; padding: 0 20px; }
+  .load li + li { border-top: 1px solid var(--line); }
+  .load .nm { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+  .load .bar { height: 8px; border-radius: 4px; background: var(--raised); }
+  .load .bar span { display: block; height: 100%; border-radius: 4px; background: #a8a29e; }
+  .load .room .bar span { background: var(--gold); }
+  .load .room .lt { color: var(--gold-ink); font-weight: 500; }
+  .load .n { text-align: right; color: var(--text-2); font-size: 13px; }
+  .load .lt { text-align: right; font-size: 13px; }
+  .load-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; border-top: 1px solid var(--line); background: var(--raised); border-radius: 0 0 14px 14px; color: var(--text-2); }
+
+  /* Lists */
+  .rows { list-style: none; }
+  .rows li { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 20px; }
+  .rows li + li { border-top: 1px solid var(--line); }
+  .rows .grow { flex: 1; min-width: 0; }
+  .rows .t { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rows .s { font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rows .r { font-size: 13px; color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .logo-sq { width: 32px; height: 32px; border-radius: 8px; background: var(--raised); display: grid; place-items: center; font: 600 11px/1 var(--sans); color: var(--text-2); flex: none; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .tag.live { color: var(--good); background: var(--good-soft); }
+  .tag.off { color: var(--muted); background: var(--raised); }
+  .tag.bad { color: var(--bad); background: var(--bad-soft); }
+  .tag.wait { color: var(--gold-ink); background: var(--gold-soft); }
+  .tag.plain { color: var(--text-2); background: var(--raised); }
+
+  .meter { height: 6px; border-radius: 4px; background: var(--raised); overflow: hidden; }
+  .meter span { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  th:first-child, td:first-child { padding-left: 20px; }
+  th:last-child, td:last-child { padding-right: 20px; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr { transition: background-color 120ms var(--ease); }
+  tbody tr:hover { background: #fcfbfa; }
+  tr.flag td:first-child { box-shadow: inset 2px 0 0 var(--bad); }
+  .cell-main { font-weight: 500; }
+  .cell-sub { font-size: 13px; color: var(--muted); }
+  .late { color: var(--bad); font-weight: 500; }
+
+  /* Orders filters */
+  .tabs { display: flex; gap: 4px; padding: 12px 16px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tabs button { position: relative; height: 40px; padding: 0 10px; color: var(--text-2); white-space: nowrap; }
+  .tabs button span { margin-left: 6px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tabs button[aria-selected="true"] { color: var(--text); font-weight: 500; }
+  .tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
+  .tabs button.alert span { color: var(--bad); }
+  .filters { display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+  .search { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 8px; background: var(--raised); color: var(--muted); width: 280px; font-size: 13px; }
+  .select { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 13px; color: var(--text-2); }
+  .select b { font-weight: 500; color: var(--text); }
+
+  /* Order page */
+  .order-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 0 20px 20px; }
+  .steps div { padding-top: 10px; border-top: 3px solid var(--line-strong); font-size: 13px; color: var(--muted); }
+  .steps div.done { border-color: var(--text-2); color: var(--text-2); }
+  .steps div.now { border-color: var(--gold); color: var(--text); font-weight: 500; }
+  .steps small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+  .next { margin: 0 20px 20px; padding: 14px 16px; border-radius: 10px; background: var(--raised); }
+  .next .h { font-size: 13px; color: var(--muted); }
+  .next p { margin-top: 4px; }
+  .next .quote { margin-top: 10px; padding-left: 12px; box-shadow: inset 2px 0 0 var(--gold); color: var(--text-2); }
+
+  .desk { padding: 24px; border-radius: 14px; background: var(--raised); display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 20px; }
+  .page { position: relative; max-width: 520px; min-height: 560px; padding: 36px 40px; background: #fffefb; border-radius: 3px; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 32px rgba(28, 27, 25, 0.08); font-size: 9.5px; line-height: 14px; color: #2b2925; overflow: hidden; }
+  .page .nm { font: 600 22px/1.1 var(--serif); letter-spacing: -0.01em; color: #1c1b19; }
+  .page .role { margin-top: 4px; font-size: 11px; color: var(--gold-ink); font-weight: 500; }
+  .page .ct { margin-top: 6px; color: #6b665e; }
+  .page h4 { margin: 16px 0 6px; padding-bottom: 4px; border-bottom: 1px solid rgba(28, 27, 25, 0.12); font-size: 9.5px; font-weight: 600; color: #1c1b19; }
+  .page .job { display: flex; justify-content: space-between; font-weight: 600; color: #1c1b19; margin-top: 6px; }
+  .page .job span { font-weight: 400; color: #6b665e; }
+  .page ul { margin: 3px 0 0 12px; }
+  .page mark { background: rgba(184, 145, 63, 0.22); color: inherit; border-radius: 2px; padding: 0 1px; }
+  .page .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: linear-gradient(rgba(255, 254, 251, 0), #fffefb); }
+  .notes { display: grid; gap: 12px; align-content: start; }
+  .note { padding: 12px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; }
+  .note .w { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .note .ix { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; background: var(--gold-soft); color: var(--gold-ink); font-size: 11px; font-weight: 600; margin-right: 6px; }
+  .desk-head { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+  .desk-head .t { font-weight: 600; font-size: 15px; }
+  .desk-head .ver { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .desk-head .ver button { height: 26px; padding: 0 10px; border-radius: 6px; font-size: 13px; color: var(--text-2); }
+  .desk-head .ver button[aria-pressed="true"] { background: var(--raised); color: var(--text); font-weight: 500; }
+
+  .brief { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 20px 4px; }
+  .brief > div { padding: 0 0 16px; }
+  .brief > div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+  .brief .k { font-size: 12px; color: var(--muted); }
+  .brief .v { margin-top: 2px; font-weight: 500; }
+  .brief-note { margin: 0 20px 20px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+  .rail .card + .card { margin-top: 16px; }
+  .rail .body { padding: 0 20px 18px; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 13px; }
+  .kv span:first-child { color: var(--muted); }
+  .kv span:last-child { font-weight: 500; text-align: right; }
+  .link-box { display: flex; align-items: center; gap: 8px; margin-top: 10px; height: 34px; padding: 0 6px 0 10px; border-radius: 8px; background: var(--raised); font: 12px var(--mono); color: var(--text-2); }
+  .link-box span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wa { display: grid; gap: 6px; margin-top: 10px; }
+  .wa button { display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 12px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 13px; text-align: left; }
+  .wa button:hover { background: var(--raised); }
+  .wa button svg { color: var(--muted); }
+
+  /* Finance */
+  .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--raised); }
+  .seg button { height: 30px; padding: 0 12px; border-radius: 7px; font-size: 13px; color: var(--text-2); }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06); }
+  .split-bar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; gap: 2px; margin: 4px 20px 16px; }
+  .split-bar .keep { background: var(--gold); }
+  .split-bar .pay { background: var(--text-2); }
+  .legend { list-style: none; padding: 0 20px 20px; }
+  .legend li { display: flex; align-items: center; gap: 10px; height: 36px; }
+  .legend li + li { border-top: 1px solid var(--line); }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; }
+  .legend .grow { flex: 1; }
+  .legend .pc { width: 48px; text-align: right; color: var(--muted); font-size: 13px; }
+  .bars { padding: 4px 20px 20px; display: grid; gap: 12px; }
+  .bar-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 96px; align-items: center; gap: 12px; }
+  .bar-row .track-b { height: 8px; border-radius: 4px; background: var(--raised); }
+  .bar-row .track-b span { display: block; height: 100%; border-radius: 4px; background: #a8a29e; }
+  .bar-row.top .track-b span { background: var(--gold); }
+  .bar-row .amt { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .bar-row .lab { color: var(--text-2); }
+  .bar-row .lab small { display: block; font-size: 12px; color: var(--muted); }
+
+
+  /* ── Jobs section ── */
+  .btn-count { margin-left: 2px; font-size: 12px; color: var(--muted); }
+  .job-cell { display: flex; align-items: center; gap: 12px; }
+  .jobs-table td { padding-top: 14px; padding-bottom: 14px; }
+  /* Signature for jobs: the runway from posting to deadline */
+  .runway { width: 120px; height: 4px; border-radius: 2px; background: var(--raised); margin-bottom: 6px; overflow: hidden; }
+  .runway span { display: block; height: 100%; background: #a8a29e; border-radius: 2px; }
+  .runway.soon span { background: var(--gold); }
+  .runway.open { background: repeating-linear-gradient(90deg, var(--line-strong) 0 6px, transparent 6px 10px); }
+  .soon-t { color: var(--gold-ink); }
+  .orders-n { font-weight: 600; color: var(--gold-ink); }
+  .chan { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .chan.done svg { color: var(--good); }
+  tr.hl td { background: rgba(184, 145, 63, 0.05); }
+  .table-foot { padding: 12px 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+  .queue-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .seg-tabs { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--raised); }
+  .seg-tabs button { display: inline-flex; gap: 6px; align-items: center; height: 30px; padding: 0 12px; border-radius: 7px; font-size: 13px; color: var(--text-2); }
+  .seg-tabs button span { color: var(--muted); }
+  .seg-tabs button[aria-pressed="true"] { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06); }
+
+  .review { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .queue { padding: 8px; position: sticky; top: 16px; }
+  .q-group { padding: 12px 8px 6px; font-size: 12px; color: var(--muted); }
+  .q-group:first-child { padding-top: 4px; }
+  .q-item { display: flex; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: background-color 120ms var(--ease); }
+  .q-item:hover { background: var(--raised); }
+  .q-item.on { background: var(--raised); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .q-main { display: flex; flex-direction: column; min-width: 0; }
+  .q-t { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-s { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-flag { margin-top: 4px; font-size: 12px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+  .q-flag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex: none; }
+  .q-flag.bad { color: var(--bad); } .q-flag.bad::before { background: var(--bad); }
+  .q-flag.warn { color: var(--gold-ink); } .q-flag.warn::before { background: var(--gold); }
+  .q-reading { display: flex; justify-content: space-between; padding: 8px; font-size: 13px; }
+  .thumb { width: 36px; height: 46px; border-radius: 4px; flex: none; padding: 6px 5px; display: grid; gap: 3px; align-content: start; box-shadow: inset 0 0 0 1px var(--line); }
+  .thumb i { display: block; height: 3px; border-radius: 1px; background: rgba(0, 0, 0, 0.18); }
+  .thumb i:first-child { height: 6px; width: 80%; }
+  .thumb i:nth-child(2) { width: 60%; } .thumb i:nth-child(3) { width: 70%; }
+  .t-yellow { background: #f6d84a; } .t-yellow i { background: rgba(180, 30, 20, 0.6); }
+  .t-white { background: #fff; } .t-paper { background: #f3efe6; }
+  .t-green { background: #1f5c3b; } .t-green i { background: rgba(255, 255, 255, 0.55); }
+  .t-blue { background: #dfe8f3; } .t-teal { background: #1e5a63; } .t-teal i { background: rgba(255, 255, 255, 0.5); }
+
+  .pane { overflow: hidden; }
+  .pane-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .pane-title { margin-top: 2px; font: 500 22px/1.2 var(--serif); letter-spacing: -0.01em; }
+  .pager { display: flex; align-items: center; gap: 8px; }
+  .read { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; padding: 20px; align-items: start; }
+
+  /* The moment: the photographed notice */
+  .photo { margin: 0; }
+  .photo figcaption { margin-top: 14px; font-size: 12px; color: rgba(255, 255, 255, 0.72); }
+  .photo figcaption a { color: #fff; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.4); }
+  .photo { padding: 20px 16px; border-radius: 12px; background: #4a3b2c linear-gradient(160deg, #5a4836, #3e3125); }
+  .notice { position: relative; padding: 22px 20px 18px; background: #f6f2e8; border-radius: 2px; transform: rotate(-1.2deg); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 28px rgba(0, 0, 0, 0.3); font: 10px/14px Georgia, 'Times New Roman', serif; color: #2a2620; }
+  .notice::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 40%, rgba(0, 0, 0, 0.06)); pointer-events: none; }
+  .notice p { margin-top: 6px; }
+  .n-school { text-align: center; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; }
+  .n-town { text-align: center; font-size: 9px; color: #6a6358; }
+  .n-rule { height: 2px; background: #2a2620; margin: 8px 0; opacity: 0.8; }
+  .n-head { text-align: center; font-weight: 700; font-size: 12px; text-decoration: underline; }
+  .n-pos { font-weight: 700; }
+  .n-sign { margin-top: 12px; text-align: right; font-style: normal; }
+  .smudge { position: relative; }
+  .blot { filter: blur(2.2px); opacity: 0.8; }
+  .n-dead { position: relative; margin-top: 4px !important; padding: 3px 4px; border-radius: 3px; background: rgba(184, 145, 63, 0.14); box-shadow: 0 0 0 1.5px var(--gold); }
+  .n-dead::after { content: "Couldn\2019t read the day"; position: absolute; right: 4px; top: -16px; padding: 1px 6px; border-radius: 4px; background: var(--gold); color: #1c1b19; font: 500 10px/14px var(--sans); }
+
+  .fields { display: grid; gap: 10px; align-content: start; }
+  .f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .f3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .fld { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 8px; background: var(--raised); }
+  .fl { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+  .fv { font-weight: 500; }
+  .fs { font-size: 13px; color: var(--text-2); }
+  .fld.unsure { background: var(--gold-soft); box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .fld.unsure .fl { color: var(--gold-ink); font-weight: 500; }
+  .why { font-weight: 500; }
+  .fld.confirmed { box-shadow: inset 0 0 0 1px rgba(21, 128, 61, 0.35); }
+  .fld.confirmed .why { color: var(--good); }
+  .unsure-note { font-size: 13px; color: var(--text); }
+  .pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .pick button { height: 28px; padding: 0 10px; border-radius: 6px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .pick button[aria-pressed="true"] { background: #1c1b19; color: #fafaf9; box-shadow: none; }
+  .scam-ok { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text-2); padding: 4px 2px; }
+  .scam-ok svg { color: var(--good); }
+  .pane-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); background: #fcfbfa; }
+  kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; margin-left: 4px; border-radius: 4px; font: 500 11px/1 var(--sans); color: var(--text-2); background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong), 0 1px 0 var(--line-strong); }
+  .btn[disabled] { opacity: 0.38; cursor: not-allowed; }
+  kbd.dark { background: rgba(255, 255, 255, 0.14); color: #fafaf9; box-shadow: none; }
+  .keys { margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .keys kbd { margin: 0 2px; }
+
+  .share { margin: 0 20px 20px; padding: 16px; border-radius: 12px; background: var(--raised); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+  .share .bubble { margin-top: 0; }
+  .share-h { font-size: 15px; font-weight: 600; }
+  .bubble { position: relative; margin-top: 10px; padding: 10px 12px 20px; border-radius: 4px 12px 12px 12px; background: #e9f6e3; color: #1d2b1a; font-size: 12.5px; line-height: 18px; white-space: pre-line; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06); }
+  .bubble b { font-weight: 600; }
+  .bubble-time { position: absolute; right: 10px; bottom: 4px; font-size: 11px; color: #6b7b66; }
+
+  .drop { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1.5px dashed var(--line-strong); color: var(--text-2); cursor: pointer; }
+  .drop b { color: var(--text); font-weight: 500; }
+  .drop .muted { margin-left: auto; font-size: 13px; }
+  .form-body { display: grid; gap: 14px; padding: 0 20px 20px; }
+  .in > span { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; }
+  .in em { font-style: normal; font-weight: 400; color: var(--muted); }
+  .box { min-height: 38px; padding: 9px 12px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .box.sel { padding-right: 32px; background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2378716c' stroke-width='1.5' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center; }
+  .box.ph { color: var(--muted); }
+  .box.area { min-height: 88px; line-height: 22px; }
+  .check { display: flex; align-items: center; gap: 8px; height: 38px; color: var(--text-2); }
+  .cb { width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--line-strong); background: var(--card); }
+  .methods { display: flex; gap: 6px; flex-wrap: wrap; }
+  .methods button { height: 34px; padding: 0 14px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 13px; color: var(--text-2); }
+  .methods button[aria-pressed="true"] { background: #1c1b19; color: #fafaf9; box-shadow: none; }
+  .site-card { padding: 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); background: #fcfbf8; }
+  .sc-top { display: flex; gap: 10px; align-items: center; }
+  .sc-t { font: 500 16px/1.2 var(--serif); }
+  .sc-c { font-size: 13px; color: var(--text-2); }
+  .sc-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .sc-tags { display: flex; gap: 6px; margin-top: 10px; }
+  .sc-tags span { height: 22px; padding: 0 8px; border-radius: 6px; background: var(--raised); font-size: 12px; color: var(--text-2); display: inline-flex; align-items: center; }
+  .ready { list-style: none; padding: 0 20px 16px; }
+  .ready li { display: flex; align-items: center; gap: 10px; height: 32px; font-size: 13px; color: var(--text-2); }
+  .ready li::before { content: ""; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line-strong); flex: none; }
+  .ready li.done { color: var(--text); }
+  .ready li.done::before { background: var(--good) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='none' stroke='white' stroke-width='3' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 5 5L20 7'/%3E%3C/svg%3E") no-repeat center; box-shadow: none; }
+
+  .morning { display: flex; align-items: center; gap: 32px; padding: 20px 24px; flex-wrap: wrap; }
+  .m-time { display: flex; flex-direction: column; }
+  .m-clock { font: 500 32px/1.1 var(--serif); }
+  .m-flow { display: flex; align-items: center; gap: 20px; flex: 1; flex-wrap: wrap; }
+  .m-flow > div { display: flex; flex-direction: column; }
+  .m-flow .v { font-size: 26px; line-height: 32px; font-weight: 500; }
+  .m-flow .v.key { color: var(--gold-ink); }
+  .m-flow .l { font-size: 13px; color: var(--muted); }
+  .m-flow .arrow { color: var(--line-strong); }
+  .m-note { width: 100%; font-size: 13px; color: var(--muted); padding-top: 12px; border-top: 1px solid var(--line); }
+  .add-src { display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+
+  @media (max-width: 1280px) {
+    .review { grid-template-columns: 260px minmax(0, 1fr); }
+    .read, .share { grid-template-columns: 1fr; }
+  }
+
+  .board[hidden], .card[hidden] { display: none; }
+
+  /* ═════════ AI tokens ═════════ */
+  .ai-top { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+  .ai-bal { padding: 24px; }
+  .ai-bal .l { font-size: 13px; color: var(--text-2); }
+  .ai-bal .big { display: flex; align-items: baseline; gap: 10px; margin-top: 6px; }
+  .ai-bal .big b { font: 500 44px/48px var(--serif); font-variant-numeric: tabular-nums; letter-spacing: -0.015em; }
+  .ai-bal .big span { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ai-gauge { position: relative; height: 10px; margin: 18px 0 8px; border-radius: 5px; background: var(--raised); overflow: visible; }
+  .ai-gauge .left { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--gold); }
+  .ai-gauge .warn { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; background: var(--bad); opacity: 0.6; }
+  .ai-gauge-k { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ai-pace { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 20px; border-top: 1px solid var(--line); }
+  .ai-pace div { padding: 14px 16px 0 0; }
+  .ai-pace div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+  .ai-pace .v { display: block; font-size: 20px; line-height: 28px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ai-pace .v.key { color: var(--gold-ink); }
+  .ai-pace .c { font-size: 13px; color: var(--muted); }
+  .ai-alert { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; padding: 12px 14px; border-radius: 10px; background: var(--gold-soft); color: var(--gold-ink); font-size: 13px; line-height: 20px; }
+  .ai-alert svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+  .ai-alert b { font-weight: 500; }
+
+  .ai-chart { padding: 0 20px 20px; }
+  .ai-bars { display: grid; grid-template-columns: repeat(18, 1fr); gap: 6px; align-items: end; height: 172px; padding-top: 12px; border-bottom: 1px solid var(--line); background: repeating-linear-gradient(to top, transparent 0 42px, var(--line) 42px 43px); }
+  .ai-bars span { position: relative; display: block; border-radius: 3px 3px 0 0; background: #d6d3d1; transition: background-color 140ms var(--ease); }
+  .ai-bars span:hover { background: #a8a29e; }
+  .ai-bars span.today { background: var(--gold); }
+  .ai-bars span:hover::after { content: attr(data-t); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); padding: 4px 8px; border-radius: 6px; background: #1c1b19; color: #fafaf9; font-size: 11px; white-space: nowrap; z-index: 2; }
+  .ai-axis { display: flex; justify-content: space-between; margin-top: 8px; font: 11px/1 var(--mono); color: var(--muted); }
+
+  .ai-mid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+  .ai-feat { list-style: none; padding: 0 20px 16px; }
+  .ai-feat li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .ai-feat li:first-child { border-top: 0; padding-top: 0; }
+  .ai-feat .t { font-weight: 500; }
+  .ai-feat .t small { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 6px; }
+  .ai-feat .n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .ai-feat .s { font-size: 13px; color: var(--muted); }
+  .ai-feat .pc { text-align: right; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ai-feat .bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--raised); overflow: hidden; }
+  .ai-feat .bar span { display: block; height: 100%; background: #a8a29e; }
+  .ai-feat li:first-child .bar span { background: var(--gold); }
+
+  /* Allowances */
+  .ai-split { display: flex; height: 12px; gap: 2px; margin: 0 20px 6px; border-radius: 6px; overflow: hidden; }
+  .ai-split span { display: block; height: 100%; }
+  .ai-split-k { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 4px 20px 16px; font-size: 12px; color: var(--text-2); }
+  .ai-split-k i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+  .ai-allow td { vertical-align: middle; }
+  .ai-allow .inp { width: 128px; height: 34px; }
+  .ai-use { min-width: 180px; }
+  .ai-use .meter { height: 6px; }
+  .ai-use .meter span { background: #a8a29e; }
+  .ai-use.hot .meter span { background: var(--bad); }
+  .ai-use small { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ai-use.hot small { color: var(--bad); }
+  .ai-allow .pool td { background: #fcfbf8; }
+  .ai-sum { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--text-2); flex-wrap: wrap; }
+  .ai-sum b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ai-sum.over b.over { color: var(--bad); }
+
+  /* Request */
+  .ai-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .ai-req { padding: 0 20px 20px; display: grid; gap: 16px; }
+  .ai-chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .ai-chips button { height: 64px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-strong); display: grid; align-content: center; gap: 2px; text-align: center; transition: box-shadow 140ms var(--ease), background-color 140ms var(--ease); }
+  .ai-chips button b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ai-chips button small { font-size: 11px; color: var(--muted); }
+  .ai-chips button[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--gold); background: #fdfbf6; }
+  .ai-req .lasts { font-size: 13px; color: var(--text-2); }
+  .ai-req .lasts b { color: var(--text); font-weight: 500; }
+  .ai-pending { display: grid; gap: 4px; padding: 16px; border-radius: 12px; background: var(--gold-soft); }
+  .ai-pending b { font-weight: 500; }
+  .ai-pending span { font-size: 13px; color: var(--text-2); }
+  .ai-pending .row { display: flex; gap: 8px; margin-top: 10px; }
+  .ai-ledger { list-style: none; padding: 0 20px 16px; }
+  .ai-ledger li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .ai-ledger li:first-child { border-top: 0; }
+  .ai-ledger b { font-weight: 500; }
+  .ai-ledger .amt { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--good); }
+  .ai-ledger span { color: var(--muted); }
+  .ai-runs td { font-size: 13px; }
+
+  @media (max-width: 1280px) { .ai-top, .ai-mid, .ai-bottom { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { .ai-chips { grid-template-columns: repeat(3, 1fr); } .ai-pace { grid-template-columns: 1fr; } .ai-pace div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); } }
+
+  #s-ai [hidden] { display: none !important; }
+
+  /* ═════════ Added screens: Team, Website content, Order flow demo ═════════ */
+  .inp { width: 100%; height: 38px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); font: inherit; color: var(--text); outline: 0; transition: box-shadow 140ms var(--ease); }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  textarea.inp { height: auto; min-height: 96px; padding: 9px 12px; line-height: 22px; resize: vertical; }
+  .inp.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pre-in { display: flex; align-items: center; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .pre-in:focus-within { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .pre-in span { padding: 0 0 0 12px; font-size: 13px; color: var(--muted); }
+  .pre-in .inp { box-shadow: none; background: none; }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fgrid .full { grid-column: 1 / -1; }
+  .in small { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .toggle { position: relative; width: 34px; height: 20px; flex: none; border-radius: 10px; background: var(--line-strong); transition: background-color 160ms var(--ease); cursor: pointer; appearance: none; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 160ms var(--ease); }
+  .toggle:checked { background: var(--good); }
+  .toggle:checked::after { transform: translateX(14px); }
+  .tick-in { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-strong); cursor: pointer; }
+  .tick-in:has(input:checked) { box-shadow: inset 0 0 0 1.5px var(--gold); background: #fdfbf6; }
+  .tick-in input { margin-top: 3px; accent-color: #1c1b19; }
+  .tick-in b { display: block; font-weight: 500; }
+  .tick-in span { font-size: 13px; color: var(--text-2); }
+
+  /* Team */
+  .team-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+  .who-cell { display: flex; align-items: center; gap: 12px; }
+  .who-cell .av { width: 34px; height: 34px; font-size: 12px; }
+  .can { display: flex; flex-wrap: wrap; gap: 4px; }
+  .can span { height: 22px; padding: 0 8px; border-radius: 6px; background: var(--raised); font-size: 12px; color: var(--text-2); display: inline-flex; align-items: center; }
+  .can span.all { background: #1c1b19; color: #e6c877; }
+  tr.dim td { color: var(--muted); }
+  .how-inv { list-style: none; padding: 0 20px 20px; display: grid; gap: 14px; }
+  .how-inv li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; font-size: 13px; line-height: 20px; color: var(--text-2); }
+  .how-inv li b { color: var(--text); font-weight: 500; }
+  .how-inv .k { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); font: 500 11px/1 var(--mono); color: var(--text); }
+  .only { list-style: none; padding: 0 20px 20px; display: grid; gap: 8px; font-size: 13px; color: var(--text-2); }
+  .only li { display: flex; gap: 8px; }
+  .only svg { width: 14px; height: 14px; margin-top: 3px; color: var(--gold-ink); }
+
+  dialog.dlg { margin: auto; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 0; border-radius: 16px; background: var(--bg); color: var(--text); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28); }
+  dialog.dlg::backdrop { background: rgba(28, 27, 25, 0.55); }
+  .dlg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 20px 24px 0; }
+  .dlg-head h2 { font: 500 22px/30px var(--serif); }
+  .dlg-head p { margin-top: 2px; font-size: 13px; color: var(--text-2); }
+  .dlg-body { display: grid; gap: 16px; padding: 20px 24px; }
+  .dlg-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--line); }
+  .x { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .pay-eg { margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .invite-msg { padding: 14px; border-radius: 10px; background: #e7f6dc; font-size: 13px; line-height: 20px; color: #1b2a17; white-space: pre-line; }
+
+  /* Website content */
+  .content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+  .content-grid > .card { min-width: 0; }
+  .ctabs { display: flex; gap: 4px; padding: 12px 16px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .ctabs button { position: relative; height: 40px; padding: 0 10px; color: var(--text-2); white-space: nowrap; }
+  .ctabs button[aria-selected="true"] { color: var(--text); font-weight: 500; }
+  .ctabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
+  .ctabs button .dot { display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--gold); vertical-align: middle; }
+  .cpanel { padding: 20px; }
+  .cpanel[hidden] { display: none; }
+  .cpanel > .lead-in { margin-bottom: 16px; font-size: 13px; color: var(--text-2); }
+  .publish { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--line); background: rgba(255, 255, 255, 0.96); border-radius: 0 0 14px 14px; font-size: 13px; color: var(--muted); }
+  .publish.dirty { color: var(--gold-ink); }
+  .pked-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .pked { padding: 16px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line-strong); display: grid; gap: 12px; align-content: start; }
+  .pked.pop { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .pked-head { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  #s-team td.n { white-space: nowrap; }
+  #s-team [hidden], #s-content [hidden], #s-flow [hidden] { display: none !important; }
+  .pked-head b { font: 500 17px/1.2 var(--serif); }
+  .pked .feat { display: grid; gap: 6px; }
+  .pked .feat .inp { height: 32px; font-size: 13px; }
+  .pked .addf { justify-self: start; font-size: 13px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+  .sub-h { margin: 24px 0 10px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .svc-t td .inp { height: 32px; }
+  .svc-t td:first-child { min-width: 220px; }
+  .svc-t .inp.num { width: 96px; }
+  .rv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .rv:first-of-type { border-top: 0; padding-top: 0; }
+  .rv .stars { color: var(--gold); letter-spacing: 1px; font-size: 13px; }
+  .rv q { display: block; margin-top: 4px; font: 400 16px/24px var(--serif); quotes: none; }
+  .rv .by { margin-top: 6px; font-size: 13px; color: var(--muted); }
+  .rv .acts { display: flex; gap: 6px; align-items: flex-start; }
+  .rv.done { opacity: 0.55; }
+  .smp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .smp-c { padding: 12px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); }
+  .smp-c .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px; border-radius: 8px; background: #ebe7df; }
+  .smp-c .pair img { border-radius: 2px; box-shadow: 0 1px 3px rgba(28, 27, 25, 0.12); }
+  .smp-c .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; }
+  .smp-c b { font-weight: 500; font-size: 14px; }
+  .smp-c small { display: block; font-size: 12px; color: var(--muted); }
+  .post-row { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .post-row:first-child { border-top: 0; }
+  .post-row img { width: 72px; height: 50px; object-fit: cover; border-radius: 6px; }
+  .post-row .t { font-weight: 500; }
+  .post-row .s { font-size: 13px; color: var(--muted); }
+  .faq-row { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); }
+  .faq-row:first-child { border-top: 0; }
+  .faq-row .grip { margin-top: 4px; color: var(--muted); cursor: grab; }
+  .faq-row b { display: block; font-weight: 500; }
+  .faq-row p { margin-top: 2px; font-size: 13px; color: var(--text-2); }
+  .faq-row .where { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .preview-hero { margin-top: 20px; padding: 20px; border-radius: 12px; background: #fafaf9; box-shadow: inset 0 0 0 1px var(--line); }
+  .preview-hero .lbl { font-size: 12px; color: var(--muted); }
+  .preview-hero .ann { margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: #1c1b19; color: #fafaf9; font-size: 13px; }
+  .preview-hero h3 { margin-top: 14px; font: 500 30px/36px var(--serif); letter-spacing: -0.015em; }
+  .preview-hero p { margin-top: 8px; color: var(--text-2); }
+  .ph-photo { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; }
+  .ph-photo .ph { width: 96px; height: 120px; border-radius: 12px; background: #ebe7df; display: grid; place-items: center; font: 500 48px/1 var(--serif); color: rgba(122, 94, 34, 0.25); }
+  .changes { list-style: none; padding: 0 20px 16px; }
+  .changes li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 19px; }
+  .changes li:first-child { border-top: 0; }
+  .changes .av { width: 26px; height: 26px; font-size: 10px; }
+  .changes b { font-weight: 500; }
+  .changes span { color: var(--muted); }
+  .changes button { display: block; margin-top: 2px; font-size: 12px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px); opacity: 0; padding: 10px 16px; border-radius: 10px; background: #1c1b19; color: #fafaf9; font-size: 13px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); transition: opacity 200ms var(--ease), transform 200ms var(--ease); pointer-events: none; z-index: 20; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Order flow demo */
+  .flow-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 20px; }
+  .flow-bar .grp { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .fsteps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 0 20px 18px; list-style: none; }
+  .fsteps button { width: 100%; text-align: left; }
+  .fsteps i { display: block; height: 4px; border-radius: 2px; background: var(--line-strong); transition: background-color 300ms var(--ease); }
+  .fsteps .done i { background: var(--text-2); } .fsteps .now i { background: var(--gold); }
+  .fsteps b { display: block; margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .fsteps .done b, .fsteps .now b { color: var(--text); }
+  .fsteps small { display: block; font-size: 12px; color: var(--muted); }
+  .fnote { margin: 0 20px 18px; padding: 12px 14px; border-radius: 10px; background: var(--raised); font-size: 13px; line-height: 20px; color: var(--text-2); }
+  .fnote b { color: var(--text); font-weight: 500; }
+  .frames { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; }
+  .frames.roles { grid-template-columns: 1fr 1fr; }
+  .fr { border-radius: 14px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .fr-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .fr-head b { font-weight: 500; }
+  .fr-head span { color: var(--muted); }
+  .fr .scaler { position: relative; height: 720px; overflow: hidden; }
+  .fr .scaler iframe { position: absolute; top: 0; left: 0; width: 1360px; transform-origin: 0 0; }
+  .fr iframe { display: block; width: 100%; height: 720px; border: 0; background: #fafaf9; }
+  .fr.phone { padding: 14px; background: #ebe7df; box-shadow: none; }
+  .fr.phone .fr-head { border: 0; padding: 0 4px 10px; }
+  .fr:not(.phone) .bezel { padding: 0; }
+  .fr.phone .bezel { width: 390px; margin: 0 auto; padding: 10px; border-radius: 36px; background: #1c1b19; }
+  .fr.phone iframe { width: 370px; height: 680px; border-radius: 28px; }
+  @media (max-width: 1280px) { .frames, .frames.roles { grid-template-columns: 1fr; } .team-grid, .content-grid { grid-template-columns: 1fr; } .pked-grid, .smp-grid { grid-template-columns: 1fr 1fr; } }
+
+  .screen { display: none; }
+  .screen.on { display: block; animation: in 320ms var(--ease); }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) { .screen.on { animation: none; } }
+
+  @media (max-width: 1180px) {
+    .order-grid { grid-template-columns: 1fr; }
+    .desk { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(3) { border-left: 0; }
+    .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; }
+    main { padding: 0 16px 48px; }
+    .two { grid-template-columns: 1fr !important; }
+    .brief { grid-template-columns: 1fr; }
+    .brief > div + div { padding-left: 0; border-left: 0; }
+    .search { width: 100%; }
+    .topbar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="wallet" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20M16 15h2"/></symbol>
+  <symbol id="list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></symbol>
+  <symbol id="loop" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></symbol>
+  <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="dl" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="M7 5v14l11-7z"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="cpu" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+  <symbol id="upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M5 21h14"/></symbol>
+</defs></svg>
+
+<div class="shell">
+  <aside>
+    <div class="brand"><span class="mark">J</span><span class="word">Jay<span>CVS</span></span></div>
+    <nav class="nav" aria-label="Admin">
+      <a href="#dashboard" data-s="dashboard"><svg class="i"><use href="#grid"/></svg>Dashboard</a>
+      <div class="nav-label">Orders</div>
+      <a href="#orders" data-s="orders"><svg class="i"><use href="#file"/></svg>Orders<span class="count alert">4</span></a>
+      <a href="#team" data-s="team"><svg class="i"><use href="#users"/></svg>Team<span class="count">3</span></a>
+      <a href="#finance" data-s="finance"><svg class="i"><use href="#wallet"/></svg>Finance</a>
+      <a href="#ai" data-s="ai"><svg class="i"><use href="#cpu"/></svg>AI<span class="count num">40%</span></a>
+      <div class="nav-label">Jobs board</div>
+      <a href="#jobs" data-s="jobs"><svg class="i"><use href="#list"/></svg>Job board<span class="count">7</span></a>
+      <a href="#inbox" data-s="inbox"><svg class="i"><use href="#inbox"/></svg>Bulk post<span class="count">7</span></a>
+      <a href="#post" data-s="post"><svg class="i"><use href="#plus"/></svg>Post a job</a>
+      <a href="#sources" data-s="sources"><svg class="i"><use href="#globe"/></svg>Job sources</a>
+      <div class="nav-label">Website</div>
+      <a href="#content" data-s="content"><svg class="i"><use href="#layout"/></svg>Website content</a>
+      <a href="#flow" data-s="flow"><svg class="i"><use href="#loop"/></svg>Order flow demo</a>
+    </nav>
+    <div class="side-foot nav">
+      <a href="index.html" target="_blank" rel="noopener"><svg class="i"><use href="#globe"/></svg>View website</a>
+      <a href="admin-login.html"><svg class="i"><use href="#out"/></svg>Sign out</a>
+      <div class="me"><span class="av dark">JA</span><div><div class="n">Jay</div><div class="r">Owner</div></div></div>
+    </div>
+  </aside>
+
+  <main>
+
+  <!-- ═════════ DASHBOARD ═════════ -->
+  <section class="screen" id="s-dashboard">
+    <div class="topbar">
+      <div>
+        <h1>November 2026</h1>
+        <p class="sub">Orders, writers and money at Jay CVS this month</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="#orders">All orders</a>
+        <a class="btn btn-primary" href="#post"><svg class="i"><use href="#plus"/></svg>Post a job</a>
+      </div>
+    </div>
+
+    <div class="attention">
+      <span class="dot"></span>
+      <p class="t" id="attnText"><b><span class="ref" style="color:inherit">JC-1047</span> · Kevin Otieno</b> <span>paid for Basic but no writer has accepted it. Waiting 1h.</span></p>
+      <button class="btn btn-ghost btn-sm">Remind team</button>
+      <a class="btn btn-primary btn-sm" href="#order">Assign a writer</a>
+    </div>
+
+    <div class="owner-note"><span>This month</span><span>Only you see these</span></div>
+    <div class="card stats">
+      <div class="stat"><span class="l">Takings</span><span class="v"><small>KES</small>17,800</span><span class="c">7 orders paid</span></div>
+      <div class="stat"><span class="l">CVs delivered</span><span class="v key">5</span><span class="c">4 of 5 on time</span></div>
+      <div class="stat"><span class="l">Average order</span><span class="v"><small>KES</small>2,543</span><span class="c">Across 7 paid orders</span></div>
+      <a class="stat" href="#ai" style="display:block"><span class="l">AI tokens left</span><span class="v">397,700</span><span class="c">About 195 posters</span></a>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-head">
+        <h2>Order board</h2>
+        <div style="display:flex;align-items:center;gap:12px"><span class="hint" id="boardHint">8 orders · Grace, Brian and Aisha writing</span><div class="seg" role="group" aria-label="Preview"><button aria-pressed="true" data-busy="0">Today</button><button aria-pressed="false" data-busy="1">Busy week</button><button aria-pressed="false" data-busy="2">Busy day</button></div></div>
+      </div>
+      <div class="board" id="board">
+        <div class="col"><h3>Awaiting payment <span>1</span></h3>
+          <div class="lane">
+            <a class="sheet dim" href="#order"><span class="ref">JC-1048</span><div class="who">Faith Njeri</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="lines"><i style="width:80%"></i><i style="width:60%"></i></div><div class="foot"><span>No writer yet</span><span>24m</span></div></a>
+          </div></div>
+        <div class="col"><h3>Paid, not accepted <span>1</span></h3>
+          <div class="lane">
+            <a class="sheet flag" href="#order"><span class="ref">JC-1047</span><div class="who">Kevin Otieno</div><div class="pk">Basic<span class="pr num">KES 1,500</span></div><div class="lines"><i style="width:85%"></i><i style="width:55%"></i></div><div class="foot"><span class="late">Waiting 1h</span><span>Due 1d 22h</span></div></a>
+          </div></div>
+        <div class="col"><h3>Writing <span id="writingCount">2</span></h3>
+          <div class="lane" id="laneWriting">
+            <a class="sheet" href="#order"><span class="ref">JC-1046</span><div class="who">Dr. Amina Hassan</div><div class="pk">Executive<span class="pr num">KES 6,000</span></div><div class="lines"><i style="width:90%"></i><i style="width:70%"></i></div><div class="foot"><span>Grace</span><span>Due in 15h</span></div></a>
+            <a class="sheet" href="#order"><span class="ref">JC-1045</span><div class="who">Peter Kamau</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="lines"><i style="width:75%"></i><i style="width:50%"></i></div><div class="foot"><span>Brian</span><span class="late">Overdue 5h</span></div></a>
+          </div></div>
+        <div class="col"><h3>Draft with client <span>1</span></h3>
+          <div class="lane">
+            <a class="sheet" href="#order"><span class="ref">JC-1044</span><div class="who">Lucy Wambui</div><div class="pk">Cover letter<span class="pr num">KES 800</span></div><div class="lines"><i style="width:88%"></i><i style="width:64%"></i></div><div class="foot"><span>Aisha</span><span>With client</span></div></a>
+          </div></div>
+        <div class="col"><h3>Revisions <span>1</span></h3>
+          <div class="lane">
+            <a class="sheet" href="#order"><span class="ref">JC-1043</span><div class="who">Samuel Kiprono</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="lines"><i style="width:82%"></i><i style="width:58%"></i></div><div class="foot"><span>Brian</span><span class="late">Due in 1h</span></div></a>
+          </div></div>
+        <div class="col"><h3>Delivered <span>2</span></h3>
+          <div class="lane">
+            <a class="sheet dim" href="#order"><span class="ref">JC-1042</span><div class="who">Mercy Achieng</div><div class="pk">LinkedIn revamp<span class="pr num">KES 2,000</span></div><div class="foot" style="margin-top:8px"><span>Aisha</span><span>3d ago</span></div></a>
+            <a class="sheet dim" href="#order"><span class="ref">JC-1041</span><div class="who">John Mutua</div><div class="pk">Basic<span class="pr num">KES 1,500</span></div><div class="foot" style="margin-top:8px"><span>Grace</span><span>5d ago</span></div></a>
+          </div></div>
+      </div>
+      <div class="board" id="boardScale" hidden>
+        <div class="col"><h3>Awaiting payment <span>14</span></h3>
+          <div class="health"><i class="today" style="flex:4"></i><i class="ok" style="flex:10"></i></div>
+          <div class="health-key">4 unpaid over 1h · 10 new</div>
+          <div class="lane"><div class="sum"><div class="big num">KES 37,200</div><div class="s num">14 orders not paid yet</div><button class="btn btn-ghost btn-sm act">Send 4 payment reminders</button><a class="see" href="#orders">See all 14</a></div></div></div>
+        <div class="col"><h3>Paid, not accepted <span>5</span></h3>
+          <div class="health"><i class="late" style="flex:2"></i><i class="today" style="flex:3"></i></div>
+          <div class="health-key"><span class="late">2 over 1h</span> · 3 new</div>
+          <div class="lane"><a class="sheet flag" href="#order"><span class="ref">JC-1131</span><div class="who">Brenda Atieno</div><div class="pk">Executive<span class="pr num">KES 6,000</span></div><div class="foot" style="margin-top:8px"><span>No writer</span><span class="late">Waiting 3h</span></div></a><a class="sheet flag" href="#order"><span class="ref">JC-1138</span><div class="who">Collins Kiprop</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="foot" style="margin-top:8px"><span>No writer</span><span class="late">Waiting 80m</span></div></a><div class="sum"><div class="big num">3 more</div><div class="s num">Paid under 1h ago</div><a class="see" href="#orders">See all 5</a></div></div></div>
+        <div class="col"><h3>Writing <span>23</span></h3>
+          <div class="health"><i class="late" style="flex:3"></i><i class="today" style="flex:8"></i><i class="ok" style="flex:12"></i></div>
+          <div class="health-key"><span class="late">3 late</span> · 8 today · 12 later</div>
+          <div class="lane"><a class="sheet" href="#order"><span class="ref">JC-1098</span><div class="who">Halima Said</div><div class="pk">Executive<span class="pr num">KES 6,000</span></div><div class="foot" style="margin-top:8px"><span>Grace</span><span class="late">Overdue 5h</span></div></a><a class="sheet" href="#order"><span class="ref">JC-1104</span><div class="who">Dennis Ouma</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="foot" style="margin-top:8px"><span>Brian</span><span class="late">Overdue 2h</span></div></a><a class="sheet" href="#order"><span class="ref">JC-1107</span><div class="who">Faith Wairimu</div><div class="pk">Basic<span class="pr num">KES 1,500</span></div><div class="foot" style="margin-top:8px"><span>Wanjiku</span><span class="late">Overdue 40m</span></div></a><div class="sum"><div class="big num">20 on track</div><div class="s num">8 due today · 12 later</div><a class="see" href="#orders">See all 23</a></div></div></div>
+        <div class="col"><h3>Draft with client <span>9</span></h3>
+          <div class="health"><i class="today" style="flex:2"></i><i class="ok" style="flex:7"></i></div>
+          <div class="health-key">2 quiet for 2+ days · 7 recent</div>
+          <div class="lane"><div class="sum"><div class="big num">9 with clients</div><div class="s num">2 haven’t replied in 2 days</div><button class="btn btn-ghost btn-sm act">Nudge 2 on WhatsApp</button><a class="see" href="#orders">See all 9</a></div></div></div>
+        <div class="col"><h3>Revisions <span>6</span></h3>
+          <div class="health"><i class="today" style="flex:1"></i><i class="ok" style="flex:5"></i></div>
+          <div class="health-key">1 due within 2h · 5 later</div>
+          <div class="lane"><a class="sheet" href="#order"><span class="ref">JC-1089</span><div class="who">Joseph Kiplagat</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="foot" style="margin-top:8px"><span>Aisha</span><span class="late">Due in 1h</span></div></a><div class="sum"><div class="big num">5 on track</div><div class="s num">All due tomorrow or later</div><a class="see" href="#orders">See all 6</a></div></div></div>
+        <div class="col"><h3>Delivered today <span>18</span></h3>
+          <div class="health"><i class="ok" style="flex:1"></i></div>
+          <div class="health-key">112 this month</div>
+          <div class="lane"><div class="sum"><div class="big num">18</div><div class="s num">Delivered since midnight · KES 52,400</div><a class="see" href="#orders">See delivered</a></div></div></div>
+      </div>
+    </div>
+    <div class="card" id="writersCard" hidden style="margin-top:16px">
+      <div class="card-head"><h2>Writers’ load</h2><span class="hint num">38 orders being written or revised · 6 writers</span></div>
+      <ul class="load">
+        <li><span class="nm"><span class="av">GR</span>Grace</span><span class="bar"><span style="width:83%"></span></span><span class="n num">10 active</span><span class="lt late">1 late</span></li>
+        <li><span class="nm"><span class="av">BR</span>Brian</span><span class="bar"><span style="width:75%"></span></span><span class="n num">9 active</span><span class="lt late">1 late</span></li>
+        <li><span class="nm"><span class="av">AI</span>Aisha</span><span class="bar"><span style="width:58%"></span></span><span class="n num">7 active</span><span class="lt muted">On time</span></li>
+        <li><span class="nm"><span class="av">WA</span>Wanjiku</span><span class="bar"><span style="width:50%"></span></span><span class="n num">6 active</span><span class="lt late">1 late</span></li>
+        <li><span class="nm"><span class="av">OT</span>Otieno</span><span class="bar"><span style="width:33%"></span></span><span class="n num">4 active</span><span class="lt muted">On time</span></li>
+        <li class="room"><span class="nm"><span class="av">FA</span>Fatma</span><span class="bar"><span style="width:17%"></span></span><span class="n num">2 active</span><span class="lt">Has room</span></li>
+      </ul>
+      <div class="load-foot"><span>5 paid orders are waiting for a writer. Fatma and Otieno have the most room.</span><button class="btn btn-primary btn-sm">Offer them the 5</button></div>
+    </div>
+
+    <div class="grid two" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);margin-top:16px">
+      <div class="card">
+        <div class="card-head"><h2>Recently posted jobs</h2><a class="more" href="#jobs">All jobs</a></div>
+        <ul class="rows">
+          <li><span class="logo-sq" style="background:#e3eef0;color:#2a5a62">BM</span><div class="grow"><div class="t">Customer Service Intern, 10 posts</div><div class="s">Bahari Microfinance Bank · Mombasa</div></div><span class="r">Closes 5 Dec</span></li>
+          <li><span class="logo-sq" style="background:#e6edf4;color:#2e4d6b">KD</span><div class="grow"><div class="t">Social Media Manager</div><div class="s">Kazi Digital · Nairobi, Westlands</div></div><span class="r">Open until filled</span></li>
+          <li><span class="logo-sq" style="background:#f3ebdd;color:#7a5e22">ML</span><div class="grow"><div class="t">Warehouse Supervisor, 3 posts</div><div class="s">Mavuno Logistics · Athi River</div></div><span class="r" style="color:var(--gold-ink)">Closes in 2 days</span></li>
+          <li><span class="logo-sq" style="background:#efe8f0;color:#5d3f63">IM</span><div class="grow"><div class="t">Clinical Officer, 2 posts</div><div class="s">Imani Medical Centre · Kisumu</div></div><span class="r" style="color:var(--gold-ink)">Closes in 3 days</span></li>
+          <li><span class="logo-sq" style="background:#e7efe9;color:#2f5d43">SF</span><div class="grow"><div class="t">Accounts Assistant</div><div class="s">Savanna Fresh Foods Ltd · Nairobi</div></div><span class="r">2 orders</span></li>
+        </ul>
+      </div>
+      <div class="grid" style="align-content:start">
+        <div class="card">
+          <div class="card-head"><h2>Jobs board</h2><a class="more" href="#inbox">Bulk post</a></div>
+          <ul class="rows">
+            <li><div class="grow soft">Live on the website</div><span class="r" style="color:var(--text);font-weight:500">7</span></li>
+            <li><div class="grow soft">Closing this week</div><span class="r">3</span></li>
+            <li><div class="grow soft">Waiting in Bulk post</div><span class="r">7</span></li>
+            <li><div class="grow soft">Orders from job adverts</div><span class="r" style="color:var(--gold-ink);font-weight:500">4</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>AI tokens</h2><span class="hint num">397,700 of 1,000,000 left</span></div>
+          <div style="padding:0 20px 8px"><div class="meter"><span style="width:39.8%"></span></div></div>
+          <table>
+            <thead><tr><th>Used for</th><th class="n">Times</th><th class="n">Tokens</th></tr></thead>
+            <tbody>
+              <tr><td>Reading job posters</td><td class="n">260</td><td class="n">528K</td></tr>
+              <tr><td>CV analysis</td><td class="n">22</td><td class="n">59K</td></tr>
+              <tr><td>Summary drafts</td><td class="n">14</td><td class="n">15K</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ ORDERS ═════════ -->
+  <section class="screen" id="s-orders">
+    <div class="topbar">
+      <div>
+        <h1>Orders</h1>
+        <p class="sub num">8 orders · KES 17,800 paid this month</p>
+      </div>
+      <div class="actions"><a class="btn btn-ghost" href="#flow">Order flow demo</a></div>
+    </div>
+
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">All<span>8</span></button>
+        <button role="tab" aria-selected="false" class="alert">Needs action<span>4</span></button>
+        <button role="tab" aria-selected="false">Awaiting payment<span>1</span></button>
+        <button role="tab" aria-selected="false" class="alert">Not accepted<span>1</span></button>
+        <button role="tab" aria-selected="false">Writing<span>2</span></button>
+        <button role="tab" aria-selected="false">Draft sent<span>1</span></button>
+        <button role="tab" aria-selected="false">Revisions<span>1</span></button>
+        <button role="tab" aria-selected="false">Delivered<span>2</span></button>
+      </div>
+      <div class="filters">
+        <label class="search"><svg class="i"><use href="#search"/></svg>Name, phone or payment code</label>
+        <span class="select">Package <b>All</b><svg class="i" style="width:14px;height:14px"><use href="#down"/></svg></span>
+        <span class="select">Writer <b>All</b><svg class="i" style="width:14px;height:14px"><use href="#down"/></svg></span>
+        <span class="select">Payment <b>Any</b><svg class="i" style="width:14px;height:14px"><use href="#down"/></svg></span>
+        <span class="select">Due <b>Any time</b><svg class="i" style="width:14px;height:14px"><use href="#down"/></svg></span>
+        <span class="select" style="margin-left:auto">Sort <b>Newest first</b><svg class="i" style="width:14px;height:14px"><use href="#down"/></svg></span>
+      </div>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Order</th><th>Client</th><th>Package</th><th>Payment</th><th>Stage</th><th>Writer</th><th class="n">Due</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><div class="ref">JC-1048</div><div class="cell-sub">24 min ago</div></td><td><div class="cell-main">Faith Njeri</div><div class="cell-sub num">+254 7•• ••• 214</div></td><td><div>Professional</div><div class="cell-sub num">KES 3,000</div></td><td><span class="tag wait">Waiting</span></td><td><span class="track"><i></i><i></i><i></i><i></i><i></i></span><div class="cell-sub">Awaiting payment</div></td><td class="muted">None yet</td><td class="n muted">Unpaid</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1048"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr class="flag"><td><div class="ref">JC-1047</div><div class="cell-sub">2h ago</div></td><td><div class="cell-main">Kevin Otieno</div><div class="cell-sub num">+254 7•• ••• 902</div></td><td><div>Basic</div><div class="cell-sub num">KES 1,500</div></td><td><div>M-Pesa prompt</div><div class="cell-sub">Paid</div></td><td><span class="track bad"><i class="now"></i><i></i><i></i><i></i><i></i></span><div class="cell-sub late">Not accepted · 1h</div></td><td class="muted">None yet</td><td class="n num">1d 22h</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1047"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr><td><div class="ref">JC-1046</div><div class="cell-sub">9h ago</div></td><td><div class="cell-main">Dr. Amina Hassan</div><div class="cell-sub num">+254 7•• ••• 557</div></td><td><div>Executive</div><div class="cell-sub num">KES 6,000</div></td><td><div>Paybill</div><div class="cell-sub">Paid</div></td><td><span class="track"><i class="done"></i><i class="now"></i><i></i><i></i><i></i></span><div class="cell-sub">Writing</div></td><td>Grace</td><td class="n num">15h</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1046"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr><td><div class="ref">JC-1045</div><div class="cell-sub">1d 6h ago</div></td><td><div class="cell-main">Peter Kamau</div><div class="cell-sub num">+254 7•• ••• 330</div></td><td><div>Professional</div><div class="cell-sub num">KES 3,000</div></td><td><div>M-Pesa prompt</div><div class="cell-sub">Paid</div></td><td><span class="track bad"><i class="done"></i><i class="now"></i><i></i><i></i><i></i></span><div class="cell-sub">Writing</div></td><td>Brian</td><td class="n late num">Overdue 5h</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1045"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr><td><div class="ref">JC-1044</div><div class="cell-sub">1d 16h ago</div></td><td><div class="cell-main">Lucy Wambui</div><div class="cell-sub num">+254 7•• ••• 118</div></td><td><div>Cover letter</div><div class="cell-sub num">KES 800</div></td><td><div>M-Pesa prompt</div><div class="cell-sub">Paid</div></td><td><span class="track"><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i></span><div class="cell-sub">Draft with client</div></td><td>Aisha</td><td class="n muted">With client</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1044"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr><td><div class="ref">JC-1043</div><div class="cell-sub">2d 4h ago</div></td><td><div class="cell-main">Samuel Kiprono</div><div class="cell-sub num">+254 7•• ••• 745</div></td><td><div>Professional</div><div class="cell-sub num">KES 3,000</div></td><td><div>Paybill</div><div class="cell-sub">Paid</div></td><td><span class="track"><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i><i></i></span><div class="cell-sub">Revisions</div></td><td>Brian</td><td class="n late num">1h</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1043"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr><td><div class="ref">JC-1042</div><div class="cell-sub">4d ago</div></td><td><div class="cell-main">Mercy Achieng</div><div class="cell-sub num">+254 7•• ••• 671</div></td><td><div>LinkedIn revamp</div><div class="cell-sub num">KES 2,000</div></td><td><div>M-Pesa prompt</div><div class="cell-sub">Paid</div></td><td><span class="track"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i></span><div class="cell-sub">Delivered</div></td><td>Aisha</td><td class="n muted">Done</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1042"><svg class="i"><use href="#right"/></svg></a></td></tr>
+          <tr><td><div class="ref">JC-1041</div><div class="cell-sub">6d ago</div></td><td><div class="cell-main">John Mutua</div><div class="cell-sub num">+254 7•• ••• 093</div></td><td><div>Basic</div><div class="cell-sub num">KES 1,500</div></td><td><div>Paybill</div><div class="cell-sub">Paid</div></td><td><span class="track"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i></span><div class="cell-sub">Delivered</div></td><td>Grace</td><td class="n muted">Done</td><td><a class="btn btn-ghost btn-sm" href="#order" aria-label="Open JC-1041"><svg class="i"><use href="#right"/></svg></a></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ ORDER JC-1043 ═════════ -->
+  <section class="screen" id="s-order">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#orders">Orders</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span class="ref">JC-1043</span></div>
+        <h1>Samuel Kiprono</h1>
+        <p class="sub num">Professional CV · KES 3,000 · placed 2d 4h ago</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost">Reassign</button>
+        <button class="btn btn-primary"><svg class="i"><use href="#send"/></svg>Send draft 2</button>
+      </div>
+    </div>
+
+    <div class="order-grid">
+      <div class="grid">
+        <div class="card">
+          <div class="card-head"><h2>Progress</h2><span class="late num">Draft 2 due in 1h</span></div>
+          <div class="steps">
+            <div class="done">Paid<small>Sat 14 Nov</small></div>
+            <div class="done">Writing<small>Brian</small></div>
+            <div class="done">Draft sent<small>Mon 16 Nov</small></div>
+            <div class="now">Revisions<small>1 of 2 used</small></div>
+            <div>Delivered</div>
+          </div>
+          <div class="next">
+            <div class="h">What happens next</div>
+            <p>Samuel asked for two changes to draft 1. Brian sends draft 2 from here and Samuel gets it on his tracking link and by WhatsApp.</p>
+            <p class="quote">“Please put the KCB internship higher and make the profile shorter. Applying to Equity and KCB this month.”</p>
+          </div>
+        </div>
+
+        <div class="desk">
+          <div class="desk-head">
+            <span class="t">Draft</span>
+            <div class="ver"><button aria-pressed="true">Draft 1 · client notes</button><button aria-pressed="false">Draft 2 · in progress</button></div>
+          </div>
+          <div class="page" aria-label="Draft 1 of Samuel Kiprono's CV">
+            <div class="nm">Samuel Kiprono</div>
+            <div class="role">Senior Accountant</div>
+            <div class="ct">Nairobi · +254 7•• ••• 745 · samuel.kiprono@example.com</div>
+            <h4>Profile</h4>
+            <p><mark>Certified Public Accountant with seven years in banking and manufacturing finance, experienced in month-end close, IFRS reporting, reconciliations and audit support across multi-branch operations, with a record of shortening reporting cycles and improving controls.</mark></p>
+            <h4>Experience</h4>
+            <div class="job">Accountant <span>2021 to now</span></div>
+            <div>Bidco Africa · Thika</div>
+            <ul><li>Ran month-end close for 4 business units, cutting close from 9 to 6 days</li><li>Led reconciliation of 1,200 supplier accounts ahead of the 2024 audit</li><li>Built the cash-flow forecast used by the treasury team each week</li></ul>
+            <div class="job">Assistant Accountant <span>2018 to 2021</span></div>
+            <div>Nairobi Bottlers · Nairobi</div>
+            <ul><li>Prepared VAT and withholding returns with zero KRA penalties in three years</li><li>Supported the move from Sage to SAP Business One</li></ul>
+            <div class="job"><mark>Finance Intern</mark> <span>2017</span></div>
+            <div>KCB Bank · Nakuru branch</div>
+            <ul><li>Reconciled branch suspense accounts and prepared daily cash reports</li></ul>
+            <h4>Education</h4>
+            <div class="job">BCom, Accounting <span>2013 to 2017</span></div>
+            <div>Egerton University · CPA (K), KASNEB</div>
+            <div class="fade"></div>
+          </div>
+          <div class="notes">
+            <div class="note"><div class="w"><span><span class="ix">1</span>Samuel</span><span>Tue 09:14</span></div>Put the KCB internship higher, it matters for bank roles</div>
+            <div class="note"><div class="w"><span><span class="ix">2</span>Samuel</span><span>Tue 09:16</span></div>Profile is too long, keep it to two lines</div>
+            <div class="note" style="background:transparent;box-shadow:inset 0 0 0 1px var(--line-strong)"><div class="w"><span>Brian</span><span>Tue 11:02</span></div>Moving banking work into a Banking experience section first. Shortening the profile.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Client brief</h2></div>
+          <div class="brief">
+            <div><div class="k">Target role</div><div class="v">Senior Accountant</div></div>
+            <div><div class="k">Industry</div><div class="v">Banking</div></div>
+            <div><div class="k">Experience</div><div class="v">7 years</div></div>
+          </div>
+          <div class="brief-note"><div class="muted" style="font-size:12px">Client notes</div><p style="margin-top:2px">Applying to KCB and Equity this month. Wants the CPA up front.</p></div>
+        </div>
+      </div>
+
+      <div class="rail">
+        <div class="card">
+          <div class="card-head"><h2>Payment</h2><span class="tag live">Paid</span></div>
+          <div class="body">
+            <div class="kv"><span>Amount</span><span class="num">KES 3,000</span></div>
+            <div class="kv"><span>Method</span><span>Paybill 4027127</span></div>
+            <div class="kv"><span>M-Pesa code</span><span class="ref" style="color:var(--text)">SKE4H7Q2LM</span></div>
+            <div class="kv"><span>Paid</span><span>Sat 14 Nov, 18:22</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Writer</h2><a class="more" href="#team">Team</a></div>
+          <div class="body">
+            <div style="display:flex;align-items:center;gap:10px"><span class="av">BR</span><div><div style="font-weight:500">Brian</div><div class="muted" style="font-size:13px">2 active orders</div></div></div>
+            <div class="kv" style="margin-top:8px"><span>Accepted</span><span class="num">Sat 14 Nov, 18:40</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Client</h2></div>
+          <div class="body">
+            <div style="font-weight:500">Samuel Kiprono</div>
+            <div class="soft num" style="font-size:13px">+254 7•• ••• 745 · samuel.kiprono@example.com</div>
+            <div class="muted" style="font-size:12px;margin-top:12px">Tracking link</div>
+            <div class="link-box"><span>jaycvs.co.ke/track?o=JC-1043&amp;t=k2f9</span><button class="btn btn-sm" aria-label="Copy link"><svg class="i"><use href="#copy"/></svg></button></div>
+            <div class="muted" style="font-size:12px;margin-top:16px">WhatsApp messages</div>
+            <div class="wa">
+              <button>Draft 2 is ready<svg class="i"><use href="#right"/></svg></button>
+              <button>We’re on your changes<svg class="i"><use href="#right"/></svg></button>
+              <button>Your CV is final<svg class="i"><use href="#right"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>AI helper</h2></div>
+          <div class="body" style="display:grid;gap:6px">
+            <p class="muted" style="font-size:13px;margin-bottom:4px">Helps the writer, doesn’t replace them</p>
+            <button class="btn btn-ghost btn-sm" style="justify-content:flex-start">Shorten the profile to two lines</button>
+            <button class="btn btn-ghost btn-sm" style="justify-content:flex-start">Check the CV against the brief</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ FINANCE ═════════ -->
+  <section class="screen" id="s-finance">
+    <div class="topbar">
+      <div>
+        <h1>Finance</h1>
+        <p class="sub">Money in from clients, paid straight to your Pay Bill</p>
+      </div>
+      <div class="actions">
+        <div class="seg" role="group" aria-label="Period"><button aria-pressed="true">This month</button><button aria-pressed="false">Last 30 days</button><button aria-pressed="false">All time</button></div>
+        <button class="btn btn-ghost"><svg class="i"><use href="#dl"/></svg>Download CSV</button>
+      </div>
+    </div>
+
+    <div class="card stats">
+      <div class="stat"><span class="l">Takings</span><span class="v"><small>KES</small>17,800</span><span class="c">7 orders paid</span></div>
+      <div class="stat"><span class="l">Average order</span><span class="v key"><small>KES</small>2,543</span><span class="c">Up from KES 2,180 last month</span></div>
+      <div class="stat"><span class="l">Waiting for payment</span><span class="v"><small>KES</small>3,000</span><span class="c">1 order, JC-1048</span></div>
+      <div class="stat"><span class="l">Middleman fees</span><span class="v"><small>KES</small>0</span><span class="c">Paid straight to your Paybill</span></div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="card">
+        <div class="card-head"><h2>Takings by package</h2><span class="hint">This month</span></div>
+        <div class="bars">
+          <div class="bar-row top"><span class="lab">Executive<small>1 order</small></span><span class="track-b"><span style="width:100%"></span></span><span class="amt">KES 6,000</span></div>
+          <div class="bar-row top"><span class="lab">Professional<small>2 orders</small></span><span class="track-b"><span style="width:100%"></span></span><span class="amt">KES 6,000</span></div>
+          <div class="bar-row"><span class="lab">Basic<small>2 orders</small></span><span class="track-b"><span style="width:50%"></span></span><span class="amt">KES 3,000</span></div>
+          <div class="bar-row"><span class="lab">LinkedIn revamp<small>1 order</small></span><span class="track-b"><span style="width:33.3%"></span></span><span class="amt">KES 2,000</span></div>
+          <div class="bar-row"><span class="lab">Cover letter<small>1 order</small></span><span class="track-b"><span style="width:13.3%"></span></span><span class="amt">KES 800</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-head"><h2>Payments</h2><span class="hint">M-Pesa payments matched to orders automatically</span></div>
+      <table>
+        <thead><tr><th>Order</th><th>Client</th><th>Method</th><th>M-Pesa code</th><th class="n">Amount</th><th class="n">When</th></tr></thead>
+        <tbody>
+          <tr><td><span class="ref">JC-1047</span></td><td class="cell-main">Kevin Otieno</td><td>M-Pesa prompt</td><td class="ref">SKE4J7Q2LM</td><td class="n">KES 1,500</td><td class="n muted">Today, 12:04</td></tr>
+          <tr><td><span class="ref">JC-1046</span></td><td class="cell-main">Dr. Amina Hassan</td><td>Pay Bill</td><td class="ref">SKD9X3T1PA</td><td class="n">KES 6,000</td><td class="n muted">Yesterday, 21:40</td></tr>
+          <tr><td><span class="ref">JC-1045</span></td><td class="cell-main">Peter Kamau</td><td>M-Pesa prompt</td><td class="ref">SKD2M8R5VB</td><td class="n">KES 3,000</td><td class="n muted">Yesterday, 10:15</td></tr>
+          <tr><td><span class="ref">JC-1044</span></td><td class="cell-main">Joyce Achieng</td><td>M-Pesa prompt</td><td class="ref">SKC7H1N4QE</td><td class="n">KES 800</td><td class="n muted">Mon 16 Nov</td></tr>
+          <tr><td><span class="ref">JC-1043</span></td><td class="cell-main">Samuel Kiprono</td><td>Pay Bill</td><td class="ref">SKB6IT02LM</td><td class="n">KES 3,000</td><td class="n muted">Sat 14 Nov</td></tr>
+        </tbody>
+      </table>
+      <div class="table-foot">Showing the last 5 of 7 payments this month · <a href="#" style="text-decoration:underline;text-underline-offset:3px">See all</a></div>
+    </div>
+  </section>
+
+
+  <!-- ═════════ JOB BOARD ═════════ -->
+  <section class="screen" id="s-jobs">
+    <div class="topbar">
+      <div>
+        <h1>Job board</h1>
+        <p class="sub">What’s live on jaycvs.co.ke and the business each advert brings in</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="#inbox"><svg class="i"><use href="#inbox"/></svg>Bulk post<span class="btn-count num">7</span></a>
+        <a class="btn btn-primary" href="#post"><svg class="i"><use href="#plus"/></svg>Post a job</a>
+      </div>
+    </div>
+
+    <div class="owner-note"><span>This month</span><span>From people who came through a job advert</span></div>
+    <div class="card stats">
+      <div class="stat"><span class="l">Live on the website</span><span class="v">7</span><span class="c">3 close this week</span></div>
+      <div class="stat"><span class="l">Shared to the channel</span><span class="v">6<small style="margin-left:4px">of 7</small></span><span class="c">1 not posted yet</span></div>
+      <div class="stat"><span class="l">CV checks from jobs</span><span class="v">86</span><span class="c num">KES 860 at KES 10 each</span></div>
+      <div class="stat"><span class="l">Orders from job adverts</span><span class="v key"><small>KES</small>10,500</span><span class="c">4 tailored CVs ordered</span></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">Live<span>7</span></button>
+        <button role="tab" aria-selected="false">Closing this week<span>3</span></button>
+        <button role="tab" aria-selected="false">Drafts<span>1</span></button>
+        <button role="tab" aria-selected="false">Expired<span>41</span></button>
+        <button role="tab" aria-selected="false">All<span>49</span></button>
+        <label class="search" style="margin:6px 0 6px auto;width:260px"><svg class="i"><use href="#search"/></svg>Title, company or place</label>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="jobs-table">
+        <thead><tr><th>Job</th><th>Deadline</th><th class="n">CV checks</th><th class="n">Orders</th><th>Channel</th><th></th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="job-cell"><span class="logo-sq" style="background:#e7efe9;color:#2f5d43">SF</span><div><div class="cell-main">Accounts Assistant</div><div class="cell-sub">Savanna Fresh Foods Ltd · Nairobi, Industrial Area</div></div></div></td>
+            <td><div class="runway"><span style="width:56%"></span></div><div class="cell-sub num">11 days left · 28 Nov</div></td>
+            <td class="n">31</td><td class="n"><span class="orders-n">2</span><div class="cell-sub num">KES 4,500</div></td>
+            <td><span class="chan done"><svg class="i"><use href="#check"/></svg>Posted 3 Nov</span></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+          <tr>
+            <td><div class="job-cell"><span class="logo-sq" style="background:#efe8f0;color:#5d3f63">IM</span><div><div class="cell-main">Clinical Officer, 2 posts</div><div class="cell-sub">Imani Medical Centre · Kisumu</div></div></div></td>
+            <td><div class="runway soon"><span style="width:70%"></span></div><div class="cell-sub soon-t num">3 days left · 20 Nov</div></td>
+            <td class="n">12</td><td class="n"><span class="orders-n">1</span><div class="cell-sub num">KES 3,000</div></td>
+            <td><span class="chan done"><svg class="i"><use href="#check"/></svg>Posted 10 Nov</span></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+          <tr class="hl">
+            <td><div class="job-cell"><span class="logo-sq" style="background:#f3ebdd;color:#7a5e22">ML</span><div><div class="cell-main">Warehouse Supervisor, 3 posts</div><div class="cell-sub">Mavuno Logistics · Athi River</div></div></div></td>
+            <td><div class="runway soon"><span style="width:71%"></span></div><div class="cell-sub soon-t num">2 days left · 19 Nov</div></td>
+            <td class="n">9</td><td class="n muted">0</td>
+            <td><button class="btn btn-ghost btn-sm"><svg class="i"><use href="#copy"/></svg>Copy channel post</button></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+          <tr>
+            <td><div class="job-cell"><span class="logo-sq" style="background:#fbe9e2;color:#9a3d1c">K</span><div><div class="cell-main">IT Specialist</div><div class="cell-sub">Kilimall · Nairobi, Mombasa Road</div></div></div></td>
+            <td><div class="runway"><span style="width:82%"></span></div><div class="cell-sub num">4 days left · 21 Nov</div></td>
+            <td class="n">22</td><td class="n"><span class="orders-n">1</span><div class="cell-sub num">KES 3,000</div></td>
+            <td><span class="chan done"><svg class="i"><use href="#check"/></svg>Posted 30 Oct</span></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+          <tr>
+            <td><div class="job-cell"><span class="logo-sq" style="background:#e6edf4;color:#2e4d6b">KD</span><div><div class="cell-main">Social Media Manager</div><div class="cell-sub">Kazi Digital · Nairobi, Westlands · Hybrid</div></div></div></td>
+            <td><div class="runway open"></div><div class="cell-sub">Open until filled</div></td>
+            <td class="n">6</td><td class="n muted">0</td>
+            <td><span class="chan done"><svg class="i"><use href="#check"/></svg>Posted 14 Nov</span></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+          <tr>
+            <td><div class="job-cell"><span class="logo-sq" style="background:#e3eef0;color:#2a5a62">BM</span><div><div class="cell-main">Customer Service Intern, 10 posts</div><div class="cell-sub">Bahari Microfinance Bank · Mombasa</div></div></div></td>
+            <td><div class="runway"><span style="width:10%"></span></div><div class="cell-sub num">18 days left · 5 Dec</div></td>
+            <td class="n">4</td><td class="n muted">0</td>
+            <td><span class="chan done"><svg class="i"><use href="#check"/></svg>Posted 15 Nov</span></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+          <tr>
+            <td><div class="job-cell"><span class="logo-sq">MI</span><div><div class="cell-main">Graduate Trainee, Finance</div><div class="cell-sub">Microfinance institution · Nairobi</div></div></div></td>
+            <td><div class="runway open"></div><div class="cell-sub">Open until filled</div></td>
+            <td class="n">2</td><td class="n muted">0</td>
+            <td><span class="chan done"><svg class="i"><use href="#check"/></svg>Posted 5 Nov</span></td>
+            <td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="table-foot">41 expired jobs are hidden from the website automatically. Their CV checks and orders still count above.</div>
+    </div>
+
+    <div class="grid two" style="grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);margin-top:16px">
+      <div class="card">
+        <div class="card-head"><h2>Which adverts bring orders</h2><span class="hint">By category, last 90 days</span></div>
+        <div class="bars">
+          <div class="bar-row top"><span class="lab">Finance & Accounting<small>14 jobs posted</small></span><span class="track-b"><span style="width:100%"></span></span><span class="amt">11 orders</span></div>
+          <div class="bar-row"><span class="lab">Healthcare<small>6 jobs posted</small></span><span class="track-b"><span style="width:55%"></span></span><span class="amt">6 orders</span></div>
+          <div class="bar-row"><span class="lab">ICT<small>9 jobs posted</small></span><span class="track-b"><span style="width:45%"></span></span><span class="amt">5 orders</span></div>
+          <div class="bar-row"><span class="lab">Sales & Marketing<small>8 jobs posted</small></span><span class="track-b"><span style="width:18%"></span></span><span class="amt">2 orders</span></div>
+          <div class="bar-row"><span class="lab">Education<small>5 jobs posted</small></span><span class="track-b"><span style="width:9%"></span></span><span class="amt">1 order</span></div>
+        </div>
+        <p class="muted" style="font-size:13px;padding:0 20px 20px">Finance jobs are a third of what you post but bring nearly half the orders. Worth adding more banks as job sources.</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Job sources this morning</h2><a class="more" href="#sources">Job sources</a></div>
+        <ul class="rows">
+          <li><div class="grow soft">Pages checked at 06:00</div><span class="r" style="color:var(--text);font-weight:500">18</span></li>
+          <li><div class="grow soft">New jobs added to Bulk post</div><span class="r" style="color:var(--text);font-weight:500">4</span></li>
+          <li><div class="grow soft">Skipped, already seen or not a job</div><span class="r">9</span></li>
+          <li><div class="grow"><span class="late" style="font-weight:400">KEMRI careers didn’t load</span><div class="s">2 failed checks in a row</div></div><a class="btn btn-ghost btn-sm" href="#sources">Look</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ BULK POST ═════════ -->
+  <section class="screen" id="s-inbox">
+    <div class="topbar">
+      <div>
+        <h1>Bulk post</h1>
+        <p class="sub">Posters and found jobs, read by AI and checked by you. Nothing goes live by itself</p>
+      </div>
+      <div class="actions">
+        <a class="btn btn-ghost" href="#post">Type a job instead</a>
+        <button class="btn btn-primary"><svg class="i"><use href="#upload"/></svg>Add posters</button>
+      </div>
+    </div>
+
+    <div class="queue-bar">
+      <div class="seg-tabs">
+        <button aria-pressed="true">To check<span class="num">7</span></button>
+        <button aria-pressed="false">Reading<span class="num">3</span></button>
+        <button aria-pressed="false">Approved today<span class="num">5</span></button>
+        <button aria-pressed="false">Discarded<span class="num">2</span></button>
+      </div>
+      <span class="muted num" style="font-size:13px">About 2,030 tokens a poster · 397,700 left</span>
+    </div>
+
+    <div class="review">
+      <!-- Queue -->
+      <div class="card queue">
+        <div class="q-group">Needs a decision</div>
+        <a class="q-item">
+          <span class="thumb t-yellow"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">Airport jobs: cleaners, drivers, loaders</span><span class="q-s">Not stated · WhatsApp forward</span><span class="q-flag bad">Likely scam: asks for a KES 1,500 fee</span></span>
+        </a>
+        <a class="q-item">
+          <span class="thumb t-white"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">IT Specialist</span><span class="q-s">Kilimall · WhatsApp forward</span><span class="q-flag">Same advert as a live job</span></span>
+        </a>
+        <a class="q-item on" aria-current="true">
+          <span class="thumb t-paper"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">Teacher, Mathematics and Physics</span><span class="q-s">Tumaini Academy · Phone photo</span><span class="q-flag warn">Check 1 field: deadline</span></span>
+        </a>
+        <div class="q-group">Ready to approve</div>
+        <a class="q-item">
+          <span class="thumb t-green"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">Procurement Officer</span><span class="q-s">KeNHA · Found on KeNHA careers</span></span>
+        </a>
+        <a class="q-item">
+          <span class="thumb t-white"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">ICT Officer II</span><span class="q-s">KRA · Found on KRA careers</span></span>
+        </a>
+        <a class="q-item">
+          <span class="thumb t-blue"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">Medical Sales Representative</span><span class="q-s">Afya Pharma · LinkedIn screenshot</span></span>
+        </a>
+        <a class="q-item">
+          <span class="thumb t-teal"><i></i><i></i><i></i></span>
+          <span class="q-main"><span class="q-t">Front Office Assistant</span><span class="q-s">Coral Bay Resort · Facebook group</span></span>
+        </a>
+        <div class="q-group">Reading</div>
+        <div class="q-reading"><span class="num">3 posters</span><span class="muted">About 10 seconds each</span></div>
+      </div>
+
+      <!-- Review pane -->
+      <div class="card pane">
+        <div class="pane-head">
+          <div>
+            <div class="muted" style="font-size:13px">Phone photo · read in 3.1s · 2,350 tokens</div>
+            <h2 class="pane-title">Teacher, Mathematics and Physics</h2>
+          </div>
+          <div class="pager"><button class="btn btn-ghost btn-sm" aria-label="Previous">‹</button><span class="num muted" style="font-size:13px">3 of 7</span><button class="btn btn-ghost btn-sm" aria-label="Next">›</button></div>
+        </div>
+
+        <div class="read">
+          <!-- The moment: the poster as photographed, with what the AI couldn't read marked -->
+          <figure class="photo">
+            <div class="notice">
+              <div class="n-school">TUMAINI ACADEMY</div>
+              <div class="n-town">P.O. Box 1520-20100, Nakuru</div>
+              <div class="n-rule"></div>
+              <div class="n-head">TEACHING VACANCY</div>
+              <p>Tumaini Academy invites applications from qualified and motivated candidates for the following position, to start in January 2027.</p>
+              <p class="n-pos">Teacher – Mathematics / Physics (1 post)</p>
+              <p><b>Requirements</b></p>
+              <p>• B.Ed (Science), Mathematics / Physics<br>• Registered with TSC<br>• At least 2 years of KCSE teaching</p>
+              <p><b>How to apply</b></p>
+              <p>Hand-deliver your application letter, CV and copies of certificates to the school office, Monday to Friday, 8am to 4pm,</p>
+              <p style="margin-top:14px">&nbsp;</p><p class="n-dead" style="margin-top:0">on or before <span class="smudge">1<span class="blot">2</span>th</span> December 2026.</p>
+              <div class="n-sign">The Principal</div>
+            </div>
+            <figcaption>Phone photo from a WhatsApp forward · <a href="#">Open full size</a></figcaption>
+          </figure>
+
+          <div class="fields">
+            <div class="f2">
+              <label class="fld ok"><span class="fl">Job title</span><span class="fv">Teacher, Mathematics and Physics</span></label>
+              <label class="fld ok"><span class="fl">Company</span><span class="fv">Tumaini Academy</span></label>
+            </div>
+            <div class="f2">
+              <label class="fld ok"><span class="fl">County and town</span><span class="fv">Nakuru · Nakuru</span></label>
+              <label class="fld ok"><span class="fl">Category</span><span class="fv">Education</span></label>
+            </div>
+            <div class="fld unsure">
+              <span class="fl">Deadline <span class="why">Check this</span></span>
+              <p class="unsure-note">One digit is smudged. The poster says “1<span class="num">?</span>th December 2026”.</p>
+              <div class="pick">
+                <button>11 Dec</button><button>12 Dec</button><button>13 Dec</button><button>14 Dec</button><button>Other date</button>
+              </div>
+            </div>
+            <div class="fld ok"><span class="fl">How to apply</span><span class="fv">In person at the school office, Mon to Fri, 8am to 4pm</span><span class="fs">Bring: application letter, CV, certificates</span></div>
+            <div class="fld ok"><span class="fl">About the role</span><span class="fv" style="font-weight:400">Tumaini Academy in Nakuru is hiring a Mathematics and Physics teacher to start in January 2027.</span></div>
+            <div class="fld ok"><span class="fl">Requirements</span><span class="fv" style="font-weight:400">B.Ed (Science), Mathematics and Physics<br>Registered with TSC<br>At least 2 years of KCSE teaching</span></div>
+            <div class="scam-ok"><svg class="i"><use href="#check"/></svg>Scam check: no fees asked, a named school and a physical address</div>
+          </div>
+        </div>
+
+        <!-- After approval: what gets shared -->
+        <div class="share">
+          <div><div class="share-h">Channel post</div>
+          <p class="muted" style="font-size:13px;margin-top:4px">Made from the fields above, ready to paste into the Job Vacancies channel once you approve. It ends with the link to your CV services.</p>
+          <button class="btn btn-ghost btn-sm" style="margin-top:12px" disabled><svg class="i"><use href="#copy"/></svg>Copy for WhatsApp</button></div>
+          <div class="bubble">
+<b>🔥 TEACHER, MATHEMATICS AND PHYSICS</b>
+🏢 Tumaini Academy
+📍 Nakuru · Full-time
+⏳ Deadline: 1? Dec 2026, pick the date first
+📌 Apply in person: school office, Mon to Fri, 8am to 4pm
+
+👉 Full details: jaycvs.co.ke/jobs/teacher-tumaini
+
+✍🏾 Is your CV ready? Get one that gets you shortlisted: jaycvs.co.ke/services
+            <span class="bubble-time">now</span>
+          </div>
+        </div>
+
+        <div class="pane-foot">
+          <span class="muted" style="font-size:13px">Confirm the deadline to approve</span>
+          <div class="actions">
+            <button class="btn btn-ghost">Discard <kbd>D</kbd></button>
+            <button class="btn btn-ghost">Skip</button>
+            <button class="btn btn-primary" disabled aria-disabled="true">Approve and publish <kbd class="dark">A</kbd></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="keys">Keys <kbd>J</kbd><kbd>K</kbd> next and previous · <kbd>A</kbd> approve · <kbd>D</kbd> discard</p>
+  </section>
+
+  <!-- ═════════ POST A JOB ═════════ -->
+  <section class="screen" id="s-post">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#jobs">Job board</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span>New job</span></div>
+        <h1>Post a job</h1>
+        <p class="sub">Type it in, or drop the poster and let the AI fill the form</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost">Save draft</button>
+        <button class="btn btn-primary">Publish</button>
+      </div>
+    </div>
+
+    <div class="order-grid" style="grid-template-columns:minmax(0,1fr) 360px">
+      <div class="grid">
+        <label class="drop"><svg class="i" style="width:18px;height:18px"><use href="#upload"/></svg><span><b>Have the poster?</b> Drop it here and the fields fill themselves</span><span class="muted">JPG, PNG or PDF</span></label>
+
+        <div class="card form">
+          <div class="card-head"><h2>The job</h2></div>
+          <div class="form-body">
+            <div class="in"><span>Job title</span><div class="box">Procurement Officer</div></div>
+            <div class="f2">
+              <div class="in"><span>Company</span><div class="box">Kenya National Highways Authority (KeNHA)</div></div>
+              <div class="in"><span>Category</span><div class="box sel">Procurement & Supply Chain</div></div>
+            </div>
+            <div class="f3">
+              <div class="in"><span>County</span><div class="box sel">Nairobi</div></div>
+              <div class="in"><span>Town or area</span><div class="box">Blue Shield Towers, Upper Hill</div></div>
+              <div class="in"><span>Job type</span><div class="box sel">Contract, 3 years</div></div>
+            </div>
+            <div class="in"><span>Salary <em>only if the advert says</em></span><div class="box ph">e.g. KES 60,000</div></div>
+          </div>
+        </div>
+
+        <div class="card form">
+          <div class="card-head"><h2>Details</h2><span class="hint">Written text helps people find the job on Google</span></div>
+          <div class="form-body">
+            <div class="in"><span>About the role</span><div class="box area">KeNHA is hiring a Procurement Officer to run tenders and contracts for road projects across the Nairobi region.</div></div>
+            <div class="f2">
+              <div class="in"><span>Responsibilities <em>one per line</em></span><div class="box area">Prepare and run tenders under the PPADA<br>Evaluate bids and draft contracts<br>Keep the procurement plan up to date</div></div>
+              <div class="in"><span>Requirements <em>one per line</em></span><div class="box area">Degree in Procurement or Supply Chain<br>Member of KISM with a practising licence<br>3 years in public procurement</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card form">
+          <div class="card-head"><h2>Deadline and how to apply</h2></div>
+          <div class="form-body">
+            <div class="f2">
+              <div class="in"><span>Application deadline</span><div class="box">2 December 2026</div></div>
+              <div class="in"><span>&nbsp;</span><label class="check"><span class="cb"></span>Open until filled</label></div>
+            </div>
+            <div class="in"><span>How people apply</span>
+              <div class="methods"><button>Email</button><button aria-pressed="true">Online link</button><button>WhatsApp</button><button>In person</button><button>Other</button></div>
+            </div>
+            <div class="in"><span>Application link</span><div class="box">kenha.co.ke/careers/procurement-officer-2026</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail" style="position:sticky;top:16px">
+        <div class="card">
+          <div class="card-head"><h2>On the website</h2><span class="hint">Preview</span></div>
+          <div class="body">
+            <div class="site-card">
+              <div class="sc-top"><span class="logo-sq" style="background:#e9efe6;color:#3d5f2e">KE</span><div><div class="sc-t">Procurement Officer</div><div class="sc-c">Kenya National Highways Authority</div></div></div>
+              <div class="sc-meta"><span>Nairobi, Upper Hill</span><span>Contract</span><span class="num">Closes 2 Dec</span></div>
+              <div class="sc-tags"><span>Procurement</span><span>Apply online</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Ready to publish</h2><span class="hint num">4 of 5</span></div>
+          <ul class="ready">
+            <li class="done">Title, company and place</li>
+            <li class="done">Details for Google</li>
+            <li class="done">Deadline</li>
+            <li class="done">How to apply</li>
+            <li>Poster <span class="muted">optional</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>After you publish</h2></div>
+          <div class="body muted" style="font-size:13px">The channel post is made for you to copy into WhatsApp. The job hides itself the day after the deadline.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ JOB SOURCES ═════════ -->
+  <section class="screen" id="s-sources">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#jobs">Job board</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span>Job sources</span></div>
+        <h1>Job sources</h1>
+        <p class="sub">Vacancies pages checked every morning. New jobs wait in Bulk post for you</p>
+      </div>
+      <div class="actions"><button class="btn btn-ghost">Add from the ready-made list</button></div>
+    </div>
+
+    <div class="card morning">
+      <div class="m-time"><span class="muted" style="font-size:13px">This morning</span><span class="m-clock num">06:00</span></div>
+      <div class="m-flow">
+        <div><span class="v num">18</span><span class="l">pages checked</span></div>
+        <svg class="i arrow"><use href="#right"/></svg>
+        <div><span class="v num">13</span><span class="l">new links found</span></div>
+        <svg class="i arrow"><use href="#right"/></svg>
+        <div><span class="v num">4</span><span class="l">jobs added to Bulk post</span></div>
+        <svg class="i arrow"><use href="#right"/></svg>
+        <div><span class="v num key">2</span><span class="l">approved so far</span></div>
+      </div>
+      <p class="m-note">9 skipped: 6 already seen, 3 weren’t job adverts. Nothing is paid for twice.</p>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="add-src">
+        <label class="search" style="flex:1;width:auto"><svg class="i"><use href="#globe"/></svg>Paste a careers page or job feed link</label>
+        <button class="btn btn-primary btn-sm">Check it</button>
+      </div>
+      <table>
+        <thead><tr><th>Source</th><th>Kind</th><th>Last check</th><th class="n">Added this week</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr class="flag"><td><div class="cell-main">KEMRI careers</div><div class="cell-sub">kemri.go.ke/careers</div></td><td class="soft">Government</td><td class="num">Today 06:02</td><td class="n">0</td><td><span class="tag wait">Didn’t load, 2 in a row</span></td><td class="n"><button class="btn btn-ghost btn-sm">Check now</button></td></tr>
+          <tr><td><div class="cell-main">Parliament of Kenya vacancies</div><div class="cell-sub">parliament.go.ke/vacancies</div></td><td class="soft">Government</td><td class="num muted">Fri 06:01</td><td class="n muted">0</td><td><span class="tag off">Switched off after 3 fails</span></td><td class="n"><button class="btn btn-ghost btn-sm">Turn on</button></td></tr>
+          <tr><td><div class="cell-main">KeNHA careers</div><div class="cell-sub">kenha.co.ke/careers</div></td><td class="soft">Government</td><td class="num">Today 06:00</td><td class="n">3</td><td><span class="tag live">1 new today</span></td><td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td></tr>
+          <tr><td><div class="cell-main">KRA careers</div><div class="cell-sub">kra.go.ke/careers</div></td><td class="soft">Government</td><td class="num">Today 06:00</td><td class="n">2</td><td><span class="tag live">1 new today</span></td><td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td></tr>
+          <tr><td><div class="cell-main">KCB careers</div><div class="cell-sub">kcbgroup.com/careers</div></td><td class="soft">Banks & employers</td><td class="num">Today 06:01</td><td class="n">4</td><td><span class="tag live">2 new today</span></td><td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td></tr>
+          <tr><td><div class="cell-main">Co-op Bank careers</div><div class="cell-sub">co-opbank.co.ke/careers</div></td><td class="soft">Banks & employers</td><td class="num">Today 06:01</td><td class="n">1</td><td><span class="tag plain">Nothing new</span></td><td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td></tr>
+          <tr><td><div class="cell-main">TSC recruitment</div><div class="cell-sub">tsc.go.ke</div></td><td class="soft">Government</td><td class="num">Today 06:00</td><td class="n">0</td><td><span class="tag plain">Nothing new</span></td><td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td></tr>
+          <tr><td><div class="cell-main">Kenyatta National Hospital careers</div><div class="cell-sub">knh.or.ke/careers</div></td><td class="soft">Government</td><td class="num">Today 06:01</td><td class="n">1</td><td><span class="tag plain">Nothing new</span></td><td class="n"><button class="btn btn-ghost btn-sm" aria-label="More">•••</button></td></tr>
+        </tbody>
+      </table>
+      <div class="table-foot">Showing 8 of 18 sources · A source that fails 3 mornings in a row is switched off and you get told</div>
+    </div>
+  </section>
+
+  
+  <!-- ═════════ TEAM ═════════ -->
+  <section class="screen" id="s-team">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#dashboard">Dashboard</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span>Team</span></div>
+        <h1>Team</h1>
+        <p class="sub">Who can write CVs and post jobs, and what each person is working on.</p>
+      </div>
+      <div class="actions"><button class="btn btn-primary" type="button" data-open="invite"><svg class="i"><use href="#plus"/></svg>Invite a writer</button></div>
+    </div>
+
+    <div class="card stats" style="margin-bottom:16px">
+      <div class="stat"><span class="l">Active writers</span><span class="v num">3</span><span class="c">Grace, Brian and Aisha</span></div>
+      <div class="stat"><span class="l">Orders in hand</span><span class="v num">5</span><span class="c">Being written right now</span></div>
+      <div class="stat"><span class="l">Delivered this month</span><span class="v num">38</span><span class="c">By the whole team, 35 on time</span></div>
+      <div class="stat"><span class="l">Invites waiting</span><span class="v key num">1</span><span class="c">Wanjiru, sent 3 days ago</span></div>
+    </div>
+
+    <div class="team-grid">
+      <div class="card">
+        <div class="card-head"><h2>Your team</h2><span class="muted" style="font-size:13px">5 people</span></div>
+        <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Member</th><th>What they can do</th><th class="n">This month</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><div class="who-cell"><span class="av dark">JA</span><div><div class="cell-main">Jay</div><div class="cell-sub">That's you</div></div></div></td><td><div class="can"><span class="all">Everything</span></div></td><td class="n"><div class="num">6 delivered</div><div class="cell-sub">Executive</div></td><td><span class="tag live">Active</span></td><td></td></tr>
+            <tr><td><div class="who-cell"><span class="av">GW</span><div><div class="cell-main">Grace Wanjiku</div><div class="cell-sub">grace.wanjiku@gmail.com</div></div></div></td><td><div class="can"><span>Writes CVs</span><span>Posts jobs</span></div></td><td class="n"><div class="num">14 delivered</div><div class="cell-sub">2 in hand</div></td><td><span class="tag live">Active</span></td><td><button class="btn btn-ghost btn-sm" type="button" data-open="edit" data-who="Grace Wanjiku">Edit</button></td></tr>
+            <tr><td><div class="who-cell"><span class="av">BO</span><div><div class="cell-main">Brian Otieno</div><div class="cell-sub">brian.otieno@gmail.com</div></div></div></td><td><div class="can"><span>Writes CVs</span></div></td><td class="n"><div class="num">11 delivered</div><div class="cell-sub">2 in hand</div></td><td><span class="tag live">Active</span></td><td><button class="btn btn-ghost btn-sm" type="button" data-open="edit" data-who="Brian Otieno">Edit</button></td></tr>
+            <tr><td><div class="who-cell"><span class="av">AM</span><div><div class="cell-main">Aisha Mohamed</div><div class="cell-sub">aisha.m@gmail.com</div></div></div></td><td><div class="can"><span>Writes CVs</span></div></td><td class="n"><div class="num">7 delivered</div><div class="cell-sub">1 in hand</div></td><td><span class="tag live">Active</span></td><td><button class="btn btn-ghost btn-sm" type="button" data-open="edit" data-who="Aisha Mohamed">Edit</button></td></tr>
+            <tr class="dim"><td><div class="who-cell"><span class="av">WN</span><div><div class="cell-main">Wanjiru Njoroge</div><div class="cell-sub">wanjiru.njoroge@gmail.com</div></div></div></td><td><div class="can"><span>Posts jobs</span></div></td><td class="n">Nothing yet</td><td><span class="tag wait">Invited, not joined</span><div class="cell-sub">Expires in 11 days</div></td><td><button class="btn btn-ghost btn-sm" type="button" data-copy-invite>Copy invite</button></td></tr>
+            <tr class="dim"><td><div class="who-cell"><span class="av">PK</span><div><div class="cell-main">Peter Kariuki</div><div class="cell-sub">p.kariuki@gmail.com</div></div></div></td><td><div class="can"><span>Writes CVs</span></div></td><td class="n">Nothing yet</td><td><span class="tag off">Invite expired</span><div class="cell-sub">On 2 Nov</div></td><td><button class="btn btn-ghost btn-sm" type="button" data-open="invite">Resend</button></td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="table-foot">Writers only see orders, and the orders they've accepted. They never see prices or takings.</div>
+      </div>
+
+      <div style="display:grid;gap:16px">
+        <div class="card">
+          <div class="card-head"><h2>How inviting works</h2></div>
+          <ol class="how-inv">
+            <li><span class="k">1</span><span>You add their <b>name, Google email, WhatsApp number</b> and what they can do.</span></li>
+            <li><span class="k">2</span><span>They get a message on WhatsApp and <b>sign in with that Google account</b>. The invite lasts 14 days.</span></li>
+            <li><span class="k">3</span><span>They start on the work you allowed, and you can <b>pause or remove</b> them any time.</span></li>
+          </ol>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Only you can</h2></div>
+          <ul class="only">
+            <li><svg class="i"><use href="#check"/></svg>See money: prices, takings and M-Pesa payments</li>
+            <li><svg class="i"><use href="#check"/></svg>Change prices and everything on the website</li>
+            <li><svg class="i"><use href="#check"/></svg>Invite, pause and remove team members</li>
+            <li><svg class="i"><use href="#check"/></svg>Reassign orders, extend deadlines and refund clients</li>
+            <li><svg class="i"><use href="#check"/></svg>See the AI token balance</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <dialog class="dlg" data-dlg="invite">
+      <div class="dlg-head"><div><h2>Invite a writer</h2><p>They join by signing in with Google, using the email you enter here.</p></div><button class="x" type="button" data-close aria-label="Close"><svg class="i"><use href="#x"/></svg></button></div>
+      <div class="dlg-body" data-inv-form>
+        <div class="fgrid">
+          <label class="in"><span>Name</span><input class="inp" placeholder="For example Wanjiru Njoroge" data-inv-name></label>
+          <label class="in"><span>WhatsApp number</span><input class="inp" placeholder="07XX XXX XXX"></label>
+          <label class="in full"><span>Google email</span><input class="inp" type="email" placeholder="name@gmail.com"><small>The invite only works for this Google account.</small></label>
+        </div>
+        <div class="in"><span>What can they do?</span>
+          <div style="display:grid;gap:8px">
+            <label class="tick-in"><input type="checkbox" checked data-can-write><div><b>Write CVs</b><span>Accept paid orders and work on the ones they accept</span></div></label>
+            <label class="tick-in"><input type="checkbox"><div><b>Post jobs</b><span>Post and edit job adverts, bulk post jobs, company logos</span></div></label>
+          </div>
+        </div>
+      </div>
+      <div class="dlg-body" data-inv-done hidden>
+        <p style="font-size:14px;color:var(--text-2)">Invite created. Send them this on WhatsApp:</p>
+        <div class="invite-msg" data-inv-msg></div>
+      </div>
+      <div class="dlg-foot"><button class="btn btn-ghost" type="button" data-close>Cancel</button><button class="btn btn-primary" type="button" data-inv-create>Create invite</button></div>
+    </dialog>
+
+    <dialog class="dlg" data-dlg="edit">
+      <div class="dlg-head"><div><h2 data-edit-title>Edit Grace Wanjiku</h2><p>Change what they can do. It applies from now on.</p></div><button class="x" type="button" data-close aria-label="Close"><svg class="i"><use href="#x"/></svg></button></div>
+      <div class="dlg-body">
+        <div class="in"><span>What can they do?</span>
+          <div style="display:grid;gap:8px">
+            <label class="tick-in"><input type="checkbox" checked><div><b>Write CVs</b><span>Accept paid orders and work on the ones they accept</span></div></label>
+            <label class="tick-in"><input type="checkbox" checked><div><b>Post jobs</b><span>Post and edit job adverts, bulk post jobs, company logos</span></div></label>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:var(--raised);font-size:13px"><span>Pause their access. Their open orders go back to Paid, not accepted.</span><input type="checkbox" class="toggle" aria-label="Pause access"></div>
+      </div>
+      <div class="dlg-foot" style="justify-content:space-between"><button class="btn btn-ghost" type="button" style="color:var(--bad)">Remove from team</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" type="button" data-close>Cancel</button><button class="btn btn-primary" type="button" data-close data-toast="Changes saved">Save</button></div></div>
+    </dialog>
+  </section>
+
+  <!-- ═════════ WEBSITE CONTENT ═════════ -->
+  <section class="screen" id="s-content">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#dashboard">Dashboard</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span data-ctab-crumb>Website content</span></div>
+        <h1>Website content</h1>
+        <p class="sub">What clients see on the website. Changes go live when you press Save and publish.</p>
+      </div>
+      <div class="actions"><a class="btn btn-ghost" href="index.html" target="_blank" rel="noopener"><svg class="i"><use href="#globe"/></svg>View website</a></div>
+    </div>
+
+    <div class="content-grid">
+      <div class="card">
+        <div class="ctabs" role="tablist" data-ctabs>
+          <button role="tab" data-ct="packages" aria-selected="true">Packages and prices</button>
+          <button role="tab" data-ct="reviews" aria-selected="false">Reviews<span class="dot" aria-label="2 waiting"></span></button>
+          <button role="tab" data-ct="samples" aria-selected="false">Sample CVs</button>
+          <button role="tab" data-ct="posts" aria-selected="false">Career tips</button>
+          <button role="tab" data-ct="faqs" aria-selected="false">FAQs</button>
+          <button role="tab" data-ct="home" aria-selected="false">Homepage</button>
+          <button role="tab" data-ct="about" aria-selected="false">About page</button>
+          <button role="tab" data-ct="settings" aria-selected="false">Business settings</button>
+        </div>
+
+        <!-- Packages -->
+        <div class="cpanel" data-cp="packages">
+          <p class="lead-in">Prices show on the homepage, pricing page, services page and the order form.</p>
+          <div class="pked-grid">
+            <div class="pked"><div class="pked-head"><b>Basic CV</b></div>
+              <label class="in"><span>Price</span><div class="pre-in"><span>KES</span><input class="inp num" value="1,500"></div></label>
+              <label class="in"><span>Best for</span><input class="inp" value="Graduates and entry-level roles"></label>
+              <div class="fgrid"><label class="in"><span>First draft</span><div class="pre-in"><input class="inp num" value="48"><span style="padding:0 12px 0 0">hours</span></div></label><label class="in"><span>Revisions</span><input class="inp" value="1 round"></label></div>
+              <div class="in"><span>What's included</span><div class="feat"><input class="inp" value="Professionally written CV"><input class="inp" value="ATS-friendly format"><input class="inp" value="Word and PDF files"></div></div>
+              <button class="addf" type="button">Add a line</button>
+            </div>
+            <div class="pked pop"><div class="pked-head"><b>Professional</b><label class="check" style="height:auto;font-size:12px;gap:6px"><input type="checkbox" class="toggle" checked aria-label="Chosen most often">Chosen most often</label></div>
+              <label class="in"><span>Price</span><div class="pre-in"><span>KES</span><input class="inp num" value="3,000"></div></label>
+              <label class="in"><span>Best for</span><input class="inp" value="Mid-level professionals"></label>
+              <div class="fgrid"><label class="in"><span>First draft</span><div class="pre-in"><input class="inp num" value="24"><span style="padding:0 12px 0 0">hours</span></div></label><label class="in"><span>Revisions</span><input class="inp" value="2 rounds"></label></div>
+              <div class="in"><span>What's included</span><div class="feat"><input class="inp" value="Everything in Basic"><input class="inp" value="Cover letter for your target role"><input class="inp" value="Rewrite around your achievements"></div></div>
+              <button class="addf" type="button">Add a line</button>
+            </div>
+            <div class="pked"><div class="pked-head"><b>Executive</b></div>
+              <label class="in"><span>Price</span><div class="pre-in"><span>KES</span><input class="inp num" value="6,000"></div></label>
+              <label class="in"><span>Best for</span><input class="inp" value="Senior leaders and career changers"></label>
+              <div class="fgrid"><label class="in"><span>First draft</span><div class="pre-in"><input class="inp num" value="24"><span style="padding:0 12px 0 0">hours</span></div></label><label class="in"><span>Revisions</span><input class="inp" value="14 days"></label></div>
+              <div class="in"><span>What's included</span><div class="feat"><input class="inp" value="Everything in Professional"><input class="inp" value="LinkedIn profile revamp"><input class="inp" value="Written personally by Jay"></div></div>
+              <button class="addf" type="button">Add a line</button>
+            </div>
+          </div>
+          <p class="sub-h">Single services</p>
+          <div style="overflow-x:auto;margin:0 -20px">
+          <table class="svc-t">
+            <thead><tr><th>Service</th><th>Note on the website</th><th class="n">First draft</th><th class="n">Price, KES</th><th>Shown</th></tr></thead>
+            <tbody>
+              <tr><td><input class="inp" value="CV tailored to a job"></td><td><input class="inp" value="Your CV rewritten for one specific advert"></td><td class="n">48 h</td><td class="n"><input class="inp num" value="1,000"></td><td><input type="checkbox" class="toggle" checked aria-label="Shown"></td></tr>
+              <tr><td><input class="inp" value="Cover letter"></td><td><input class="inp" value="Written for one specific role"></td><td class="n">24 h</td><td class="n"><input class="inp num" value="800"></td><td><input type="checkbox" class="toggle" checked aria-label="Shown"></td></tr>
+              <tr><td><input class="inp" value="LinkedIn profile revamp"></td><td><input class="inp" value="Headline, About, experience and skills"></td><td class="n">72 h</td><td class="n"><input class="inp num" value="2,000"></td><td><input type="checkbox" class="toggle" checked aria-label="Shown"></td></tr>
+              <tr><td><input class="inp" value="Career coaching session"></td><td><input class="inp" value="60 minutes, in person or online"></td><td class="n">48 h</td><td class="n"><input class="inp num" value="2,500"></td><td><input type="checkbox" class="toggle" checked aria-label="Shown"></td></tr>
+              <tr><td><input class="inp" value="Mock interview"></td><td><input class="inp" value="With written feedback"></td><td class="n">48 h</td><td class="n"><input class="inp num" value="2,000"></td><td><input type="checkbox" class="toggle" checked aria-label="Shown"></td></tr>
+              <tr><td><input class="inp" value="CV update"></td><td><input class="inp" value="For CVs we wrote in the last 12 months"></td><td class="n">48 h</td><td class="n"><input class="inp num" value="700"></td><td><input type="checkbox" class="toggle" checked aria-label="Shown"></td></tr>
+              <tr><td><input class="inp" value="International CV format"></td><td><input class="inp" value="UK, Canada, US, Europe, Gulf"></td><td class="n">48 h</td><td class="n"><input class="inp num" value="2,500"></td><td><input type="checkbox" class="toggle" aria-label="Shown"></td></tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="cpanel" data-cp="reviews" hidden>
+          <p class="lead-in">Clients leave reviews on their tracking page when they finish an order. Nothing shows on the website until you approve it.</p>
+          <p class="sub-h" style="margin-top:0">Waiting for you · 2</p>
+          <div class="rv"><div><span class="stars">★★★★★</span><q>Grace moved my reconciliations to the top and I got two calls the same week. Worth every shilling.</q><div class="by">Brian M. · Accounts assistant · order <span class="ref">JC-1052</span> · today</div></div><div class="acts"><button class="btn btn-primary btn-sm" type="button" data-rv="ok">Approve</button><button class="btn btn-ghost btn-sm" type="button" data-rv="no">Hide</button></div></div>
+          <div class="rv"><div><span class="stars">★★★★☆</span><q>Good CV. The first draft took a bit longer than 24 hours but they kept me updated on WhatsApp.</q><div class="by">Ann C. · order <span class="ref">JC-1049</span> · yesterday</div></div><div class="acts"><button class="btn btn-primary btn-sm" type="button" data-rv="ok">Approve</button><button class="btn btn-ghost btn-sm" type="button" data-rv="no">Hide</button></div></div>
+          <p class="sub-h">On the website · 3</p>
+          <div class="rv"><div><q>I had applied for months with no response. Two weeks after getting my new CV I had three interview invitations.</q><div class="by">Faith W. · Graduate trainee</div></div><label class="check" style="height:auto;font-size:13px;gap:8px">On homepage<input type="checkbox" class="toggle" checked></label></div>
+          <div class="rv"><div><q>The LinkedIn revamp was worth every shilling. Recruiters started messaging me within a month.</q><div class="by">Achieng O. · Programme officer</div></div><label class="check" style="height:auto;font-size:13px;gap:8px">On homepage<input type="checkbox" class="toggle" checked></label></div>
+          <div class="rv"><div><q>Quick and easy on WhatsApp. They knew exactly what a UK application needed.</q><div class="by">Joseph K. · Staff nurse</div></div><label class="check" style="height:auto;font-size:13px;gap:8px">On homepage<input type="checkbox" class="toggle"></label></div>
+        </div>
+
+        <!-- Samples -->
+        <div class="cpanel" data-cp="samples" hidden>
+          <p class="lead-in">Before and after CVs on the samples page. Only share a client's CV with their written permission and personal details removed.</p>
+          <div class="smp-grid" data-smp-grid></div>
+          <label class="drop" style="margin-top:12px"><svg class="i"><use href="#upload"/></svg><span><b>Add a sample</b> · a before and an after, PDF or image</span><span class="muted">Up to 10 MB each</span></label>
+        </div>
+
+        <!-- Career tips -->
+        <div class="cpanel" data-cp="posts" hidden>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><p class="lead-in" style="margin:0">Articles on the career tips page. Drafts aren't public.</p><button class="btn btn-primary btn-sm" type="button"><svg class="i"><use href="#plus"/></svg>New article</button></div>
+          <div>
+            <div class="post-row"><img src="../img/photos/blog-cv-mistakes.jpg" alt=""><div><div class="t">7 CV mistakes that get you rejected in Kenya</div><div class="s">CV tips · Sep 2026 · featured on the career tips page</div></div><span class="tag live">Published</span><button class="btn btn-ghost btn-sm" type="button">Edit</button></div>
+            <div class="post-row"><img src="../img/photos/blog-linkedin.jpg" alt=""><div><div class="t">How to get recruiters to message you on LinkedIn</div><div class="s">LinkedIn · Sep 2026</div></div><span class="tag live">Published</span><button class="btn btn-ghost btn-sm" type="button">Edit</button></div>
+            <div class="post-row"><img src="../img/photos/blog-fake-jobs.jpg" alt=""><div><div class="t">How to spot a fake job advert</div><div class="s">Job search · May 2026</div></div><span class="tag live">Published</span><button class="btn btn-ghost btn-sm" type="button">Edit</button></div>
+            <div class="post-row"><img src="../img/photos/blog-salary.jpg" alt=""><div><div class="t">How to negotiate your salary in Kenya</div><div class="s">Career growth · placeholder text still in it</div></div><span class="tag wait">Draft</span><button class="btn btn-ghost btn-sm" type="button">Edit</button></div>
+            <div class="post-row"><img src="../img/photos/blog-uk-canada-cv.jpg" alt=""><div><div class="t">How to write a CV for the UK and Canada</div><div class="s">CV tips · placeholder text still in it</div></div><span class="tag wait">Draft</span><button class="btn btn-ghost btn-sm" type="button">Edit</button></div>
+          </div>
+        </div>
+
+        <!-- FAQs -->
+        <div class="cpanel" data-cp="faqs" hidden>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><p class="lead-in" style="margin:0">Drag to change the order. Each question shows on the pages you pick.</p><button class="btn btn-ghost btn-sm" type="button"><svg class="i"><use href="#plus"/></svg>Add a question</button></div>
+          <div>
+            <div class="faq-row"><svg class="i grip"><use href="#grip"/></svg><div><b>How long does it take to get my CV?</b><p>Your first draft arrives within 48 hours of payment. Professional and Executive get priority, within 24 hours.</p></div><span class="where">Home, How it works</span></div>
+            <div class="faq-row"><svg class="i grip"><use href="#grip"/></svg><div><b>How do I pay?</b><p>After uploading your CV you'll see a Pay button. Choose M-Pesa and a prompt appears on your phone.</p></div><span class="where">Home, Pricing</span></div>
+            <div class="faq-row"><svg class="i grip"><use href="#grip"/></svg><div><b>What if I don't like the draft?</b><p>Every package includes revisions. Tell us what to change and your writer will update it.</p></div><span class="where">Home, How it works</span></div>
+            <div class="faq-row"><svg class="i grip"><use href="#grip"/></svg><div><b>Do you offer student or group discounts?</b><p>Ask us on WhatsApp before you order and we'll tell you what's available.</p></div><span class="where">Pricing</span></div>
+            <div class="faq-row"><svg class="i grip"><use href="#grip"/></svg><div><b>What's your refund policy?</b><p>If we haven't started work, we refund you in full. Once a draft is delivered, we keep revising it.</p></div><span class="where">Pricing</span></div>
+          </div>
+        </div>
+
+        <!-- Homepage -->
+        <div class="cpanel" data-cp="home" hidden>
+          <div class="fgrid">
+            <label class="in full"><span>Headline</span><input class="inp" value="A CV Kenyan recruiters read to the end" data-live="h"></label>
+            <label class="in full"><span>Under the headline</span><textarea class="inp" data-live="p">CVs, cover letters and LinkedIn profiles written by HR consultants who know what Kenyan and international recruiters look for. Your first draft arrives within 48 hours.</textarea></label>
+            <label class="in"><span>Announcement <em>optional</em></span><input class="inp" value="December offer: 20% off LinkedIn revamps" data-live="a"></label>
+            <label class="in"><span>Announcement links to</span><input class="inp" value="/pricing#single"></label>
+          </div>
+          <div class="preview-hero"><span class="lbl">Preview</span><div class="ann" data-pv="a">December offer: 20% off LinkedIn revamps</div><h3 data-pv="h">A CV Kenyan recruiters read to the end</h3><p data-pv="p">CVs, cover letters and LinkedIn profiles written by HR consultants who know what Kenyan and international recruiters look for. Your first draft arrives within 48 hours.</p></div>
+        </div>
+
+        <!-- About -->
+        <div class="cpanel" data-cp="about" hidden>
+          <div class="fgrid">
+            <div class="in full"><span>Your photo</span><div class="ph-photo"><span class="ph">J</span><label class="drop"><svg class="i"><use href="#upload"/></svg><span><b>Upload a portrait</b><br><span class="muted" style="font-size:13px">Shows on the homepage and the about page. Until then we show your initial.</span></span></label></div></div>
+            <label class="in"><span>Your name</span><input class="inp" value="Jay"></label>
+            <label class="in"><span>Your role</span><input class="inp" value="Founder and lead CV writer"></label>
+            <label class="in full"><span>Line under the title</span><input class="inp" value="Since 2018 we've helped Kenyans show employers what they've really done."></label>
+            <label class="in full"><span>Your story <em>a few short paragraphs</em></span><textarea class="inp" style="min-height:160px">Most CVs we receive aren't weak because the person is weak. They're weak because nobody told them what a recruiter reads first.
+
+Jay started Jay CVS in 2018 to fix that. Every CV is rewritten around what the person achieved, in a format both recruiters and screening software can read.</textarea><small>Draft text. Rewrite it in your own words before launch.</small></label>
+            <label class="in"><span>Your LinkedIn</span><input class="inp" placeholder="linkedin.com/in/…"></label>
+            <label class="in"><span>Your X</span><input class="inp" placeholder="x.com/…"></label>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="cpanel" data-cp="settings" hidden>
+          <div class="fgrid">
+            <label class="in"><span>WhatsApp number</span><input class="inp" value="0725 912 186"></label>
+            <label class="in"><span>Email</span><input class="inp" value="info@jaycvs.co.ke"></label>
+            <label class="in"><span>Office address</span><input class="inp" placeholder="Building, street, Nairobi"><small>Not set. The website shows "Nairobi, Kenya" until you add it.</small></label>
+            <label class="in"><span>M-Pesa Pay Bill</span><input class="inp" value="4027127"></label>
+            <label class="in"><span>CV check price</span><div class="pre-in"><span>KES</span><input class="inp num" value="10"></div><small>What a client pays to check their CV against a job.</small></label>
+            <label class="in"><span>WhatsApp jobs channel link</span><input class="inp" placeholder="https://whatsapp.com/channel/…"><small>Not set. "Follow the channel" buttons go nowhere until you add it.</small></label>
+          </div>
+        </div>
+
+        <div class="publish" data-publish><span data-pub-text>All changes are live</span><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" type="button" data-discard hidden>Discard</button><button class="btn btn-primary btn-sm" type="button" data-pub disabled>Save and publish</button></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Recent changes</h2></div>
+        <ul class="changes" data-changes>
+          <li><span class="av">GW</span><div><b>Grace</b> published <b>How to spot a fake job advert</b><span> · Mon 16 Nov</span><button type="button">Undo</button></div></li>
+          <li><span class="av dark">JA</span><div><b>Jay</b> changed the <b>Executive</b> price from KES 5,500 to KES 6,000<span> · Fri 13 Nov</span><button type="button">Undo</button></div></li>
+          <li><span class="av dark">JA</span><div><b>Jay</b> approved a review from <b>Faith W.</b><span> · Thu 12 Nov</span><button type="button">Undo</button></div></li>
+          <li><span class="av dark">JA</span><div><b>Jay</b> hid the sample <b>Hospitality supervisor</b><span> · 2 Nov</span><button type="button">Undo</button></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ ORDER FLOW DEMO ═════════ -->
+  <section class="screen" id="s-flow">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#dashboard">Dashboard</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span>Order flow demo</span></div>
+        <h1>Order flow demo</h1>
+        <p class="sub">See what your team and the client see at each step of one order. Test mode: no real money moves.</p>
+      </div>
+      <div class="actions"><div class="seg" data-fmode><button type="button" aria-pressed="true" data-m="client">Team and client</button><button type="button" aria-pressed="false" data-m="roles">Jay and a writer</button></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="flow-bar">
+        <div class="grp"><span class="ref">Test order</span><span class="muted" style="font-size:13px">Professional · KES 3,000 · test mode</span></div>
+        <div class="grp">
+          <button class="btn btn-primary btn-sm" type="button" data-fnext><svg class="i"><use href="#play"/></svg>Next step</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-fskip><svg class="i"><use href="#clock"/></svg>Skip 24 hours</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-freset>Reset</button>
+        </div>
+      </div>
+      <ol class="fsteps" data-fsteps>
+        <li><button type="button" data-f="0"><i></i><b>Order placed</b><small>Client uploads CV</small></button></li>
+        <li><button type="button" data-f="1"><i></i><b>Paid</b><small>M-Pesa prompt</small></button></li>
+        <li><button type="button" data-f="2"><i></i><b>Accepted</b><small>A writer takes it</small></button></li>
+        <li><button type="button" data-f="3"><i></i><b>Draft sent</b><small>Within 24 hours</small></button></li>
+        <li><button type="button" data-f="4"><i></i><b>Changes</b><small>If the client asks</small></button></li>
+        <li><button type="button" data-f="5"><i></i><b>Delivered</b><small>Word and PDF</small></button></li>
+      </ol>
+      <p class="fnote" data-fnote></p>
+    </div>
+
+    <div class="frames" data-frames>
+      <div class="fr"><div class="fr-head"><b data-fl-title>Team · the writer</b><span data-fl-sub>Admin, the order page</span></div><div class="scaler"><iframe title="Team view" data-fl loading="lazy"></iframe></div></div>
+      <div class="fr phone" data-fr-right><div class="fr-head"><b data-fr-title>Client · their phone</b><span data-fr-sub>Tracking link</span></div><div class="bezel"><iframe title="Client view" data-frr loading="lazy"></iframe></div></div>
+    </div>
+  </section>
+
+  
+  <!-- ═════════ AI TOKENS ═════════
+       Matches platform modules/ai (token ledger, usage by feature, token requests to the platform owner).
+       NEW, not in the platform yet: per-person monthly allowances (the "Share among the team" card). -->
+  <section class="screen" id="s-ai">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#dashboard">Dashboard</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span>AI</span></div>
+        <h1>AI</h1>
+        <p class="sub">Tokens power poster reading, job links, CV checks and the writers' AI helper. You see tokens, never money.</p>
+      </div>
+      <div class="actions"><a class="btn btn-primary" href="#ai-request" data-jump-req><svg class="i"><use href="#plus"/></svg>Request more tokens</a></div>
+    </div>
+
+    <div class="ai-top">
+      <!-- The balance: the one number that matters on this screen -->
+      <div class="card ai-bal">
+        <span class="l">Tokens left</span>
+        <div class="big"><b>397,700</b><span>of 1,000,000 this month</span></div>
+        <div class="ai-gauge" role="img" aria-label="40 percent left, warning at 20 percent"><span class="left" style="width:39.8%"></span><span class="warn" style="left:20%" title="Warning at 20%"></span></div>
+        <div class="ai-gauge-k"><span>0</span><span style="margin-left:14%">Warn at 20%</span><span style="margin-left:auto">1,000,000</span></div>
+        <div class="ai-pace">
+          <div><span class="v num">33,500</span><span class="c">Used a day this month</span></div>
+          <div><span class="v key num">About 12 days</span><span class="c">Left at this pace, to around 30 Nov</span></div>
+          <div><span class="v num">About 195</span><span class="c">Posters you could still read</span></div>
+        </div>
+        <p class="ai-alert"><svg class="i"><use href="#clock"/></svg><span><b>This month's tokens run out before 1 December at this pace.</b> Request more now, since the developer may take up to a day to add them.</span></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Used each day</h2><span class="hint num">602,300 in November</span></div>
+        <div class="ai-chart">
+          <div class="ai-bars" data-ai-bars aria-label="Tokens used each day, 1 to 18 November"></div>
+          <div class="ai-axis"><span>1 Nov</span><span>8 Nov</span><span>15 Nov</span><span>Today</span></div>
+          <ul class="ai-feat" style="padding:16px 0 0;margin-top:16px;border-top:1px solid var(--line)">
+            <li><span class="t">Busiest day</span><span class="n">52,000</span><span class="s">Tue 17 Nov · Grace read 24 posters in Bulk post</span></li>
+            <li><span class="t">Quiet days</span><span class="n">8,000 to 12,000</span><span class="s">Weekends, when only client CV checks run</span></li>
+            <li><span class="t">Biggest user</span><span class="n">63%</span><span class="s">Reading job posters. Fewer, clearer posters use fewer tokens</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-mid">
+      <div class="card">
+        <div class="card-head"><h2>What it was used for</h2><span class="hint">November</span></div>
+        <ul class="ai-feat">
+          <li><span class="t">Reading job posters<small>Bulk post</small></span><span class="n">379,400</span><span class="s">186 posters · about 2,000 each</span><span class="pc">63%</span><span class="bar"><span style="width:63%"></span></span></li>
+          <li><span class="t">Client CV checks<small>Paid by clients</small></span><span class="n">123,000</span><span class="s">41 checks · KES 410 taken</span><span class="pc">20%</span><span class="bar"><span style="width:20%"></span></span></li>
+          <li><span class="t">Reading job links<small>Job sources</small></span><span class="n">55,000</span><span class="s">22 links · about 2,500 each</span><span class="pc">9%</span><span class="bar"><span style="width:9%"></span></span></li>
+          <li><span class="t">Writers' AI helper<small>Order page</small></span><span class="n">32,300</span><span class="s">38 uses · shorten, check against the brief</span><span class="pc">5%</span><span class="bar"><span style="width:5%"></span></span></li>
+          <li><span class="t">Review screening<small>Automatic</small></span><span class="n">7,200</span><span class="s">9 reviews checked before you approve</span><span class="pc">1%</span><span class="bar"><span style="width:1.2%"></span></span></li>
+          <li><span class="t">Job sources check<small>Automatic</small></span><span class="n">5,400</span><span class="s">5 sources checked for new jobs</span><span class="pc">1%</span><span class="bar"><span style="width:0.9%"></span></span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Share among the team</h2><span class="hint">Monthly allowance per person</span></div>
+        <div class="ai-split" data-ai-split aria-hidden="true"></div>
+        <div class="ai-split-k" data-ai-split-k></div>
+        <div style="overflow-x:auto">
+        <table class="ai-allow">
+          <thead><tr><th>Who</th><th>Allowance</th><th>Used this month</th><th>AI on</th></tr></thead>
+          <tbody data-ai-allow></tbody>
+        </table>
+        </div>
+        <div class="ai-sum" data-ai-sum></div>
+      </div>
+    </div>
+
+    <div class="ai-bottom">
+      <div class="card" id="ai-request">
+        <div class="card-head"><h2>Request more tokens</h2><span class="hint">Sent to the developer</span></div>
+        <div class="ai-req" data-ai-form>
+          <div class="ai-chips" role="group" aria-label="How many tokens" data-ai-chips>
+            <button type="button" data-n="500000" aria-pressed="false"><b>500,000</b><small>About 250 posters</small></button>
+            <button type="button" data-n="1000000" aria-pressed="true"><b>1,000,000</b><small>About a month</small></button>
+            <button type="button" data-n="2000000" aria-pressed="false"><b>2,000,000</b><small>About 2 months</small></button>
+            <button type="button" data-n="5000000" aria-pressed="false"><b>5,000,000</b><small>About 5 months</small></button>
+            <button type="button" data-n="other" aria-pressed="false"><b>Other</b><small>100,000 to 50M</small></button>
+          </div>
+          <label class="in" data-ai-other hidden><span>How many tokens</span><input class="inp num" inputmode="numeric" placeholder="For example 750,000" style="width:220px"></label>
+          <p class="lasts" data-ai-lasts>At November's pace, <b>1,000,000</b> tokens last about <b>30 days</b>.</p>
+          <label class="in"><span>Note for the developer <em>optional</em></span><textarea class="inp" placeholder="For example: December is busy, we're posting more jobs from Bulk post."></textarea></label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" type="button" data-ai-send>Send request</button><span class="muted" style="font-size:13px">One request at a time. You'll get a WhatsApp message when they're added.</span></div>
+        </div>
+        <div class="ai-req" data-ai-pending hidden>
+          <div class="ai-pending">
+            <b data-ai-pend-t>1,000,000 tokens requested</b>
+            <span data-ai-pend-s>Sent just now by Jay · waiting for the developer</span>
+            <div class="row"><button class="btn btn-ghost btn-sm" type="button" data-ai-cancel>Cancel request</button><button class="btn btn-ghost btn-sm" type="button" data-ai-grant>Mockup: mark as added</button></div>
+          </div>
+          <p class="muted" style="font-size:13px">Writers who run out see "Ask the business owner to request more AI tokens."</p>
+        </div>
+        <div class="card-head" style="padding-top:4px"><h2 style="font-size:14px">Tokens added</h2></div>
+        <ul class="ai-ledger" data-ai-ledger>
+          <li><div><b>Monthly allowance</b><br><span>1 Nov · from the developer</span></div><span class="amt">+1,000,000</span></li>
+          <li><div><b>Top-up you requested</b><br><span>22 Oct · "Busy week, lots of posters"</span></div><span class="amt">+500,000</span></li>
+          <li><div><b>Monthly allowance</b><br><span>1 Oct · from the developer</span></div><span class="amt">+1,000,000</span></li>
+        </ul>
+      </div>
+
+      <div style="display:grid;gap:16px;align-content:start">
+        <div class="card">
+          <div class="card-head"><h2>Settings</h2></div>
+          <div class="form-body">
+            <label class="in"><span>Warn me when tokens drop below</span><div class="pre-in" style="width:120px"><input class="inp num" value="20"><span style="padding:0 12px 0 0">%</span></div><small>You get a WhatsApp message and a note on the dashboard.</small></label>
+            <label class="check" style="height:auto;justify-content:space-between;gap:12px"><span>When a person's allowance runs out, let them use the shared pool</span><input type="checkbox" class="toggle" checked></label>
+            <label class="check" style="height:auto;justify-content:space-between;gap:12px"><span>Keep client CV checks running even below the warning</span><input type="checkbox" class="toggle" checked></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Latest AI runs</h2><span class="hint">Today</span></div>
+          <table class="ai-runs">
+            <thead><tr><th>When</th><th>Who</th><th>What</th><th class="n">Tokens</th></tr></thead>
+            <tbody>
+              <tr><td class="muted num">14:31</td><td>Client</td><td>CV check · <span class="ref">I.T Specialist</span></td><td class="n">3,100</td></tr>
+              <tr><td class="muted num">13:58</td><td>Grace</td><td>Read 6 posters</td><td class="n">12,400</td></tr>
+              <tr><td class="muted num">12:40</td><td>Aisha</td><td>AI helper · <span class="ref">JC-1044</span></td><td class="n">900</td></tr>
+              <tr><td class="muted num">11:15</td><td>Automatic</td><td>Job sources check</td><td class="n">1,100</td></tr>
+              <tr><td class="muted num">09:02</td><td>Jay</td><td>Read 3 job links</td><td class="n">7,600</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<script>
+  const screens = ['dashboard', 'orders', 'order', 'finance', 'jobs', 'inbox', 'post', 'sources', 'team', 'content', 'flow', 'ai'];
+  function show() {
+    let s = location.hash.slice(1);
+    if (!screens.includes(s)) s = 'dashboard';
+    document.querySelectorAll('.screen').forEach((el) => el.classList.toggle('on', el.id === 's-' + s));
+    const navKey = s === 'order' ? 'orders' : s;
+    document.querySelectorAll('.nav a[data-s]').forEach((a) => a.toggleAttribute('aria-current', a.dataset.s === navKey) || a.removeAttribute('aria-current'));
+    document.querySelectorAll('.nav a[data-s]').forEach((a) => { if (a.dataset.s === navKey) a.setAttribute('aria-current', 'page'); });
+    window.scrollTo(0, 0);
+  }
+  const lane = document.getElementById('laneWriting');
+  const attnToday = document.getElementById('attnText').innerHTML;
+  const today = lane.innerHTML;
+  const busy = `
+            <a class="sheet" href="#order"><span class="ref">JC-1045</span><div class="who">Peter Kamau</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="lines"><i style="width:75%"></i><i style="width:50%"></i></div><div class="foot"><span>Brian</span><span class="late">Overdue 5h</span></div></a>
+            <a class="sheet" href="#order"><span class="ref">JC-1052</span><div class="who">Ann Chebet</div><div class="pk">Professional<span class="pr num">KES 3,000</span></div><div class="lines"><i style="width:80%"></i><i style="width:62%"></i></div><div class="foot"><span>Aisha</span><span class="late">Due in 3h</span></div></a>
+            <a class="sheet" href="#order"><span class="ref">JC-1046</span><div class="who">Dr. Amina Hassan</div><div class="pk">Executive<span class="pr num">KES 6,000</span></div><div class="lines"><i style="width:90%"></i><i style="width:70%"></i></div><div class="foot"><span>Grace</span><span>Due in 15h</span></div></a>
+            <a class="stack" href="#orders" aria-label="4 more orders in Writing, open the list">
+              <div class="more">4 more writing</div>
+              <div class="who-has num">Grace 2 · Brian 1 · Aisha 1</div>
+              <div class="due">Next due in <b class="num">1d 2h</b></div>
+              <div class="see">See all 7 in Orders</div>
+            </a>
+            <div class="lane-note">Most urgent first</div>`;
+  document.querySelectorAll('[data-busy]').forEach((b) => b.addEventListener('click', () => {
+    const mode = b.dataset.busy;
+    const on = mode === '1', big = mode === '2';
+    document.querySelectorAll('[data-busy]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    lane.innerHTML = on ? busy : today;
+    document.getElementById('writingCount').textContent = on ? '7' : '2';
+    document.getElementById('board').hidden = big;
+    document.getElementById('boardScale').hidden = !big;
+    document.getElementById('writersCard').hidden = !big;
+    document.getElementById('boardHint').textContent = big ? '57 open · 18 delivered today' : on ? '13 orders · 7 being written' : '8 orders · Grace, Brian and Aisha writing';
+    document.getElementById('attnText').innerHTML = big
+      ? '<b>5 paid orders have no writer.</b> <span>Longest waiting is <span class="ref" style="color:inherit">JC-1131</span> · Brenda Atieno, 3h.</span>'
+      : attnToday;
+  }));
+
+
+  // Bulk post: picking the deadline confirms the field, unlocks Approve and fills the channel post
+  document.querySelectorAll('.pick button').forEach((b) => b.addEventListener('click', () => {
+    if (b.textContent === 'Other date') return;
+    document.querySelectorAll('.pick button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const fld = b.closest('.fld');
+    fld.classList.remove('unsure');
+    fld.classList.add('ok', 'confirmed');
+    fld.querySelector('.why').textContent = 'Confirmed by you';
+    const pane = b.closest('.pane');
+    const approve = pane.querySelector('.pane-foot .btn-primary');
+    approve.disabled = false;
+    approve.removeAttribute('aria-disabled');
+    pane.querySelector('.pane-foot > span').textContent = 'All fields checked';
+    pane.querySelectorAll('.share .btn[disabled]').forEach((c) => { c.disabled = false; });
+    const bubble = pane.querySelector('.bubble');
+    bubble.innerHTML = bubble.innerHTML.replace(/Deadline: [^\n<]*/, 'Deadline: ' + b.textContent + ' 2026');
+  }));
+
+
+  // ═════════ Added screens ═════════
+  const toast = (() => { const t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); let h; return (m) => { t.textContent = m; t.classList.add('on'); clearTimeout(h); h = setTimeout(() => t.classList.remove('on'), 2200); }; })();
+
+  // Team: dialogs
+  const dlg = (n) => document.querySelector(`[data-dlg="${n}"]`);
+  document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
+    const d = dlg(b.dataset.open);
+    if (b.dataset.who) d.querySelector('[data-edit-title]').textContent = 'Edit ' + b.dataset.who;
+    if (b.dataset.open === 'invite') { d.querySelector('[data-inv-form]').hidden = false; d.querySelector('[data-inv-done]').hidden = true; d.querySelector('[data-inv-create]').textContent = 'Create invite'; }
+    d.showModal();
+  }));
+  document.querySelectorAll('dialog.dlg').forEach((d) => {
+    d.addEventListener('click', (e) => { if (e.target === d || e.target.closest('[data-close]')) { d.close(); const t = e.target.closest('[data-toast]'); if (t) toast(t.dataset.toast); } });
+  });
+  document.querySelector('[data-inv-create]').addEventListener('click', (e) => {
+    const d = dlg('invite');
+    if (!d.querySelector('[data-inv-done]').hidden) { navigator.clipboard && navigator.clipboard.writeText(d.querySelector('[data-inv-msg]').textContent); d.close(); toast('Message copied. Paste it in WhatsApp'); return; }
+    const name = (d.querySelector('[data-inv-name]').value.trim() || 'there').split(' ')[0];
+    d.querySelector('[data-inv-msg]').textContent = `Hi ${name}, Jay here. I've added you to the Jay CVS team.\n\nSign in with your Google account here: jaycvs.co.ke/admin/join/8hx2k\n\nThe link works for 14 days.`;
+    d.querySelector('[data-inv-form]').hidden = true; d.querySelector('[data-inv-done]').hidden = false;
+    e.target.textContent = 'Copy message';
+  });
+  document.querySelectorAll('[data-copy-invite]').forEach((b) => b.addEventListener('click', () => toast('Invite message copied')));
+
+  // Website content: tabs, unsaved changes, publish
+  const ctabs = document.querySelectorAll('[data-ct]');
+  const pub = document.querySelector('[data-publish]'), pubBtn = document.querySelector('[data-pub]'), discard = document.querySelector('[data-discard]');
+  let dirty = 0;
+  const setDirty = (n) => {
+    dirty = n; pubBtn.disabled = !n; discard.hidden = !n; pub.classList.toggle('dirty', !!n);
+    document.querySelector('[data-pub-text]').textContent = n ? `${n} unsaved ${n === 1 ? 'change' : 'changes'}` : 'All changes are live';
+  };
+  ctabs.forEach((b) => b.addEventListener('click', () => {
+    ctabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+    document.querySelectorAll('[data-cp]').forEach((p) => (p.hidden = p.dataset.cp !== b.dataset.ct));
+    document.querySelector('[data-ctab-crumb]').textContent = b.firstChild.textContent;
+    pub.hidden = b.dataset.ct === 'reviews';
+  }));
+  document.querySelectorAll('#s-content .inp, #s-content .toggle').forEach((el) => el.addEventListener('input', () => setDirty(dirty + (el.dataset.touched ? 0 : 1), (el.dataset.touched = 1))));
+  pubBtn.addEventListener('click', () => {
+    document.querySelector('[data-changes]').insertAdjacentHTML('afterbegin', `<li><span class="av dark">JA</span><div><b>Jay</b> published ${dirty} ${dirty === 1 ? 'change' : 'changes'}<span> · just now</span><button type="button">Undo</button></div></li>`);
+    document.querySelectorAll('#s-content [data-touched]').forEach((el) => delete el.dataset.touched);
+    setDirty(0); toast('Published. The website is up to date');
+  });
+  discard.addEventListener('click', () => { document.querySelectorAll('#s-content [data-touched]').forEach((el) => delete el.dataset.touched); setDirty(0); toast('Changes discarded'); });
+  document.querySelector('[data-changes]').addEventListener('click', (e) => { if (e.target.matches('button')) { e.target.closest('li').style.opacity = 0.5; e.target.textContent = 'Undone'; e.target.disabled = true; toast('Change undone'); } });
+  document.querySelectorAll('[data-rv]').forEach((b) => b.addEventListener('click', () => {
+    const r = b.closest('.rv'); r.classList.add('done');
+    r.querySelector('.acts').innerHTML = `<span class="tag ${b.dataset.rv === 'ok' ? 'live' : 'off'}">${b.dataset.rv === 'ok' ? 'Approved' : 'Hidden'}</span>`;
+    toast(b.dataset.rv === 'ok' ? 'Review approved. It shows on the website now' : 'Review hidden');
+  }));
+  document.querySelectorAll('[data-live]').forEach((el) => el.addEventListener('input', () => (document.querySelector(`[data-pv="${el.dataset.live}"]`).textContent = el.value)));
+  const SMP = [['nurse', 'Registered nurse', 'Kenya to UK'], ['accountant', 'Accountant', 'Entry level'], ['project-manager', 'Project manager', 'Into NGO work'], ['software-developer', 'Software developer', 'Junior to mid-level'], ['business-graduate', 'Business graduate', 'First job'], ['clinical-officer', 'Clinical officer', 'To private practice'], ['finance-manager', 'Finance manager', 'Senior'], ['civil-engineer', 'Civil engineer', 'To consultancy'], ['hospitality-supervisor', 'Hospitality supervisor', 'Nairobi to Dubai']];
+  document.querySelector('[data-smp-grid]').innerHTML = SMP.map(([s, r, n], i) => `<div class="smp-c"><div class="pair"><img src="../img/samples/${s}-before.jpeg" alt=""><img src="../img/samples/${s}-after.jpeg" alt=""></div><div class="row"><div><b>${r}</b><small>${n}</small></div><input type="checkbox" class="toggle" ${i < 8 ? 'checked' : ''} aria-label="Show on website"></div></div>`).join('');
+  document.querySelectorAll('[data-smp-grid] .toggle').forEach((el) => el.addEventListener('input', () => setDirty(dirty + 1)));
+
+  // Order flow demo
+  const FLOW = [
+    { team: 'admin-unslop.html#orders', client: 'order.html?pkg=professional', note: '<b>The client places the order</b> and uploads their CV. The team sees it as Awaiting payment. Nobody is asked to work yet.' },
+    { team: 'admin-unslop.html#dashboard', client: 'track.html?ref=JC-1052', note: '<b>The client pays by M-Pesa prompt.</b> Payment is matched automatically, the order moves to Paid, not accepted, and every writer gets a WhatsApp alert.' },
+    { team: 'admin-unslop.html#order', client: 'track.html?ref=JC-1052', note: '<b>A writer accepts it.</b> The 24-hour clock starts. The client sees Writing and the writer\'s name on their tracking page.' },
+    { team: 'admin-unslop.html#order', client: 'track.html?ref=JC-1052', note: '<b>The writer uploads draft 1</b> with a note. The client gets a WhatsApp message and reviews it on their tracking page.' },
+    { team: 'admin-unslop.html#order', client: 'track.html?ref=JC-1052', note: '<b>The client asks for a change.</b> It lands on the writer\'s order page with their note. One revision round is used.' },
+    { team: 'admin-unslop.html#finance', client: 'track.html?ref=JC-1052', note: '<b>The client says they\'re happy.</b> Their final files unlock, they\'re asked for a review, and the order counts as delivered on the dashboard.' },
+  ];
+  let fstep = 2, fmode = 'client';
+  const fl = document.querySelector('[data-fl]'), frr = document.querySelector('[data-frr]');
+  // Admin views render at desktop width and scale down to fit their frame
+  const fit = () => document.querySelectorAll('.fr .scaler').forEach((sc) => {
+    const f = sc.querySelector('iframe'), k = sc.clientWidth / 1360;
+    f.style.transform = `scale(${k})`; f.style.height = (720 / k) + 'px';
+  });
+  addEventListener('resize', fit);
+  const renderFlow = () => {
+    document.querySelectorAll('[data-fsteps] li').forEach((li, i) => (li.className = i < fstep ? 'done' : i === fstep ? 'now' : ''));
+    document.querySelector('[data-fnote]').innerHTML = FLOW[fstep].note;
+    requestAnimationFrame(fit);
+    if (location.hash !== '#flow') return;
+    if (fmode === 'client') {
+      if (!fl.src.endsWith(FLOW[fstep].team)) fl.src = FLOW[fstep].team;
+      if (!frr.src.endsWith(FLOW[fstep].client)) frr.src = FLOW[fstep].client;
+    } else {
+      if (!fl.src.endsWith('admin-unslop.html#dashboard')) fl.src = 'admin-unslop.html#dashboard';
+      if (!frr.src.endsWith('admin-unslop.html#orders')) frr.src = 'admin-unslop.html#orders';
+    }
+  };
+  document.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { fstep = +b.dataset.f; renderFlow(); }));
+  document.querySelector('[data-fnext]').addEventListener('click', () => { fstep = Math.min(5, fstep + 1); renderFlow(); });
+  document.querySelector('[data-freset]').addEventListener('click', () => { fstep = 0; renderFlow(); toast('Test order reset'); });
+  document.querySelector('[data-fskip]').addEventListener('click', () => toast('24 hours skipped. Late orders now show as overdue'));
+  document.querySelector('[data-fmode]').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-m]'); if (!b) return;
+    fmode = b.dataset.m;
+    document.querySelectorAll('[data-m]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    const roles = fmode === 'roles';
+    document.querySelector('[data-frames]').classList.toggle('roles', roles);
+    document.querySelector('[data-fr-right]').classList.toggle('phone', !roles);
+    document.querySelector('[data-fl-title]').textContent = roles ? 'Jay · owner' : 'Team · the writer';
+    document.querySelector('[data-fl-sub]').textContent = roles ? 'Sees money, team and website' : 'Admin, the order page';
+    document.querySelector('[data-fr-title]').textContent = roles ? 'A writer' : 'Client · their phone';
+    document.querySelector('[data-fr-sub]').textContent = roles ? 'Only orders, no prices or takings' : 'Tracking link';
+    const bez = document.querySelector('[data-fr-right] .bezel');
+    bez.classList.toggle('scaler', roles);
+    renderFlow();
+  });
+  addEventListener('hashchange', renderFlow);
+  renderFlow();
+
+
+  // ═════════ AI tokens ═════════
+  (() => {
+    const fmt = (n) => Math.round(n).toLocaleString('en-KE');
+    const GRANT = 1000000, PER_DAY = 33500;
+    // Daily use, 1 to 18 November: busier on posting days
+    const days = [21, 38, 29, 44, 35, 12, 9, 41, 36, 47, 30, 28, 11, 8, 39, 43, 52, 30].map((k) => k * 1000);
+    const top = Math.max(...days);
+    document.querySelector('[data-ai-bars]').innerHTML = days.map((v, i) =>
+      `<span ${i === days.length - 1 ? 'class="today"' : ''} style="height:${(v / top) * 100}%" data-t="${i + 1} Nov · ${fmt(v)}"></span>`).join('');
+
+    // Team allowances. "Shared pool" covers client CV checks, automatic checks, and anyone past their allowance
+    const PEOPLE = [
+      { av: 'JA', dark: true, name: 'Jay', role: 'Owner', allow: null, used: 210000, color: '#1c1b19' },
+      { av: 'GW', name: 'Grace', role: 'Writes CVs, posts jobs', allow: 250000, used: 231600, color: '#b8913f' },
+      { av: 'BO', name: 'Brian', role: 'Writes CVs', allow: 40000, used: 14200, color: '#78716c' },
+      { av: 'AM', name: 'Aisha', role: 'Writes CVs', allow: 40000, used: 13100, color: '#a8a29e' },
+    ];
+    const POOL_USED = 123000 + 7200 + 5400; // client CV checks + automatic checks
+    const tbody = document.querySelector('[data-ai-allow]');
+    const row = (p, i) => {
+      const pct = p.allow ? Math.min(100, (p.used / p.allow) * 100) : null;
+      const hot = pct !== null && pct >= 85;
+      return `<tr>
+        <td><div class="who-cell"><span class="av${p.dark ? ' dark' : ''}">${p.av}</span><div><div class="cell-main">${p.name}</div><div class="cell-sub">${p.role}</div></div></div></td>
+        <td>${p.allow === null ? '<span class="muted">No limit</span>' : `<input class="inp num" value="${fmt(p.allow)}" data-i="${i}" aria-label="${p.name}'s monthly allowance">`}</td>
+        <td><div class="ai-use${hot ? ' hot' : ''}"><div class="meter"><span style="width:${pct === null ? Math.min(100, p.used / GRANT * 100 * 2) : pct}%"></span></div><small>${fmt(p.used)}${p.allow ? ` of ${fmt(p.allow)}${hot ? ' · almost used up' : ''}` : ' used'}</small></div></td>
+        <td>${i === 0 ? '<span class="muted" style="font-size:13px">Always</span>' : '<input type="checkbox" class="toggle" checked aria-label="AI on for ' + p.name + '">'}</td></tr>`;
+    };
+    const render = () => {
+      tbody.innerHTML = PEOPLE.map(row).join('') + `<tr class="pool"><td><div class="who-cell"><span class="av">··</span><div><div class="cell-main">Shared pool</div><div class="cell-sub">Client CV checks, automatic checks</div></div></div></td><td><span class="muted">What's left over</span></td><td><div class="ai-use"><div class="meter"><span style="width:${POOL_USED / GRANT * 100 * 2}%"></span></div><small>${fmt(POOL_USED)} used</small></div></td><td><span class="muted" style="font-size:13px">Always</span></td></tr>`;
+      sum();
+      tbody.querySelectorAll('input.inp').forEach((el) => el.addEventListener('input', () => {
+        PEOPLE[+el.dataset.i].allow = +el.value.replace(/\D/g, '') || 0; sum();
+      }));
+    };
+    const sum = () => {
+      const given = PEOPLE.reduce((a, p) => a + (p.allow || 0), 0);
+      const left = GRANT - given;
+      const box = document.querySelector('[data-ai-sum]');
+      box.classList.toggle('over', left < 0);
+      box.innerHTML = `<span>Given to writers <b class="num">${fmt(given)}</b> · Shared pool and Jay <b class="num ${left < 0 ? 'over' : ''}">${left < 0 ? 'Over by ' + fmt(-left) : fmt(left)}</b></span><button class="btn btn-primary btn-sm" type="button" data-ai-save>Save allowances</button>`;
+      const parts = PEOPLE.filter((p) => p.allow).map((p) => [p.name, p.allow, p.color]).concat([['Jay and shared pool', Math.max(0, left), '#e7e5e4']]);
+      document.querySelector('[data-ai-split]').innerHTML = parts.map(([, v, c]) => `<span style="flex:${v} 0 0;background:${c}"></span>`).join('');
+      document.querySelector('[data-ai-split-k]').innerHTML = parts.map(([n, v, c]) => `<span><i style="background:${c}"></i>${n} ${fmt(v)}</span>`).join('');
+      box.querySelector('[data-ai-save]').addEventListener('click', () => (typeof toast === 'function' ? toast('Allowances saved. They reset on the 1st of each month') : null));
+    };
+    render();
+
+    // Request more tokens
+    let pick = 1000000;
+    const lasts = document.querySelector('[data-ai-lasts]');
+    const other = document.querySelector('[data-ai-other]');
+    const updateLasts = () => {
+      const n = pick === 'other' ? (+other.querySelector('input').value.replace(/\D/g, '') || 0) : pick;
+      if (pick === 'other' && (n < 100000 || n > 50000000)) { lasts.innerHTML = n ? 'Ask for between <b>100,000</b> and <b>50,000,000</b> tokens.' : 'Type how many tokens you need.'; return; }
+      lasts.innerHTML = `At November's pace, <b>${fmt(n)}</b> tokens last about <b>${Math.max(1, Math.round(n / PER_DAY))} days</b>.`;
+    };
+    document.querySelector('[data-ai-chips]').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-n]'); if (!b) return;
+      document.querySelectorAll('[data-ai-chips] button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      pick = b.dataset.n === 'other' ? 'other' : +b.dataset.n;
+      other.hidden = pick !== 'other'; updateLasts();
+    });
+    other.querySelector('input').addEventListener('input', updateLasts);
+    const form = document.querySelector('[data-ai-form]'), pend = document.querySelector('[data-ai-pending]');
+    document.querySelector('[data-ai-send]').addEventListener('click', () => {
+      const n = pick === 'other' ? (+other.querySelector('input').value.replace(/\D/g, '') || 0) : pick;
+      if (n < 100000 || n > 50000000) { updateLasts(); return; }
+      document.querySelector('[data-ai-pend-t]').textContent = `${fmt(n)} tokens requested`;
+      form.hidden = true; pend.hidden = false;
+      typeof toast === 'function' && toast('Request sent to the developer');
+    });
+    document.querySelector('[data-ai-cancel]').addEventListener('click', () => { form.hidden = false; pend.hidden = true; });
+    document.querySelector('[data-ai-grant]').addEventListener('click', () => {
+      const t = document.querySelector('[data-ai-pend-t]').textContent.replace(' tokens requested', '');
+      document.querySelector('[data-ai-ledger]').insertAdjacentHTML('afterbegin', `<li><div><b>Top-up you requested</b><br><span>Today · added by the developer</span></div><span class="amt">+${t}</span></li>`);
+      form.hidden = false; pend.hidden = true;
+      typeof toast === 'function' && toast(`${t} tokens added`);
+    });
+    document.querySelector('[data-jump-req]').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('ai-request').scrollIntoView({ behavior: 'smooth' }); });
+  })();
+
+  addEventListener('hashchange', show);
+  show();
+</script>
+</body>
+</html>

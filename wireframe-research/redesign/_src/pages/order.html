@@ -1,0 +1,345 @@
+<!-- title: Order your CV · Jay CVS -->
+<!-- desc: Order a professional CV, cover letter or LinkedIn revamp in three quick steps. Pay by M-Pesa. -->
+<!-- nav: none -->
+<style>
+  .order { padding: 40px 0 96px; }
+  .order h1 { font-size: 40px; line-height: 46px; }
+  .order .sub { margin-top: 8px; color: var(--text-2); }
+  .order-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 48px; align-items: start; margin-top: 32px; }
+
+  .rail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px; }
+  .rail button { text-align: left; padding: 0; }
+  .rail i { display: block; height: 4px; border-radius: 2px; background: var(--line-strong); transition: background-color 300ms var(--ease); }
+  .rail span { display: block; margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .rail .done i { background: var(--text-2); } .rail .now i { background: var(--gold); }
+  .rail .now span { color: var(--text); font-weight: 500; }
+  .rail button:disabled { cursor: default; }
+
+  .panel { padding: 32px; }
+  .panel[hidden] { display: none; }
+  .panel h2 { font: 500 26px/34px var(--serif); letter-spacing: -0.01em; }
+  .panel .hint { margin-top: 4px; color: var(--text-2); }
+  .panel .hint a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+  .nav-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; }
+
+  .opts { display: grid; gap: 8px; margin-top: 24px; }
+  .opts.two { grid-template-columns: 1fr 1fr; }
+  .opt { position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 16px 18px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); cursor: pointer; transition: box-shadow 140ms var(--ease), background-color 140ms var(--ease); }
+  .opt:hover { background: #fdfcfa; }
+  .opt:has(input:checked) { box-shadow: inset 0 0 0 1.5px var(--gold); background: #fdfbf6; }
+  .opt input { appearance: none; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line-strong); display: grid; place-items: center; cursor: pointer; }
+  .opt input:checked { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .opt input:checked::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+  .opt input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .opt b { display: block; font-weight: 500; }
+  .opt small { font-size: 14px; line-height: 20px; color: var(--text-2); }
+  .opt .p { font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; }
+  .opt .rec { font-size: 13px; color: var(--gold-ink); font-weight: 400; margin-left: 6px; }
+
+  .jobrow { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; align-items: center; margin-top: 20px; padding: 14px 16px; border-radius: 14px; background: var(--alt); }
+  .jobrow .tile { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--card); font: 500 13px/1 var(--mono); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--line); }
+  .jobrow b { display: block; font-weight: 500; }
+  .jobrow span { font-size: 14px; color: var(--text-2); }
+  .jobrow a { font-size: 14px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+  .advert { margin-top: 20px; display: grid; gap: 12px; }
+  .advert[hidden] { display: none; }
+
+  .form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+  .form .full { grid-column: 1 / -1; }
+  .req { color: var(--pen); }
+  .drop { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 14px; border: 1.5px dashed var(--line-strong); background: var(--alt); cursor: pointer; transition: border-color 140ms var(--ease); }
+  .drop:hover { border-color: var(--gold); }
+  .drop svg { width: 22px; height: 22px; color: var(--muted); }
+  .drop b { display: block; font-weight: 500; }
+  .drop small { font-size: 13px; color: var(--muted); }
+  .drop.has { border-style: solid; border-color: var(--line-strong); background: var(--card); }
+  .drop.has svg { color: var(--good); }
+  .tick { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--text-2); cursor: pointer; }
+  .tick input { appearance: none; width: 18px; height: 18px; margin-top: 3px; flex: none; border-radius: 5px; box-shadow: inset 0 0 0 1.5px var(--line-strong); display: grid; place-items: center; cursor: pointer; background: var(--card); }
+  .tick input:checked { background: var(--ink); box-shadow: none; }
+  .tick input:checked::after { content: ""; width: 9px; height: 5px; border-left: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: translateY(-1px) rotate(-45deg); }
+  .err { margin-top: 16px; padding: 10px 14px; border-radius: 10px; background: rgba(180, 35, 24, 0.06); color: var(--pen); font-size: 14px; }
+  .err[hidden] { display: none; }
+  .privacy { margin-top: 16px; font-size: 14px; color: var(--muted); }
+  .privacy a { color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Done */
+  .done-head { display: flex; gap: 16px; align-items: center; }
+  .done-head .ok { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; background: rgba(21, 128, 61, 0.1); color: var(--good); }
+  .linkbox { margin-top: 24px; padding: 16px; border-radius: 14px; background: var(--alt); }
+  .linkbox span { font-size: 13px; color: var(--muted); }
+  .linkbox .row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .linkbox code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 10px 12px; border-radius: 8px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font: 14px/20px var(--mono); }
+  .linkbox small { display: flex; gap: 6px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--text-2); }
+  .done-acts { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .paybox { margin-top: 24px; padding: 24px; border-radius: 16px; box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .paybox h3 { font-size: 17px; }
+  .paybox .amt { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+  .paybox .amt b { font: 500 32px/36px var(--serif); font-variant-numeric: tabular-nums; }
+  .paybox .amt b small { font: 400 14px/20px var(--sans); color: var(--muted); margin-right: 4px; }
+  .paybox .alt { margin-top: 14px; font-size: 14px; color: var(--text-2); }
+  .paybox .wait, .paybox .paid { display: none; margin-top: 16px; padding: 14px 16px; border-radius: 12px; font-size: 14px; }
+  .paybox .wait { background: var(--alt); color: var(--text-2); }
+  .paybox .paid { background: rgba(21, 128, 61, 0.08); color: var(--good); }
+  .paybox.waiting .wait, .paybox.ok .paid { display: block; }
+  .paybox.ok .amt, .paybox.ok .alt { display: none; }
+  .another { margin-top: 20px; font-size: 14px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* The order slip: fills in as you choose */
+  .slip { position: sticky; top: 88px; padding: 24px; border-radius: 20px; background: var(--desk); }
+  .slip .paper { position: relative; padding: 22px 20px 20px; border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 28px rgba(28, 27, 25, 0.1); }
+  .slip .top { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  .slip .item { margin-top: 14px; font: 500 22px/28px var(--serif); }
+  .slip .for { font-size: 14px; color: var(--text-2); }
+  .slip dl { margin-top: 16px; border-top: 1px dashed var(--line-strong); }
+  .slip dl div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line-strong); font-size: 14px; }
+  .slip dt { color: var(--muted); }
+  .slip dd { font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+  .slip .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; }
+  .slip .total b { font: 500 28px/32px var(--serif); font-variant-numeric: tabular-nums; }
+  .slip .track { margin-top: 16px; }
+  .slip .track i { width: 100%; }
+  .slip .track { display: grid; grid-template-columns: repeat(5, 1fr); }
+  .slip .stage { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .slip .help { margin-top: 16px; font-size: 14px; color: var(--text-2); text-align: center; }
+  .slip .help a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (max-width: 1040px) {
+    .order-grid { grid-template-columns: minmax(0, 1fr); }
+    .slip { position: static; grid-row: 1; padding: 16px; }
+    .slip .paper { padding: 16px; }
+    .slip dl, .slip .help { display: none; }
+  }
+  @media (max-width: 640px) {
+    .order h1 { font-size: 30px; line-height: 36px; }
+    .panel { padding: 20px 16px; }
+    .opts.two, .form { grid-template-columns: 1fr; }
+    .opt { grid-template-columns: 20px minmax(0, 1fr); }
+    .opt .p { grid-column: 2; }
+    .nav-row { flex-direction: column-reverse; }
+    .nav-row .btn { width: 100%; }
+  }
+</style>
+
+<section class="order">
+  <div class="wrap">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><a href="pricing.html">Pricing</a><span>/</span><span>Order</span></nav>
+    <h1 data-title>Order your CV</h1>
+    <p class="sub">Three quick steps. Pay by M-Pesa once your order is placed.</p>
+
+    <div class="order-grid">
+      <div>
+        <nav class="rail" aria-label="Order steps">
+          <button type="button" class="now" data-go="0"><i></i><span>1 · Choose a service</span></button>
+          <button type="button" data-go="1" disabled><i></i><span>2 · Pick a package</span></button>
+          <button type="button" data-go="2" disabled><i></i><span>3 · Your details and CV</span></button>
+        </nav>
+
+        <!-- 1 -->
+        <section class="card panel" data-step="0">
+          <h2>What do you need?</h2>
+          <p class="hint">Pick the closest match. We'll suggest the right package next.</p>
+          <div class="opts two" data-needs>
+            <label class="opt"><input type="radio" name="need" value="cv"><div><b>A professional CV</b><small>A new CV, or a rewrite of your current one</small></div></label>
+            <label class="opt"><input type="radio" name="need" value="cvcl" checked><div><b>CV and cover letter</b><small>Everything you need to start applying</small></div></label>
+            <label class="opt"><input type="radio" name="need" value="all"><div><b>A full career makeover</b><small>CV, cover letter, LinkedIn and a coaching call</small></div></label>
+            <label class="opt"><input type="radio" name="need" value="job"><div><b>A CV for one specific job</b><small>Rewritten for an advert you've found</small></div></label>
+            <label class="opt" style="grid-column:1/-1"><input type="radio" name="need" value="single"><div><b>Just one service</b><small>Cover letter, LinkedIn, coaching, interview practice and more</small></div></label>
+          </div>
+          <div class="nav-row"><span></span><button class="btn btn-primary" type="button" data-next>Continue</button></div>
+        </section>
+
+        <!-- 2 -->
+        <section class="card panel" data-step="1" hidden>
+          <h2 data-pick-title>Pick a package</h2>
+          <p class="hint">One price, paid once by M-Pesa or card. <a href="pricing.html#compare">Compare what's included</a></p>
+          <div class="opts" data-items></div>
+          <div data-job-box hidden>
+            <div class="jobrow" data-jobrow hidden></div>
+            <div class="advert" data-advert>
+              <label class="full"><span class="label">The job advert <small>Paste it, or a link to it</small></span>
+                <span class="field area"><textarea placeholder="Paste the job advert here, or a link to it (for example https://careers.company.co.ke/jobs/123)"></textarea></span></label>
+              <label class="drop" data-poster><svg class="i"><use href="#i-upload"/></svg><span><b>Or upload a photo of the advert</b><small>A screenshot or PDF of the poster, optional if you pasted it above</small></span><input type="file" accept="image/*,.pdf" class="sr-only"></label>
+            </div>
+          </div>
+          <div class="nav-row"><button class="btn btn-ghost" type="button" data-back>Back</button><button class="btn btn-primary" type="button" data-next>Continue</button></div>
+        </section>
+
+        <!-- 3 -->
+        <section class="card panel" data-step="2" hidden>
+          <h2>Your details and CV</h2>
+          <p class="hint">We'll create your order and a private link where you can pay, follow progress, download drafts and ask for changes.</p>
+          <form class="form" data-form novalidate>
+            <label><span class="label">Full name <span class="req">*</span></span><span class="field"><input name="name" autocomplete="name" placeholder="For example Faith Njeri" required></span></label>
+            <label><span class="label">WhatsApp number <span class="req">*</span></span><span class="field"><input name="phone" type="tel" autocomplete="tel" placeholder="07XX XXX XXX" required></span></label>
+            <label><span class="label">Email <small>optional</small></span><span class="field"><input name="email" type="email" autocomplete="email" placeholder="you@example.com"></span></label>
+            <label><span class="label">Job you're aiming for <small>optional</small></span><span class="field"><input name="role" placeholder="For example Procurement Officer"></span></label>
+            <label class="drop full" data-cv><svg class="i"><use href="#i-upload"/></svg><span><b data-cv-label>Upload your current CV</b><small>PDF, Word, or a clear photo of it · up to 10 MB</small></span><input type="file" accept=".pdf,.doc,.docx,image/*" class="sr-only"></label>
+            <label class="tick full"><input type="checkbox" name="nocv">I don't have a CV yet. Send me a short questionnaire instead</label>
+            <label class="tick full"><input type="checkbox" name="consent" checked>Send me updates about this order on WhatsApp</label>
+          </form>
+          <p class="err" data-err hidden></p>
+          <div class="nav-row"><button class="btn btn-ghost" type="button" data-back>Back</button><button class="btn btn-primary" type="button" data-place>Upload CV and place my order</button></div>
+          <p class="privacy">Only your writer sees your CV. Questions first? <a href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%20have%20a%20question%20before%20I%20order" target="_blank" rel="noopener">Ask on WhatsApp</a></p>
+        </section>
+
+        <!-- Done -->
+        <section class="card panel" data-step="3" hidden>
+          <div class="done-head"><span class="ok"><svg class="i"><use href="#i-check"/></svg></span><div><h2>Order placed</h2><p class="hint" data-done-sub>Order JC-1053 is waiting for payment.</p></div></div>
+          <div class="linkbox">
+            <span>Your private tracking link</span>
+            <div class="row"><code data-link>jaycvs.co.ke/t/7fk2q9xw</code><button class="btn btn-ghost btn-sm" type="button" data-copy-link><svg class="i s16"><use href="#i-copy"/></svg><span>Copy</span></button></div>
+            <small><svg class="i s16"><use href="#i-lock"/></svg>Only you have this link. Don't share it in groups or channels</small>
+          </div>
+          <div class="done-acts">
+            <a class="btn btn-ghost" href="https://wa.me/254725912186" target="_blank" rel="noopener" data-save-wa><svg class="i s16"><use href="#i-chat"/></svg>Save the link to my WhatsApp</a>
+            <a class="btn btn-ghost" href="track.html?ref=JC-1053">Open my tracking page</a>
+          </div>
+          <div class="paybox" data-paybox>
+            <h3>Next: pay to start your order</h3>
+            <div class="amt"><b><small>KES</small><span data-amount>3,000</span></b><button class="btn btn-primary" type="button" data-pay>Pay with M-Pesa</button></div>
+            <p class="alt">A prompt appears on your phone, just enter your PIN. Or use Pay Bill <b>4027127</b> with account <b data-acct>JC-1053</b>. You can also pay later from your tracking page.</p>
+            <p class="wait">Check your phone and enter your M-Pesa PIN. This updates by itself once it's paid.</p>
+            <p class="paid"><b>Payment received.</b> Your writer has been told and starts now. First draft <span data-paid-eta>by Thu 19 Nov</span>.</p>
+          </div>
+          <button class="another" type="button" data-again>Start another order</button>
+        </section>
+      </div>
+
+      <aside class="slip" aria-label="Your order">
+        <div class="paper">
+          <div class="top"><span>Your order</span><span class="mono" data-ref>New</span></div>
+          <div class="item" data-s-name>Professional</div>
+          <div class="for" data-s-for>Mid-level professionals</div>
+          <dl>
+            <div><dt>First draft</dt><dd data-s-eta>Within 24 hours</dd></div>
+            <div><dt>Revisions</dt><dd data-s-rev>2 rounds</dd></div>
+            <div><dt>Pay by</dt><dd>M-Pesa or card</dd></div>
+          </dl>
+          <div class="total"><span class="soft">Total</span><b data-s-price>KES 3,000</b></div>
+          <div class="track" aria-hidden="true" data-s-track><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="stage" data-s-stage>Not placed yet</p>
+        </div>
+        <p class="help">Not sure what to pick? <a href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20which%20package%20should%20I%20choose%3F" target="_blank" rel="noopener">Ask us</a></p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script src="js/jobs-data.js"></script>
+<script>
+(() => {
+  const PKGS = {
+    basic: { name: 'Basic CV', for: 'Graduates and entry-level roles', price: 1500, hours: 48, rev: '1 round' },
+    professional: { name: 'Professional', for: 'Mid-level professionals', price: 3000, hours: 24, rev: '2 rounds', rec: true },
+    executive: { name: 'Executive', for: 'Senior leaders and career changers', price: 6000, hours: 24, rev: 'Unlimited, 14 days' },
+  };
+  const SINGLES = {
+    'cover-letter': { name: 'Cover letter', for: 'Written for one specific role', price: 800, hours: 24, rev: '1 round' },
+    motivation: { name: 'Motivation letter', for: 'Scholarships, universities, programmes', price: 1000, hours: 48, rev: '1 round' },
+    linkedin: { name: 'LinkedIn profile revamp', for: 'Headline, About, experience and skills', price: 2000, hours: 72, rev: '1 round' },
+    coaching: { name: 'Career coaching session', for: '60 minutes, in person or online', price: 2500, hours: 48, rev: 'Not needed' },
+    'mock-interview': { name: 'Mock interview', for: 'With written feedback', price: 2000, hours: 48, rev: 'Not needed' },
+    applications: { name: 'Job application support', for: 'Per application or portal', price: 1000, hours: 48, rev: 'Not needed' },
+    update: { name: 'CV update', for: 'For CVs we wrote in the last 12 months', price: 700, hours: 48, rev: '1 round' },
+    international: { name: 'International CV format', for: 'UK, Canada, US, Europe, Gulf', price: 2500, hours: 48, rev: '1 round' },
+    tailored: { name: 'CV tailored to a job', for: 'Your CV rewritten for one advert', price: 1000, hours: 48, rev: '1 round' },
+  };
+  const NEED_PKG = { cv: 'basic', cvcl: 'professional', all: 'executive' };
+  const ALL = { ...PKGS, ...SINGLES };
+  const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+  const kes = (n) => 'KES ' + n.toLocaleString('en-KE');
+  const etaText = (h) => h >= 72 ? `Within ${h / 24} days` : `Within ${h} hours`;
+  const etaDate = (h) => new Date(Date.now() + h * 36e5).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  const params = new URLSearchParams(location.search);
+  const job = params.get('job') && window.JOBS.find((j) => j.id === params.get('job'));
+  const state = { step: 0, need: 'cvcl', item: 'professional' };
+  if (params.get('pkg') && PKGS[params.get('pkg')]) { state.item = params.get('pkg'); state.need = Object.keys(NEED_PKG).find((k) => NEED_PKG[k] === state.item); }
+  if (params.get('item') && SINGLES[params.get('item')]) { state.item = params.get('item'); state.need = state.item === 'tailored' ? 'job' : 'single'; }
+  if (job) { state.item = 'tailored'; state.need = 'job'; }
+  $$('[name=need]').forEach((r) => (r.checked = r.value === state.need));
+
+  function slip() {
+    const it = ALL[state.item];
+    $('[data-s-name]').textContent = it.name;
+    $('[data-s-for]').textContent = state.item === 'tailored' && job ? `${job.title} at ${job.company}` : it.for;
+    $('[data-s-eta]').textContent = etaText(it.hours);
+    $('[data-s-rev]').textContent = it.rev;
+    $('[data-s-price]').textContent = kes(it.price);
+    $('[data-amount]').textContent = it.price.toLocaleString('en-KE');
+    $('[data-title]').textContent = state.item === 'tailored' ? 'Get my CV tailored' : 'Order your CV';
+  }
+
+  function items() {
+    const list = state.need === 'single' ? Object.keys(SINGLES).filter((k) => k !== 'tailored') : state.need === 'job' ? ['tailored'] : Object.keys(PKGS);
+    if (!list.includes(state.item)) state.item = state.need === 'single' ? list[0] : state.need === 'job' ? 'tailored' : NEED_PKG[state.need];
+    $('[data-pick-title]').textContent = state.need === 'single' ? 'Pick a service' : state.need === 'job' ? 'Tailored to this job' : 'Pick a package';
+    $('[data-items]').innerHTML = list.map((k) => { const it = ALL[k]; return `
+      <label class="opt"><input type="radio" name="item" value="${k}" ${k === state.item ? 'checked' : ''}><div><b>${it.name}${it.rec ? '<span class="rec">Chosen most often</span>' : ''}</b><small>${it.for} · first draft ${etaText(it.hours).toLowerCase()}</small></div><span class="p">${kes(it.price)}</span></label>`; }).join('');
+    $('[data-job-box]').hidden = state.need !== 'job';
+    if (job) {
+      const ini = job.company.replace(/[^A-Za-z ]/g, '').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+      $('[data-jobrow]').hidden = false; $('[data-advert]').hidden = true;
+      $('[data-jobrow]').innerHTML = `<span class="tile">${ini}</span><div><b>${job.title}</b><span>${job.company}</span></div><a href="job.html?id=${job.id}">View the job</a>`;
+    }
+  }
+
+  function go(n) {
+    state.step = n;
+    $$('[data-step]').forEach((p) => (p.hidden = +p.dataset.step !== n));
+    $$('.rail button').forEach((b, i) => { b.className = i < n ? 'done' : i === n ? 'now' : ''; b.disabled = i > n || n === 3; });
+    if (n === 1) items();
+    slip();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.addEventListener('change', (e) => {
+    if (e.target.name === 'need') { state.need = e.target.value; if (NEED_PKG[state.need]) state.item = NEED_PKG[state.need]; else if (state.need === 'job') state.item = 'tailored'; slip(); }
+    if (e.target.name === 'item') { state.item = e.target.value; slip(); }
+    const drop = e.target.closest('.drop');
+    if (drop && e.target.files && e.target.files[0]) { drop.classList.add('has'); const b = drop.querySelector('b'); b.textContent = e.target.files[0].name; drop.querySelector('use').setAttribute('href', '#i-check'); }
+  });
+  $$('[data-next]').forEach((b) => b.addEventListener('click', () => go(state.step + 1)));
+  $$('[data-back]').forEach((b) => b.addEventListener('click', () => go(state.step - 1)));
+  $$('[data-go]').forEach((b) => b.addEventListener('click', () => !b.disabled && go(+b.dataset.go)));
+
+  $('[data-place]').addEventListener('click', () => {
+    const f = $('[data-form]'), err = $('[data-err]');
+    const missing = [];
+    if (!f.name.value.trim()) missing.push('your name');
+    if (f.phone.value.replace(/\D/g, '').length < 9) missing.push('a WhatsApp number we can reach');
+    if (!$('[data-cv]').classList.contains('has') && !f.nocv.checked) missing.push('your CV, or tick that you don\'t have one');
+    if (missing.length) { err.textContent = 'Add ' + missing.join(', ') + '.'; err.hidden = false; return; }
+    err.hidden = true;
+    const btn = $('[data-place]'); btn.disabled = true; btn.textContent = 'Placing your order…';
+    setTimeout(() => {
+      btn.disabled = false; btn.textContent = 'Upload CV and place my order';
+      const first = f.name.value.trim().split(' ')[0];
+      $('[data-done-sub]').textContent = `Thanks ${first}. Order JC-1053 is waiting for payment.`;
+      $('[data-ref]').textContent = 'JC-1053';
+      $('[data-s-stage]').textContent = 'Awaiting payment';
+      $('[data-save-wa]').href = `https://wa.me/?text=${encodeURIComponent('My Jay CVS order JC-1053: https://jaycvs.co.ke/t/7fk2q9xw')}`;
+      go(3);
+    }, 900);
+  });
+
+  $('[data-copy-link]').addEventListener('click', (e) => {
+    const s = e.currentTarget.querySelector('span');
+    navigator.clipboard && navigator.clipboard.writeText('https://' + $('[data-link]').textContent);
+    s.textContent = 'Copied'; setTimeout(() => (s.textContent = 'Copy'), 1500);
+  });
+  $('[data-pay]').addEventListener('click', () => {
+    const box = $('[data-paybox]'); box.classList.add('waiting');
+    setTimeout(() => {
+      box.classList.remove('waiting'); box.classList.add('ok');
+      $('[data-paid-eta]').textContent = 'by ' + etaDate(ALL[state.item].hours);
+      $$('[data-s-track] i').forEach((i, n) => (i.className = n === 0 ? 'done' : n === 1 ? 'now' : ''));
+      $('[data-s-stage]').textContent = 'Paid · your writer is starting';
+    }, 2400);
+  });
+  $('[data-again]').addEventListener('click', () => location.reload());
+
+  slip();
+})();
+</script>

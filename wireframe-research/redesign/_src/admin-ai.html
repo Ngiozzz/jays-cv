@@ -1,0 +1,127 @@
+
+  <!-- ═════════ AI TOKENS ═════════
+       Matches platform modules/ai (token ledger, usage by feature, token requests to the platform owner).
+       NEW, not in the platform yet: per-person monthly allowances (the "Share among the team" card). -->
+  <section class="screen" id="s-ai">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><a href="#dashboard">Dashboard</a><svg class="i" style="width:12px;height:12px"><use href="#right"/></svg><span>AI</span></div>
+        <h1>AI</h1>
+        <p class="sub">Tokens power poster reading, job links, CV checks and the writers' AI helper. You see tokens, never money.</p>
+      </div>
+      <div class="actions"><a class="btn btn-primary" href="#ai-request" data-jump-req><svg class="i"><use href="#plus"/></svg>Request more tokens</a></div>
+    </div>
+
+    <div class="ai-top">
+      <!-- The balance: the one number that matters on this screen -->
+      <div class="card ai-bal">
+        <span class="l">Tokens left</span>
+        <div class="big"><b>397,700</b><span>of 1,000,000 this month</span></div>
+        <div class="ai-gauge" role="img" aria-label="40 percent left, warning at 20 percent"><span class="left" style="width:39.8%"></span><span class="warn" style="left:20%" title="Warning at 20%"></span></div>
+        <div class="ai-gauge-k"><span>0</span><span style="margin-left:14%">Warn at 20%</span><span style="margin-left:auto">1,000,000</span></div>
+        <div class="ai-pace">
+          <div><span class="v num">33,500</span><span class="c">Used a day this month</span></div>
+          <div><span class="v key num">About 12 days</span><span class="c">Left at this pace, to around 30 Nov</span></div>
+          <div><span class="v num">About 195</span><span class="c">Posters you could still read</span></div>
+        </div>
+        <p class="ai-alert"><svg class="i"><use href="#clock"/></svg><span><b>This month's tokens run out before 1 December at this pace.</b> Request more now, since the developer may take up to a day to add them.</span></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Used each day</h2><span class="hint num">602,300 in November</span></div>
+        <div class="ai-chart">
+          <div class="ai-bars" data-ai-bars aria-label="Tokens used each day, 1 to 18 November"></div>
+          <div class="ai-axis"><span>1 Nov</span><span>8 Nov</span><span>15 Nov</span><span>Today</span></div>
+          <ul class="ai-feat" style="padding:16px 0 0;margin-top:16px;border-top:1px solid var(--line)">
+            <li><span class="t">Busiest day</span><span class="n">52,000</span><span class="s">Tue 17 Nov · Grace read 24 posters in Bulk post</span></li>
+            <li><span class="t">Quiet days</span><span class="n">8,000 to 12,000</span><span class="s">Weekends, when only client CV checks run</span></li>
+            <li><span class="t">Biggest user</span><span class="n">63%</span><span class="s">Reading job posters. Fewer, clearer posters use fewer tokens</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-mid">
+      <div class="card">
+        <div class="card-head"><h2>What it was used for</h2><span class="hint">November</span></div>
+        <ul class="ai-feat">
+          <li><span class="t">Reading job posters<small>Bulk post</small></span><span class="n">379,400</span><span class="s">186 posters · about 2,000 each</span><span class="pc">63%</span><span class="bar"><span style="width:63%"></span></span></li>
+          <li><span class="t">Client CV checks<small>Paid by clients</small></span><span class="n">123,000</span><span class="s">41 checks · KES 410 taken</span><span class="pc">20%</span><span class="bar"><span style="width:20%"></span></span></li>
+          <li><span class="t">Reading job links<small>Job sources</small></span><span class="n">55,000</span><span class="s">22 links · about 2,500 each</span><span class="pc">9%</span><span class="bar"><span style="width:9%"></span></span></li>
+          <li><span class="t">Writers' AI helper<small>Order page</small></span><span class="n">32,300</span><span class="s">38 uses · shorten, check against the brief</span><span class="pc">5%</span><span class="bar"><span style="width:5%"></span></span></li>
+          <li><span class="t">Review screening<small>Automatic</small></span><span class="n">7,200</span><span class="s">9 reviews checked before you approve</span><span class="pc">1%</span><span class="bar"><span style="width:1.2%"></span></span></li>
+          <li><span class="t">Job sources check<small>Automatic</small></span><span class="n">5,400</span><span class="s">5 sources checked for new jobs</span><span class="pc">1%</span><span class="bar"><span style="width:0.9%"></span></span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Share among the team</h2><span class="hint">Monthly allowance per person</span></div>
+        <div class="ai-split" data-ai-split aria-hidden="true"></div>
+        <div class="ai-split-k" data-ai-split-k></div>
+        <div style="overflow-x:auto">
+        <table class="ai-allow">
+          <thead><tr><th>Who</th><th>Allowance</th><th>Used this month</th><th>AI on</th></tr></thead>
+          <tbody data-ai-allow></tbody>
+        </table>
+        </div>
+        <div class="ai-sum" data-ai-sum></div>
+      </div>
+    </div>
+
+    <div class="ai-bottom">
+      <div class="card" id="ai-request">
+        <div class="card-head"><h2>Request more tokens</h2><span class="hint">Sent to the developer</span></div>
+        <div class="ai-req" data-ai-form>
+          <div class="ai-chips" role="group" aria-label="How many tokens" data-ai-chips>
+            <button type="button" data-n="500000" aria-pressed="false"><b>500,000</b><small>About 250 posters</small></button>
+            <button type="button" data-n="1000000" aria-pressed="true"><b>1,000,000</b><small>About a month</small></button>
+            <button type="button" data-n="2000000" aria-pressed="false"><b>2,000,000</b><small>About 2 months</small></button>
+            <button type="button" data-n="5000000" aria-pressed="false"><b>5,000,000</b><small>About 5 months</small></button>
+            <button type="button" data-n="other" aria-pressed="false"><b>Other</b><small>100,000 to 50M</small></button>
+          </div>
+          <label class="in" data-ai-other hidden><span>How many tokens</span><input class="inp num" inputmode="numeric" placeholder="For example 750,000" style="width:220px"></label>
+          <p class="lasts" data-ai-lasts>At November's pace, <b>1,000,000</b> tokens last about <b>30 days</b>.</p>
+          <label class="in"><span>Note for the developer <em>optional</em></span><textarea class="inp" placeholder="For example: December is busy, we're posting more jobs from Bulk post."></textarea></label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" type="button" data-ai-send>Send request</button><span class="muted" style="font-size:13px">One request at a time. You'll get a WhatsApp message when they're added.</span></div>
+        </div>
+        <div class="ai-req" data-ai-pending hidden>
+          <div class="ai-pending">
+            <b data-ai-pend-t>1,000,000 tokens requested</b>
+            <span data-ai-pend-s>Sent just now by Jay · waiting for the developer</span>
+            <div class="row"><button class="btn btn-ghost btn-sm" type="button" data-ai-cancel>Cancel request</button><button class="btn btn-ghost btn-sm" type="button" data-ai-grant>Mockup: mark as added</button></div>
+          </div>
+          <p class="muted" style="font-size:13px">Writers who run out see "Ask the business owner to request more AI tokens."</p>
+        </div>
+        <div class="card-head" style="padding-top:4px"><h2 style="font-size:14px">Tokens added</h2></div>
+        <ul class="ai-ledger" data-ai-ledger>
+          <li><div><b>Monthly allowance</b><br><span>1 Nov · from the developer</span></div><span class="amt">+1,000,000</span></li>
+          <li><div><b>Top-up you requested</b><br><span>22 Oct · "Busy week, lots of posters"</span></div><span class="amt">+500,000</span></li>
+          <li><div><b>Monthly allowance</b><br><span>1 Oct · from the developer</span></div><span class="amt">+1,000,000</span></li>
+        </ul>
+      </div>
+
+      <div style="display:grid;gap:16px;align-content:start">
+        <div class="card">
+          <div class="card-head"><h2>Settings</h2></div>
+          <div class="form-body">
+            <label class="in"><span>Warn me when tokens drop below</span><div class="pre-in" style="width:120px"><input class="inp num" value="20"><span style="padding:0 12px 0 0">%</span></div><small>You get a WhatsApp message and a note on the dashboard.</small></label>
+            <label class="check" style="height:auto;justify-content:space-between;gap:12px"><span>When a person's allowance runs out, let them use the shared pool</span><input type="checkbox" class="toggle" checked></label>
+            <label class="check" style="height:auto;justify-content:space-between;gap:12px"><span>Keep client CV checks running even below the warning</span><input type="checkbox" class="toggle" checked></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Latest AI runs</h2><span class="hint">Today</span></div>
+          <table class="ai-runs">
+            <thead><tr><th>When</th><th>Who</th><th>What</th><th class="n">Tokens</th></tr></thead>
+            <tbody>
+              <tr><td class="muted num">14:31</td><td>Client</td><td>CV check · <span class="ref">I.T Specialist</span></td><td class="n">3,100</td></tr>
+              <tr><td class="muted num">13:58</td><td>Grace</td><td>Read 6 posters</td><td class="n">12,400</td></tr>
+              <tr><td class="muted num">12:40</td><td>Aisha</td><td>AI helper · <span class="ref">JC-1044</span></td><td class="n">900</td></tr>
+              <tr><td class="muted num">11:15</td><td>Automatic</td><td>Job sources check</td><td class="n">1,100</td></tr>
+              <tr><td class="muted num">09:02</td><td>Jay</td><td>Read 3 job links</td><td class="n">7,600</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>

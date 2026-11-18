@@ -1,0 +1,204 @@
+<!-- title: 7 CV mistakes that get you rejected in Kenya · Jay CVS -->
+<!-- desc: What recruiters notice in the first few seconds, and how to fix the most common CV mistakes. -->
+<!-- nav: blog.html -->
+<style>
+  .a-head { padding: 48px 0 40px; }
+  .a-head .inner { max-width: 760px; }
+  .a-head .tag { font-size: 14px; color: var(--gold-ink); font-weight: 500; }
+  .a-head h1 { margin-top: 10px; font-size: 52px; line-height: 58px; }
+  .a-head .lead { margin-top: 20px; max-width: 680px; font-size: 20px; line-height: 32px; }
+  .byline { display: flex; align-items: center; gap: 12px; margin-top: 28px; font-size: 14px; line-height: 20px; }
+  .byline .av { width: 40px; height: 40px; border-radius: 10px; background: var(--gold); color: var(--ink); display: grid; place-items: center; font: 600 20px/1 var(--serif); }
+  .byline b { display: block; font-weight: 500; }
+  .byline span { color: var(--muted); }
+  .a-hero img { width: 100%; aspect-ratio: 21 / 9; object-fit: cover; border-radius: 20px; }
+  .a-hero figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+  .a-body { display: grid; grid-template-columns: 220px minmax(0, 680px) 1fr; gap: 64px; padding: 56px 0 96px; }
+  .toc { position: sticky; top: 88px; align-self: start; font-size: 14px; }
+  .toc p { color: var(--muted); margin-bottom: 8px; }
+  .toc a { display: block; padding: 6px 0 6px 12px; border-left: 2px solid var(--line); color: var(--text-2); line-height: 20px; transition: color 140ms var(--ease), border-color 140ms var(--ease); }
+  .toc a:hover { color: var(--text); }
+  .toc a.on { color: var(--text); border-color: var(--gold); }
+  .toc .share { display: flex; gap: 8px; margin-top: 24px; }
+  .toc .share a, .toc .share button { width: 36px; height: 36px; padding: 0; border: 0; display: grid; place-items: center; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--text-2); }
+
+  .prose { font-size: 18px; line-height: 31px; color: #2f2d2a; }
+  .prose > * + * { margin-top: 20px; }
+  .prose h2 { margin-top: 56px; font-size: 30px; line-height: 38px; scroll-margin-top: 88px; }
+  .prose h3 { margin-top: 40px; font-size: 20px; line-height: 28px; font-weight: 500; }
+  .prose ul { display: grid; gap: 10px; }
+  .prose ul li { position: relative; padding-left: 24px; }
+  .prose ul li::before { content: ""; position: absolute; left: 6px; top: 13px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .prose blockquote { margin: 40px 0; padding-left: 24px; border-left: 2px solid var(--gold); font: 400 26px/36px var(--serif); letter-spacing: -0.01em; color: var(--text); }
+  .prose strong { font-weight: 600; color: var(--text); }
+
+  /* The moment: the mistake, corrected in red pen */
+  .redline { margin: 32px 0; padding: 28px; border-radius: 20px; background: var(--desk); }
+  .redline .sheet { padding: 24px 28px; border-radius: 3px; background: #fff; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 10px 28px rgba(28, 27, 25, 0.1); font: 400 15px/24px 'Times New Roman', Times, serif; color: #333; transform: rotate(-0.6deg); }
+  .redline .sheet b { font-weight: 700; }
+  .redline .strike { position: relative; color: #555; }
+  .redline .strike::after { content: ""; position: absolute; left: -2px; right: -2px; top: 52%; height: 1.5px; background: var(--pen); transform: rotate(-1.5deg); }
+  .redline .fix { display: block; margin-top: 6px; font: italic 400 19px/26px 'Segoe Script', 'Bradley Hand', cursive; color: var(--pen); }
+  .redline figcaption { margin-top: 14px; font-size: 14px; line-height: 22px; color: var(--text-2); font-family: var(--sans); }
+
+  .callout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; margin: 40px 0; padding: 24px; border-radius: 16px; background: var(--ink); color: var(--on-ink); font-size: 16px; line-height: 24px; }
+  .callout b { display: block; font: 500 20px/28px var(--serif); }
+  .callout span { color: var(--ink-2); }
+  .checklist { display: grid; gap: 8px; }
+  .checklist label { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 16px; line-height: 24px; cursor: pointer; }
+  .checklist input { appearance: none; width: 18px; height: 18px; margin-top: 3px; flex: none; border-radius: 5px; box-shadow: inset 0 0 0 1.5px var(--line-strong); display: grid; place-items: center; cursor: pointer; }
+  .checklist input:checked { background: var(--ink); box-shadow: none; }
+  .checklist input:checked::after { content: ""; width: 9px; height: 5px; border-left: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: translateY(-1px) rotate(-45deg); }
+
+  .related h2 { font-size: 28px; line-height: 36px; }
+  .rel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
+  .rel img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; }
+  .rel .tag { display: block; margin-top: 14px; font-size: 13px; color: var(--gold-ink); font-weight: 500; }
+  .rel h3 { margin-top: 4px; font: 500 20px/28px var(--serif); }
+  .rel a:hover h3 { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+
+  @media (max-width: 1040px) {
+    .a-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .toc { display: none; }
+    .rel { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .a-head { padding: 32px 0 24px; }
+    .a-head h1 { font-size: 34px; line-height: 40px; }
+    .a-head .lead { font-size: 18px; line-height: 28px; }
+    .a-hero img { aspect-ratio: 4 / 3; border-radius: 14px; }
+    .a-body { padding: 40px 0 64px; }
+    .prose { font-size: 17px; line-height: 29px; }
+    .prose h2 { font-size: 26px; line-height: 32px; margin-top: 44px; }
+    .prose blockquote { font-size: 22px; line-height: 30px; }
+    .redline { padding: 16px; }
+    .callout { grid-template-columns: 1fr; }
+    .rel { grid-template-columns: 1fr; }
+  }
+</style>
+
+<article>
+  <header class="a-head">
+    <div class="wrap rise">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><a href="blog.html">Career tips</a><span>/</span><span>CV tips</span></nav>
+      <div class="inner">
+        <span class="tag">CV tips</span>
+        <h1>7 CV mistakes that get you rejected in Kenya</h1>
+        <p class="lead">Recruiters give your CV a few seconds on the first look. Here's what they notice, and how to fix the most common mistakes.</p>
+        <div class="byline"><span class="av" aria-hidden="true">J</span><div><b>Jay CVS team</b><span>September 2026 · 6 min read</span></div></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <figure class="a-hero"><img src="../img/photos/blog-cv-mistakes.jpg" alt="A recruiter reviewing a CV on a clipboard"></figure>
+    <div class="a-body">
+      <aside class="toc" aria-label="In this article">
+        <p>In this article</p>
+        <a href="#m1">Duties instead of achievements</a>
+        <a href="#m2">A format software can't read</a>
+        <a href="#m3">One CV for every job</a>
+        <a href="#m4">Too long, or too short</a>
+        <a href="#m5">An objective about you</a>
+        <a href="#m6">Contact details</a>
+        <a href="#m7">Small errors</a>
+        <a href="#check">A quick checklist</a>
+        <div class="share">
+          <a href="https://wa.me/?text=7%20CV%20mistakes%20that%20get%20you%20rejected%20in%20Kenya" target="_blank" rel="noopener" aria-label="Share on WhatsApp"><svg class="i s16"><use href="#i-chat"/></svg></a>
+          <a href="#" aria-label="Share on LinkedIn"><svg class="i s16"><use href="#i-linkedin"/></svg></a>
+          <button type="button" aria-label="Copy link" data-copy><svg class="i s16"><use href="#i-copy"/></svg></button>
+        </div>
+      </aside>
+
+      <div class="prose">
+        <p>Most CVs we see aren't rejected because the person is wrong for the job. They're rejected because the CV doesn't show what the person can do, in the few seconds a recruiter gives it. These are the mistakes we fix most often.</p>
+
+        <h2 id="m1">1. Listing duties instead of achievements</h2>
+        <p>Recruiters already know what an accountant or a sales executive does. What they want to know is how well you did it.</p>
+        <figure class="redline">
+          <div class="sheet">
+            <b>Sales Executive</b>, Nairobi region, 2021 to date<br>
+            <span class="strike">Responsible for sales in Nairobi region and other duties as assigned.</span>
+            <span class="fix">Grew Nairobi region sales by 35% in 12 months</span>
+          </div>
+          <figcaption>The same job, written as what you achieved. If you don't have an exact number, an honest estimate or a count still helps</figcaption>
+        </figure>
+
+        <h2 id="m2">2. Using a format software can't read</h2>
+        <p>Many employers use applicant tracking systems (ATS) to filter CVs before a person sees them. Tables, text boxes, images and unusual fonts can make your CV unreadable to them.</p>
+        <ul>
+          <li>Use clear section headings like Experience, Education and Skills</li>
+          <li>Save as a .docx or a text-based PDF</li>
+          <li>Keep key information out of headers, footers and images</li>
+        </ul>
+
+        <h2 id="m3">3. One CV for every job</h2>
+        <p>Sending the same CV to every advert is the fastest way to be overlooked. Adjust your profile and key skills to match the words used in each job description.</p>
+        <blockquote>The best CVs don't list everything you've done. They show what you can do for this employer.</blockquote>
+        <div class="callout">
+          <div><b>See how your CV fits a real job</b><span>Pick an advert on our job board and get your match out of 100, with the words it's missing.</span></div>
+          <a class="btn btn-light" href="jobs.html">Find a job to check</a>
+        </div>
+
+        <h2 id="m4">4. Too long, or too short</h2>
+        <p>For most professionals in Kenya, two pages is right. Graduates can use one. Senior executives may need three, but only if every line earns its place.</p>
+
+        <h2 id="m5">5. A career objective about you, not them</h2>
+        <p>"To work in a challenging environment where I can utilise my skills" says nothing a recruiter can use. Replace it with a two-line profile: who you are, your years of experience, and the one thing you're best at.</p>
+
+        <h2 id="m6">6. Contact details that get in the way</h2>
+        <p>An old phone number or an email like <strong>sweetgirl99@</strong> costs you the call. Use one number you always answer, a plain email with your name, and your town. A LinkedIn link helps if your profile is up to date.</p>
+
+        <h2 id="m7">7. Small errors that suggest carelessness</h2>
+        <p>A misspelled company name or dates that don't line up make a recruiter wonder what else was rushed. Read it slowly, then have someone else read it aloud to you.</p>
+
+        <h3 id="check">A quick checklist</h3>
+        <div class="checklist">
+          <label><input type="checkbox">Contact details up to date, with a professional email address</label>
+          <label><input type="checkbox">No photo, ID number, marital status or religion unless the advert asks</label>
+          <label><input type="checkbox">Consistent dates, fonts and spacing</label>
+          <label><input type="checkbox">Spell-checked, then read aloud by someone else</label>
+        </div>
+
+        <h2>Where to start</h2>
+        <p>Pick one job you held and rewrite its bullet points as achievements today. Then do the same for your profile. Those two changes alone make a recruiter read further.</p>
+        <p>Rather have it done for you? <a class="link" href="pricing.html" style="display:inline-flex">See our packages <svg class="i s16"><use href="#i-arrow"/></svg></a></p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<section class="section alt related">
+  <div class="wrap">
+    <div class="section-head" style="margin-bottom:0"><div><h2>Keep reading</h2></div><a class="link" href="blog.html">All career tips <svg class="i s16"><use href="#i-arrow"/></svg></a></div>
+    <div class="rel">
+      <a href="article.html"><img src="../img/photos/blog-ats.jpg" alt="" loading="lazy"><span class="tag">CV tips</span><h3>What is an ATS, and how do you get past it?</h3></a>
+      <a href="article.html"><img src="../img/photos/blog-linkedin.jpg" alt="" loading="lazy"><span class="tag">LinkedIn</span><h3>How to get recruiters to message you on LinkedIn</h3></a>
+      <a href="article.html"><img src="../img/photos/blog-tell-me-about-yourself.jpg" alt="" loading="lazy"><span class="tag">Interviews</span><h3>Answering "Tell me about yourself"</h3></a>
+    </div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <div>
+      <h2>Want an expert to fix these for you?</h2>
+      <p>Send your current CV on WhatsApp for a free review. We'll tell you exactly what to improve.</p>
+    </div>
+    <div class="ctas">
+      <a class="btn btn-light" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20a%20free%20CV%20review" target="_blank" rel="noopener">Get a free review</a>
+      <a class="btn btn-ghost-dark" href="pricing.html">See packages</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Contents: highlight the section being read
+  const links = [...document.querySelectorAll('.toc a[href^="#"]')];
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+  }), { rootMargin: '-20% 0px -70% 0px' });
+  links.forEach((a) => { const t = document.querySelector(a.getAttribute('href')); if (t) io.observe(t); });
+  document.querySelector('[data-copy]').addEventListener('click', () => navigator.clipboard && navigator.clipboard.writeText(location.href));
+</script>

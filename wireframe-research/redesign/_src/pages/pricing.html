@@ -1,0 +1,259 @@
+<!-- title: Pricing · Jay CVS -->
+<!-- desc: Jay CVS packages and single service prices. One payment by M-Pesa or card, revisions included. -->
+<!-- nav: pricing.html -->
+<style>
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; margin-top: 40px; }
+  .plan { padding: 28px; border-radius: 20px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .plan.main { box-shadow: inset 0 0 0 1.5px var(--gold), 0 12px 32px rgba(28, 27, 25, 0.06); }
+  .plan .name { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .plan .name small { font-size: 13px; color: var(--gold-ink); }
+  .plan .for { margin-top: 4px; font-size: 15px; color: var(--text-2); }
+  .plan .price { margin: 24px 0 4px; font: 500 44px/48px var(--serif); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .plan .price small { font: 400 15px/20px var(--sans); color: var(--muted); margin-right: 4px; letter-spacing: 0; }
+  .plan .once { font-size: 13px; color: var(--muted); }
+  .eta { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; margin: 20px 0 24px; padding: 12px 14px; border-radius: 12px; background: var(--alt); font-size: 13px; line-height: 18px; }
+  .eta span { color: var(--muted); }
+  .eta b { font-weight: 500; text-align: right; }
+  .eta i { height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--text-2) 0 30%, var(--line-strong) 30%); }
+  .plan.main .eta i { background: linear-gradient(90deg, var(--gold) 0 30%, var(--line-strong) 30%); }
+  .plan ul { display: grid; gap: 10px; margin-bottom: 28px; font-size: 15px; line-height: 22px; }
+  .plan li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; }
+  .plan li svg { margin-top: 3px; color: var(--muted); }
+  .plan.main li svg { color: var(--gold-ink); }
+  .plan .pay { margin-top: 12px; font-size: 13px; color: var(--muted); text-align: center; }
+
+  /* Compare */
+  .cmp { width: 100%; border-collapse: collapse; border-radius: 16px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 15px; }
+  .cmp th, .cmp td { padding: 14px 20px; text-align: left; border-top: 1px solid var(--line); }
+  .cmp thead th { border-top: 0; padding: 20px; font-size: 15px; font-weight: 500; background: var(--raised); }
+  .cmp thead th small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cmp tbody th { font-weight: 400; color: var(--text-2); width: 34%; }
+  .cmp td { color: var(--text); }
+  .cmp .col { background: #fdfbf6; }
+  .cmp thead .col { background: #f6efdf; }
+  .cmp .y svg { color: var(--text-2); }
+  .cmp .col.y svg { color: var(--gold-ink); }
+  .cmp .n { color: var(--muted); }
+  .cmp tfoot td, .cmp tfoot th { padding: 16px 20px; border-top: 1px solid var(--line-strong); }
+
+  /* Single services */
+  .singles { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+  .single { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center; padding: 18px 0; border-top: 1px solid var(--line-strong); }
+  .single b { display: block; font-weight: 500; }
+  .single small { font-size: 14px; color: var(--text-2); }
+  .single .t { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .single .p { font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; min-width: 84px; text-align: right; }
+  .single .new { font-size: 13px; color: var(--gold-ink); font-weight: 400; margin-left: 6px; }
+  .singles-note { margin-top: 24px; color: var(--text-2); }
+  .singles-note a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Payment */
+  .paybox { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .paybox .card { padding: 28px; }
+  .paybox h3 { font: 500 22px/30px var(--serif); margin-bottom: 16px; }
+  .mp-steps { counter-reset: s; display: grid; gap: 12px; }
+  .mp-steps li { counter-increment: s; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; color: var(--text-2); }
+  .mp-steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--raised); color: var(--text); font: 500 12px/1 var(--mono); }
+  .mp-steps b { color: var(--text); font-weight: 500; }
+  .bill { display: grid; gap: 12px; }
+  .bill div { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .bill span { color: var(--text-2); }
+  .bill b { font-weight: 500; font-variant-numeric: tabular-nums; }
+  .paybox .fine { margin-top: 16px; font-size: 14px; color: var(--text-2); }
+  .paybox .fine a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  .faq { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; }
+  .faq .intro p { margin-top: 12px; color: var(--text-2); }
+  .faq .intro a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+  details { border-top: 1px solid var(--line-strong); }
+  details:last-child { border-bottom: 1px solid var(--line-strong); }
+  summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0; font-size: 17px; font-weight: 500; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary svg { color: var(--muted); transition: transform 200ms var(--ease); }
+  details[open] summary svg { transform: rotate(45deg); }
+  details p { padding: 0 48px 24px 0; color: var(--text-2); }
+
+  @media (max-width: 1040px) {
+    .plans { grid-template-columns: 1fr; max-width: 560px; }
+    .singles, .paybox, .faq { grid-template-columns: 1fr; }
+    .faq { gap: 32px; }
+    .cmp-wrap { overflow-x: auto; margin: 0 calc(var(--gutter) * -1); padding: 0 var(--gutter); }
+    .cmp { min-width: 680px; }
+  }
+  @media (max-width: 640px) {
+    .plan { padding: 22px 18px; }
+    .single { grid-template-columns: minmax(0, 1fr) auto; }
+    .single .t { grid-column: 1; grid-row: 2; }
+    .single .p { grid-row: 1 / 3; grid-column: 2; }
+    .paybox .card { padding: 20px 16px; }
+    details p { padding-right: 0; }
+  }
+</style>
+
+<section class="page-head">
+  <div class="wrap rise">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Pricing</span></nav>
+    <h1>One price, paid once</h1>
+    <p class="lead">Pick the package that fits your career stage, pay by M-Pesa or card, and get your first draft within 48 hours. Revisions are included and there are no hidden charges.</p>
+
+    <div class="plans">
+      <article class="plan">
+        <div class="name"><h3>Basic CV</h3></div>
+        <p class="for">For graduates and entry-level roles</p>
+        <p class="price"><small>KES</small>1,500</p>
+        <p class="once">One payment</p>
+        <div class="eta"><span>Order today</span><i></i><b data-eta="48">Draft by Fri</b></div>
+        <ul>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Professionally written CV</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>ATS-friendly format</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Draft within 48 hours</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>1 round of revisions</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Word and PDF files</li>
+        </ul>
+        <a class="btn btn-ghost btn-block" href="order.html?pkg=basic">Choose Basic</a>
+      </article>
+      <article class="plan main">
+        <div class="name"><h3>Professional</h3><small>Chosen most often</small></div>
+        <p class="for">For mid-level professionals</p>
+        <p class="price"><small>KES</small>3,000</p>
+        <p class="once">One payment</p>
+        <div class="eta"><span>Order today</span><i></i><b data-eta="24">Draft by Thu</b></div>
+        <ul>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Everything in Basic</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Cover letter for your target role</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Rewrite around your achievements</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>2 rounds of revisions</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Priority draft within 24 hours</li>
+        </ul>
+        <a class="btn btn-primary btn-block" href="order.html?pkg=professional">Choose Professional</a>
+      </article>
+      <article class="plan">
+        <div class="name"><h3>Executive</h3></div>
+        <p class="for">For senior leaders and career changers</p>
+        <p class="price"><small>KES</small>6,000</p>
+        <p class="once">One payment</p>
+        <div class="eta"><span>Order today</span><i></i><b data-eta="24">Draft by Thu</b></div>
+        <ul>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Everything in Professional</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>LinkedIn profile revamp</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>1-hour career coaching call</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Unlimited revisions for 14 days</li>
+          <li><svg class="i s16"><use href="#i-check"/></svg>Written personally by Jay</li>
+        </ul>
+        <a class="btn btn-ghost btn-block" href="order.html?pkg=executive">Choose Executive</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="compare">
+  <div class="wrap">
+    <div class="section-head"><div><h2>What each package includes</h2></div></div>
+    <div class="cmp-wrap">
+      <table class="cmp">
+        <thead><tr><th></th><th>Basic CV<small>KES 1,500</small></th><th class="col">Professional<small>KES 3,000</small></th><th>Executive<small>KES 6,000</small></th></tr></thead>
+        <tbody>
+          <tr><th>Professionally written CV</th><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="col y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td></tr>
+          <tr><th>ATS-friendly format</th><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="col y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td></tr>
+          <tr><th>Word and PDF files</th><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="col y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td></tr>
+          <tr><th>Talk to your writer</th><td>On WhatsApp</td><td class="col">Phone call</td><td>Phone or video call</td></tr>
+          <tr><th>Cover letter for your target role</th><td class="n">Not included</td><td class="col y"><svg class="i s16"><use href="#i-check"/></svg></td><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td></tr>
+          <tr><th>LinkedIn profile revamp</th><td class="n">Not included</td><td class="col n">Not included</td><td class="y"><svg class="i s16"><use href="#i-check"/></svg></td></tr>
+          <tr><th>Career coaching call</th><td class="n">Not included</td><td class="col n">Not included</td><td>1 hour</td></tr>
+          <tr><th>Written by</th><td>A Jay CVS writer</td><td class="col">A Jay CVS writer</td><td>Jay, personally</td></tr>
+          <tr><th>Revisions</th><td>1 round</td><td class="col">2 rounds</td><td>Unlimited for 14 days</td></tr>
+          <tr><th>First draft</th><td class="num">Within 48 hours</td><td class="col num">Within 24 hours</td><td class="num">Within 24 hours</td></tr>
+        </tbody>
+        <tfoot><tr><th></th><td><a class="btn btn-ghost btn-sm" href="order.html?pkg=basic">Choose Basic</a></td><td class="col"><a class="btn btn-primary btn-sm" href="order.html?pkg=professional">Choose Professional</a></td><td><a class="btn btn-ghost btn-sm" href="order.html?pkg=executive">Choose Executive</a></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="single">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>Just need one thing?</h2>
+        <p>Order any service on its own, or add it to a package.</p>
+      </div>
+    </div>
+    <div class="singles">
+      <a class="single" href="order.html?item=tailored"><div><b>CV tailored to a job<span class="new">From any job advert</span></b><small>Your CV rewritten for one specific advert</small></div><span class="t">48 hours</span><span class="p">KES 1,000</span></a>
+      <a class="single" href="jobs.html"><div><b>CV check for a job</b><small>Your match out of 100, and what to change first</small></div><span class="t">Minutes</span><span class="p">KES 10</span></a>
+      <a class="single" href="order.html?item=cover-letter"><div><b>Cover letter</b><small>Written for one specific role</small></div><span class="t">24 hours</span><span class="p">KES 800</span></a>
+      <a class="single" href="order.html?item=motivation"><div><b>Motivation letter or personal statement</b><small>Scholarships, universities, programmes</small></div><span class="t">48 hours</span><span class="p">KES 1,000</span></a>
+      <a class="single" href="order.html?item=linkedin"><div><b>LinkedIn profile revamp</b><small>Headline, About, experience and skills</small></div><span class="t">3 days</span><span class="p">KES 2,000</span></a>
+      <a class="single" href="order.html?item=coaching"><div><b>Career coaching session</b><small>60 minutes, in person or online</small></div><span class="t">48 hours</span><span class="p">KES 2,500</span></a>
+      <a class="single" href="order.html?item=mock-interview"><div><b>Mock interview</b><small>With written feedback</small></div><span class="t">48 hours</span><span class="p">KES 2,000</span></a>
+      <a class="single" href="order.html?item=applications"><div><b>Job application support</b><small>Per application or portal</small></div><span class="t">48 hours</span><span class="p">KES 1,000</span></a>
+      <a class="single" href="order.html?item=update"><div><b>CV update</b><small>For CVs we wrote in the last 12 months</small></div><span class="t">48 hours</span><span class="p">KES 700</span></a>
+      <a class="single" href="order.html?item=international"><div><b>International CV format</b><small>UK, Canada, US, Europe, Gulf</small></div><span class="t">48 hours</span><span class="p">KES 2,500</span></a>
+    </div>
+    <p class="singles-note">Not sure which you need? <a href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20which%20package%20should%20I%20choose%3F" target="_blank" rel="noopener">Ask us on WhatsApp</a></p>
+  </div>
+</section>
+
+<section class="section" id="payment">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2>How to pay</h2><p>One payment by M-Pesa, straight to Jay CVS, when you upload your CV.</p></div>
+    </div>
+    <div class="paybox">
+      <div class="card">
+        <h3>With the M-Pesa prompt</h3>
+        <ol class="mp-steps">
+          <li><span><b>Upload your CV</b> and get your private tracking link</span></li>
+          <li><span>Tap <b>Pay with M-Pesa</b> and enter your number</span></li>
+          <li><span>A prompt appears on your phone. <b>Enter your PIN</b></span></li>
+          <li><span><b>That's it.</b> Your writer starts as soon as it's confirmed</span></li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Or from the M-Pesa menu</h3>
+        <div class="bill">
+          <div><span>Pay Bill number</span><b class="mono">4027127</b></div>
+          <div><span>Account number</span><b>Your order number, like JC-1052</b></div>
+          <div><span>Amount</span><b>Your package price</b></div>
+        </div>
+        <p class="fine">You can also pay later from your tracking page. <a href="how-it-works.html#payment">See the full process</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="faq">
+  <div class="wrap faq">
+    <div class="intro">
+      <h2>Questions about pricing</h2>
+      <p>See the <a href="how-it-works.html">full ordering process</a></p>
+    </div>
+    <div>
+      <details open><summary>Do I pay before or after the work?<svg class="i"><use href="#i-plus"/></svg></summary><p>Before. Payment goes straight to Jay CVS by M-Pesa prompt or Pay Bill with your order number, and your writer starts as soon as it's confirmed.</p></details>
+      <details><summary>Can I upgrade my package later?<svg class="i"><use href="#i-plus"/></svg></summary><p>Yes. Pay the difference and we'll add the extra services to your order.</p></details>
+      <details><summary>Do you offer student or group discounts?<svg class="i"><use href="#i-plus"/></svg></summary><p>Ask us on WhatsApp before you order and we'll tell you what's available.</p></details>
+      <details><summary>What's your refund policy?<svg class="i"><use href="#i-plus"/></svg></summary><p>If we haven't started work, we refund you in full. Once a draft is delivered, we keep revising it until you're satisfied.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <div>
+      <h2>Ready when you are</h2>
+      <p>Choose a package and upload your CV in a few minutes, or send it on WhatsApp for a free review first.</p>
+    </div>
+    <div class="ctas">
+      <a class="btn btn-light" href="order.html">Start your order</a>
+      <a class="btn btn-ghost-dark" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20a%20free%20CV%20review" target="_blank" rel="noopener">Free review on WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  // "Order today, draft by …": worked out from now, so the promise is concrete
+  document.querySelectorAll('[data-eta]').forEach((b) => {
+    const t = new Date(Date.now() + (+b.dataset.eta) * 36e5);
+    b.textContent = 'Draft by ' + t.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  });
+</script>

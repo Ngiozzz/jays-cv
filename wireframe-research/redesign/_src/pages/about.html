@@ -1,0 +1,174 @@
+<!-- title: About Jay CVS -->
+<!-- desc: Jay CVS is a Nairobi HR consultancy writing CVs, cover letters and LinkedIn profiles since 2018. -->
+<!-- nav: about.html -->
+<!-- Story and team are DRAFTS from facts already on the site: Jay to rewrite in his own words and confirm the writers.
+     Drop his portrait at img/photos/jay.jpg and it replaces the monogram automatically. -->
+<style>
+  .about-hero { padding: 48px 0 80px; }
+  .about-hero .grid { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 72px; align-items: center; margin-top: 8px; }
+  .about-hero h1 { font-size: 56px; line-height: 62px; }
+  .about-hero .lead { margin-top: 20px; font-size: 20px; line-height: 32px; }
+  .owner { display: flex; align-items: center; gap: 14px; margin-top: 32px; }
+  .owner .sign { font: italic 400 34px/1 'Segoe Script', 'Bradley Hand', cursive; }
+  .owner span { font-size: 14px; color: var(--muted); }
+  .owner .links { display: flex; gap: 8px; margin-left: 8px; }
+  .owner .links a { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--text-2); }
+  .portrait { position: relative; aspect-ratio: 4 / 5; border-radius: 24px; background: var(--desk); overflow: hidden; }
+  .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .portrait .mono { position: absolute; inset: 0; display: grid; place-items: center; font: 500 220px/1 var(--serif); color: rgba(122, 94, 34, 0.18); }
+  .portrait .pin { position: absolute; left: 20px; right: 20px; bottom: 20px; padding: 14px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.94); box-shadow: 0 8px 24px rgba(28, 27, 25, 0.1); font-size: 14px; line-height: 20px; }
+  .portrait .pin b { display: block; font-weight: 500; }
+  .portrait .pin span { color: var(--muted); }
+
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .facts div { padding: 28px 0 28px 24px; border-left: 1px solid var(--line); }
+  .facts div:first-child { border-left: 0; padding-left: 0; }
+  .facts b { display: block; font: 500 28px/36px var(--serif); font-variant-numeric: tabular-nums; }
+  .facts span { font-size: 14px; color: var(--text-2); }
+
+  .story { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 72px; align-items: start; }
+  .story img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; position: sticky; top: 88px; }
+  .story .prose p { margin-top: 18px; font-size: 18px; line-height: 31px; color: #2f2d2a; }
+  .story .prose p:first-of-type { margin-top: 20px; }
+  .story blockquote { margin: 36px 0; padding-left: 24px; border-left: 2px solid var(--gold); font: 400 26px/36px var(--serif); letter-spacing: -0.01em; }
+
+  .ways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .way { padding: 28px; }
+  .way .track { margin-bottom: 20px; }
+  .way .track i { width: 20px; }
+  .way h3 { font: 500 21px/28px var(--serif); }
+  .way p { margin-top: 8px; font-size: 15px; line-height: 24px; color: var(--text-2); }
+
+  .team { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .member { padding: 24px; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .member .av { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--gold-light); font: 500 20px/1 var(--serif); }
+  .member .av.light { background: var(--raised); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .member b { display: block; font-weight: 500; }
+  .member .role { font-size: 14px; color: var(--gold-ink); }
+  .member p { margin-top: 8px; font-size: 14px; line-height: 22px; color: var(--text-2); }
+
+  .visit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .visit .card { padding: 28px; }
+  .visit h3 { font: 500 22px/30px var(--serif); margin-bottom: 12px; }
+  .visit .kv div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .visit .kv div:first-child { border-top: 0; }
+  .visit .kv span { color: var(--muted); }
+  .visit .kv b, .visit .kv a { font-weight: 500; text-align: right; }
+  .visit .kv a { text-decoration: underline; text-underline-offset: 3px; }
+  .visit p { color: var(--text-2); }
+  .visit .btn { margin-top: 20px; }
+
+  @media (max-width: 1040px) {
+    .about-hero .grid, .story { grid-template-columns: 1fr; gap: 40px; }
+    .portrait { max-width: 480px; }
+    .story img { position: static; max-width: 480px; aspect-ratio: 4 / 3; }
+    .ways, .team { grid-template-columns: 1fr 1fr; }
+    .facts { grid-template-columns: 1fr 1fr; }
+    .facts div:nth-child(3) { border-left: 0; padding-left: 0; }
+    .facts div:nth-child(n+3) { border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 640px) {
+    .about-hero { padding: 32px 0 56px; }
+    .about-hero h1 { font-size: 36px; line-height: 42px; }
+    .about-hero .lead { font-size: 18px; line-height: 28px; }
+    .portrait .mono { font-size: 150px; }
+    .facts div { padding: 20px 0 20px 16px; }
+    .facts b { font-size: 22px; line-height: 30px; }
+    .story .prose p { font-size: 17px; line-height: 29px; }
+    .ways, .team, .visit { grid-template-columns: 1fr; }
+    .way, .visit .card { padding: 20px 16px; }
+  }
+</style>
+
+<section class="about-hero">
+  <div class="wrap">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>About</span></nav>
+    <div class="grid">
+      <div class="rise">
+        <p class="kicker">About Jay CVS</p>
+        <h1>A Nairobi HR consultancy that writes CVs people read</h1>
+        <p class="lead">Since 2018 we've helped Kenyans show employers what they've really done, with CVs, cover letters and LinkedIn profiles written by people who know what recruiters look for.</p>
+        <div class="owner">
+          <span class="sign">Jay</span>
+          <span>Founder and lead CV writer</span>
+          <span class="links">
+            <a href="#" aria-label="Jay on LinkedIn"><svg class="i s16"><use href="#i-linkedin"/></svg></a>
+            <a href="#" aria-label="Jay on X"><svg class="i s16"><use href="#i-x"/></svg></a>
+          </span>
+        </div>
+      </div>
+      <div class="portrait rise d1">
+        <span class="mono" aria-hidden="true">J</span>
+        <img src="../img/photos/jay.jpg" alt="Jay, founder of Jay CVS" onerror="this.remove()">
+        <div class="pin"><b>Jay</b><span>Writes every Executive CV himself</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="facts-wrap">
+  <div class="wrap">
+    <div class="facts">
+      <div><b>2018</b><span>Writing CVs from Nairobi</span></div>
+      <div><b>48 hours</b><span>To your first draft</span></div>
+      <div><b>9 services</b><span>From cover letters to coaching</span></div>
+      <div><b>Every morning</b><span>New jobs on our WhatsApp channel</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap story">
+    <img src="../img/photos/service-cover-letters.jpg" alt="Notes being written by hand in a notebook" loading="lazy">
+    <div class="prose">
+      <h2>Why Jay CVS exists</h2>
+      <p>Most CVs we receive aren't weak because the person is weak. They're weak because nobody told them what a recruiter reads first, or that "responsible for duties as assigned" tells an employer nothing.</p>
+      <p>Jay started Jay CVS in 2018 to fix that. Every CV is rewritten around what the person achieved, in a format both recruiters and screening software can read, and for the jobs they're actually applying to.</p>
+      <blockquote>The best CVs don't list everything you've done. They show what you can do for this employer.</blockquote>
+      <p>The jobs board came next. Clients kept asking where to apply, so the team started checking and posting vacancies every morning. It's now how many people find us: they find a job, then make sure their CV is ready for it.</p>
+      <p>Today a small team of writers works on every order, and every Executive CV is still written by Jay himself.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section alt">
+  <div class="wrap">
+    <div class="section-head"><div><h2>How we work</h2><p>Three things every order gets, whoever writes it.</p></div></div>
+    <div class="ways">
+      <div class="card way"><span class="track" aria-hidden="true"><i class="now"></i><i></i><i></i></span><h3>A real conversation</h3><p>Your writer messages or calls you to bring out the achievements your old CV left out.</p></div>
+      <div class="card way"><span class="track" aria-hidden="true"><i class="done"></i><i class="now"></i><i></i></span><h3>Written for the job</h3><p>Built around the roles you're targeting, using the words their adverts use.</p></div>
+      <div class="card way"><span class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i class="now"></i></span><h3>Until you're happy</h3><p>Revisions are included, and you follow every step on your private tracking page.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Team: MOCK writers, confirm names, roles and photos before launch -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head"><div><h2>Meet the team</h2><p>The writers who'll work on your CV.</p></div></div>
+    <div class="team">
+      <div class="card member"><span class="av">J</span><div><b>Jay</b><span class="role">Founder · Executive CVs</span><p>Writes every Executive package personally and reviews the team's work.</p></div></div>
+      <div class="card member"><span class="av light">G</span><div><b>Grace</b><span class="role">Finance and accounting</span><p>Accountants, auditors and finance managers, local and international.</p></div></div>
+      <div class="card member"><span class="av light">D</span><div><b>David</b><span class="role">NGO, health and graduates</span><p>Programme roles, clinical CVs and first jobs after university.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section alt">
+  <div class="wrap visit">
+    <div class="card">
+      <h3>Get in touch</h3>
+      <div class="kv">
+        <div><span>WhatsApp</span><a href="https://wa.me/254725912186" target="_blank" rel="noopener">0725 912 186</a></div>
+        <div><span>Email</span><a href="mailto:info@jaycvs.co.ke">info@jaycvs.co.ke</a></div>
+        <div><span>Office</span><b>Nairobi, Kenya</b></div>
+        <div><span>M-Pesa Pay Bill</span><b class="mono">4027127</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>No office visit needed</h3>
+      <p>Everything happens on WhatsApp, phone and email, from anywhere in Kenya or abroad. You're welcome to meet us in Nairobi if you'd rather talk in person.</p>
+      <a class="btn btn-primary" href="order.html">Start your order</a>
+    </div>
+  </div>
+</section>

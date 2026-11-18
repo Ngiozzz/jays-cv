@@ -1,0 +1,305 @@
+<!-- title: Track your order · Jay CVS -->
+<!-- desc: Follow your Jay CVS order, review your draft and download your files. -->
+<!-- nav: none -->
+<style>
+  /* Lookup */
+  .lookup { padding: 72px 0 120px; }
+  .lookup .box { max-width: 480px; margin: 0 auto; padding: 36px; border-radius: 24px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .lookup h1 { font-size: 36px; line-height: 42px; }
+  .lookup p { margin-top: 8px; color: var(--text-2); }
+  .lookup form { display: grid; gap: 16px; margin-top: 28px; }
+  .lookup .note { margin-top: 20px; font-size: 14px; color: var(--muted); }
+  .lookup .note a { color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+  .lookup .demo { display: block; margin-top: 16px; text-align: center; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+  [hidden] { display: none !important; }
+
+  /* View */
+  .t-head { padding: 40px 0 32px; border-bottom: 1px solid var(--line); }
+  .t-head .ref { font: 500 14px/20px var(--mono); color: var(--muted); }
+  .t-head h1 { margin-top: 6px; font-size: 40px; line-height: 46px; }
+  .t-head .sub { margin-top: 6px; color: var(--text-2); }
+
+  /* The moment: the stage track, big */
+  .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 32px; }
+  .stages li i { display: block; height: 6px; border-radius: 3px; background: var(--line-strong); transition: background-color 400ms var(--ease); }
+  .stages li.done i { background: var(--text-2); }
+  .stages li.now i { background: var(--gold); }
+  .stages b { display: block; margin-top: 10px; font-size: 14px; font-weight: 500; color: var(--muted); }
+  .stages li.done b, .stages li.now b { color: var(--text); }
+  .stages small { display: block; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .stages li.now small { color: var(--gold-ink); }
+
+  .t-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; padding: 40px 0 96px; align-items: start; }
+  .t-main { display: grid; gap: 24px; }
+  .t-card { padding: 28px; }
+  .t-card h2 { font: 500 24px/32px var(--serif); letter-spacing: -0.01em; }
+  .t-card .hint { margin-top: 4px; color: var(--text-2); }
+
+  .draft { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; margin-top: 24px; }
+  .draft .pg { padding: 16px; border-radius: 16px; background: var(--desk); }
+  .draft .pg img { border-radius: 3px; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 8px 20px rgba(28, 27, 25, 0.12); }
+  .draft .pg a { display: flex; justify-content: center; gap: 6px; margin-top: 12px; font-size: 13px; font-weight: 500; }
+  .writer-note { padding: 16px; border-radius: 14px; background: var(--alt); font-size: 15px; line-height: 24px; color: var(--text-2); }
+  .writer-note .who { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; color: var(--text); }
+  .writer-note .who .av { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--gold-light); display: grid; place-items: center; font-size: 12px; font-weight: 500; }
+  .writer-note .who small { color: var(--muted); }
+  .decide { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+  .changes { margin-top: 20px; display: grid; gap: 12px; }
+  .changes .drop { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1.5px dashed var(--line-strong); font-size: 14px; color: var(--text-2); cursor: pointer; }
+  .changes .drop small { display: block; font-size: 13px; color: var(--muted); }
+  .left { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .sent { margin-top: 20px; padding: 14px 16px; border-radius: 12px; background: var(--alt); font-size: 15px; color: var(--text-2); }
+  .sent b { color: var(--text); font-weight: 500; }
+
+  .files { display: grid; gap: 8px; margin-top: 20px; }
+  .file { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); }
+  .file .ic { width: 36px; height: 44px; border-radius: 4px; display: grid; place-items: center; font: 600 9px/1 var(--sans); color: #fff; }
+  .file b { display: block; font-weight: 500; font-size: 15px; }
+  .file small { font-size: 13px; color: var(--muted); }
+  .files h3 { margin-top: 12px; font-size: 13px; font-weight: 400; color: var(--muted); }
+
+  .log { margin-top: 20px; }
+  .log li { display: grid; grid-template-columns: 112px 14px minmax(0, 1fr); gap: 14px; padding-bottom: 18px; position: relative; }
+  .log li::before { content: ""; position: absolute; left: 132px; top: 14px; bottom: 0; width: 1px; background: var(--line-strong); }
+  .log li:last-child::before { display: none; }
+  .log time { font: 13px/20px var(--mono); color: var(--muted); text-align: right; }
+  .log .dot { width: 9px; height: 9px; margin-top: 6px; border-radius: 50%; background: var(--text-2); position: relative; z-index: 1; }
+  .log li:first-child .dot { background: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+  .log p { font-size: 15px; line-height: 21px; }
+  .log p small { display: block; color: var(--muted); font-size: 13px; }
+
+  .review .stars { display: flex; gap: 4px; margin-top: 16px; }
+  .review .stars button { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; color: var(--line-strong); transition: color 140ms var(--ease); }
+  .review .stars button svg { width: 24px; height: 24px; }
+  .review .stars button.on { color: var(--gold); }
+  .review .stars button.on svg { fill: currentColor; }
+  .review form { display: grid; gap: 12px; margin-top: 16px; }
+  .review .thanks { margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: rgba(21, 128, 61, 0.08); color: var(--good); font-size: 15px; }
+
+  .t-side { position: sticky; top: 88px; display: grid; gap: 16px; }
+  .t-side .card { padding: 20px; font-size: 14px; line-height: 22px; }
+  .t-side h3 { font-size: 15px; margin-bottom: 10px; }
+  .t-side p { color: var(--text-2); }
+  .writer { display: flex; gap: 12px; align-items: center; }
+  .writer .av { width: 44px; height: 44px; border-radius: 50%; background: var(--ink); color: var(--gold-light); display: grid; place-items: center; font-weight: 500; }
+  .writer b { display: block; font-weight: 500; font-size: 15px; }
+  .writer span { color: var(--muted); }
+  .kv div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .kv div:first-child { border-top: 0; padding-top: 0; }
+  .kv span { color: var(--muted); }
+  .kv b { font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+  .t-side .btn { margin-top: 12px; }
+
+  dialog { margin: auto; width: min(440px, calc(100vw - 32px)); padding: 28px; border: 0; border-radius: 20px; background: var(--bg); color: var(--text); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); }
+  dialog::backdrop { background: rgba(28, 27, 25, 0.6); }
+  dialog h2 { font: 500 24px/32px var(--serif); }
+  dialog p { margin-top: 8px; color: var(--text-2); }
+  dialog .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+  @media (max-width: 1040px) {
+    .t-grid { grid-template-columns: minmax(0, 1fr); }
+    .t-side { position: static; }
+  }
+  @media (max-width: 640px) {
+    .lookup { padding: 40px 0 72px; } .lookup .box { padding: 24px 16px; }
+    .t-head h1 { font-size: 30px; line-height: 36px; }
+    .stages { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .stages b { font-size: 12px; line-height: 16px; } .stages small { display: none; }
+    .t-card { padding: 20px 16px; }
+    .draft { grid-template-columns: 1fr; }
+    .draft .pg { max-width: 240px; }
+    .log li { grid-template-columns: 84px 14px minmax(0, 1fr); gap: 10px; }
+    .log li::before { left: 98px; }
+  }
+</style>
+
+<!-- Lookup: what "Track an order" opens without a private link -->
+<section class="lookup" data-lookup>
+  <div class="wrap">
+    <div class="box">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Track an order</span></nav>
+      <h1>Track your order</h1>
+      <p>Use the private link we sent you on WhatsApp, or enter your order details.</p>
+      <form data-lookup-form>
+        <label><span class="label">Order number</span><span class="field"><input name="ref" placeholder="For example JC-1052" autocomplete="off"></span></label>
+        <label><span class="label">Phone number you ordered with</span><span class="field"><input name="phone" type="tel" placeholder="07XX XXX XXX"></span></label>
+        <p class="err" data-lookup-err hidden style="margin:0;padding:10px 14px;border-radius:10px;background:rgba(180,35,24,.06);color:var(--pen);font-size:14px"></p>
+        <button class="btn btn-primary" type="submit">Find my order</button>
+      </form>
+      <p class="note">Can't find it? <a href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%20can%27t%20find%20my%20order" target="_blank" rel="noopener">Message us on WhatsApp</a></p>
+      <a class="demo" href="track.html?ref=JC-1052">Mockup: open the example order</a>
+    </div>
+  </div>
+</section>
+
+<!-- The order -->
+<div data-view hidden>
+  <section class="t-head">
+    <div class="wrap">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Your order</span></nav>
+      <span class="ref">Order JC-1052</span>
+      <h1 data-h1>Your first draft is ready</h1>
+      <p class="sub" data-sub>Professional package · placed Mon 16 Nov · paid KES 3,000</p>
+      <ol class="stages" data-stages>
+        <li class="done"><i></i><b>Paid</b><small>Mon 16 Nov, 09:22</small></li>
+        <li class="done"><i></i><b>Writing</b><small>Mon 16 Nov, 09:40</small></li>
+        <li class="now"><i></i><b>Draft ready</b><small>Tue 17 Nov, 14:05</small></li>
+        <li><i></i><b>Revisions</b><small>If you need any</small></li>
+        <li><i></i><b>Delivered</b><small>Word and PDF</small></li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="t-grid">
+      <div class="t-main">
+        <section class="card t-card" data-review-card>
+          <h2>Draft 1</h2>
+          <p class="hint">Please read it carefully, then tell your writer if you're happy or what you'd like changed.</p>
+          <div class="draft">
+            <div class="pg"><img src="../img/samples/accountant-after.jpeg" alt="Page 1 of your draft CV"><a href="#"><svg class="i s16"><use href="#i-download"/></svg>Open the draft</a></div>
+            <div>
+              <div class="writer-note">
+                <div class="who"><span class="av">G</span><div>Grace <small>· your writer · Tue 14:05</small></div></div>
+                I moved your bank reconciliations and the QuickBooks migration to the top, since that's what the accounts jobs you sent are asking for. I also cut the hobbies section. Tell me if any dates are wrong.
+              </div>
+              <div class="decide" data-decide>
+                <button class="btn btn-primary" type="button" data-happy>Yes, I'm happy</button>
+                <button class="btn btn-ghost" type="button" data-change>Ask for changes</button>
+              </div>
+              <div class="changes" data-changes hidden>
+                <label><span class="label">What would you like changed?</span><span class="field area"><textarea placeholder="For example: my job at Mavuno ended in 2023, not 2024. Can the profile mention I'm CPA Part II?"></textarea></span></label>
+                <label class="drop"><svg class="i"><use href="#i-upload"/></svg><span>Attach a file <small>Optional, like your copy with the changes marked. PDF, Word or photo, up to 10 MB</small></span><input type="file" class="sr-only"></label>
+                <div class="decide" style="margin-top:4px"><button class="btn btn-primary" type="button" data-send>Send to my writer</button><button class="btn btn-ghost" type="button" data-cancel>Cancel</button></div>
+              </div>
+              <p class="sent" data-sent hidden><b>Sent to Grace.</b> She'll send draft 2 within 24 hours. You'll get a WhatsApp message when it's ready.</p>
+              <p class="left" data-left>2 rounds of revisions left</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card t-card review" data-review hidden>
+          <h2>How did we do?</h2>
+          <p class="hint">Your review helps other job seekers, and tells us what to keep doing.</p>
+          <div class="stars" role="radiogroup" aria-label="Your rating" data-stars></div>
+          <form data-review-form>
+            <label><span class="label">Tell others about your experience <small>optional</small></span><span class="field area"><textarea placeholder="What changed for you?"></textarea></span></label>
+            <label><span class="label">Your name as it should appear</span><span class="field"><input value="Brian M."></span></label>
+            <button class="btn btn-primary" type="submit" style="justify-self:start">Send review</button>
+          </form>
+          <p class="thanks" data-thanks hidden>Thank you. Jay reads every review.</p>
+        </section>
+
+        <section class="card t-card">
+          <h2>Your files</h2>
+          <p class="hint">Your drafts and final version, with notes from your writer.</p>
+          <div class="files" data-files>
+            <div class="file"><span class="ic" style="background:#c0392b">PDF</span><div><b>Brian_Mwangi_CV_draft1.pdf</b><small>Draft 1 · Tue 17 Nov</small></div><a class="btn btn-ghost btn-sm" href="#"><svg class="i s16"><use href="#i-download"/></svg>Download</a></div>
+            <h3>What you sent with your order</h3>
+            <div class="file"><span class="ic" style="background:#2b579a">DOCX</span><div><b>Brian_CV_2024.docx</b><small>Your CV · Mon 16 Nov</small></div><a class="btn btn-ghost btn-sm" href="#"><svg class="i s16"><use href="#i-download"/></svg>Download</a></div>
+          </div>
+        </section>
+
+        <section class="card t-card">
+          <h2>Updates</h2>
+          <ol class="log" data-log>
+            <li><time>Tue 14:05</time><span class="dot"></span><p>Draft 1 is ready<small>Grace sent your first draft</small></p></li>
+            <li><time>Mon 11:10</time><span class="dot"></span><p>Grace called you<small>About your QuickBooks work and dates</small></p></li>
+            <li><time>Mon 09:40</time><span class="dot"></span><p>Grace accepted your order<small>She's writing your CV</small></p></li>
+            <li><time>Mon 09:22</time><span class="dot"></span><p>Payment received<small>KES 3,000 by M-Pesa · QKT7H2M9PL</small></p></li>
+            <li><time>Mon 09:20</time><span class="dot"></span><p>Order placed<small>Professional package</small></p></li>
+          </ol>
+        </section>
+      </div>
+
+      <aside class="t-side">
+        <div class="card">
+          <h3>Your writer</h3>
+          <div class="writer"><span class="av">G</span><div><b>Grace</b><span>Finance and accounting CVs</span></div></div>
+        </div>
+        <div class="card">
+          <h3>Your order</h3>
+          <div class="kv">
+            <div><span>Package</span><b>Professional</b></div>
+            <div><span>Paid</span><b>KES 3,000</b></div>
+            <div><span>Revisions left</span><b data-kv-left>2 rounds</b></div>
+            <div><span>After delivery</span><b>30 days of free minor updates</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Need anything else?</h3>
+          <p>A cover letter for a job you're applying to, or your CV updated later: order it here.</p>
+          <a class="btn btn-ghost btn-sm" href="order.html?item=cover-letter">Place a new order</a>
+        </div>
+        <div class="card">
+          <h3>Need help?</h3>
+          <p>Questions about your order? Message us on WhatsApp.</p>
+          <a class="btn btn-ghost btn-sm" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20about%20order%20JC-1052" target="_blank" rel="noopener"><svg class="i s16"><use href="#i-chat"/></svg>WhatsApp us</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<dialog data-confirm>
+  <h2>Finish your order?</h2>
+  <p>Once you confirm, your order is complete and you can't ask for more changes. You'll still get 30 days of free minor updates.</p>
+  <div class="row"><button class="btn btn-ghost" type="button" data-no>Not yet</button><button class="btn btn-primary" type="button" data-yes>Yes, finish it</button></div>
+</dialog>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+  const ref = new URLSearchParams(location.search).get('ref');
+  const show = () => { $('[data-lookup]').hidden = true; $('[data-view]').hidden = false; document.title = 'Order JC-1052 · Jay CVS'; };
+  if (ref) show();
+
+  $('[data-lookup-form]').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target, err = $('[data-lookup-err]');
+    if (!/^JC-?\d{4}$/i.test(f.ref.value.trim()) || f.phone.value.replace(/\D/g, '').length < 9) {
+      err.textContent = 'Check the order number (like JC-1052) and the phone number you ordered with.'; err.hidden = false; return;
+    }
+    location.search = '?ref=' + f.ref.value.trim().toUpperCase();
+  });
+
+  const stages = $$('[data-stages] li');
+  const stage = (n, label) => { stages.forEach((li, i) => (li.className = i < n ? 'done' : i === n ? 'now' : '')); if (label) stages[n].querySelector('small').textContent = label; };
+  const log = (t, p, s) => $('[data-log]').insertAdjacentHTML('afterbegin', `<li><time>${t}</time><span class="dot"></span><p>${p}<small>${s}</small></p></li>`);
+  const now = () => 'Today ' + new Date().toTimeString().slice(0, 5);
+
+  $('[data-change]').addEventListener('click', () => { $('[data-changes]').hidden = false; $('[data-decide]').hidden = true; });
+  $('[data-cancel]').addEventListener('click', () => { $('[data-changes]').hidden = true; $('[data-decide]').hidden = false; });
+  $('[data-send]').addEventListener('click', () => {
+    $('[data-changes]').hidden = true; $('[data-sent]').hidden = false; $('[data-left]').textContent = '1 round of revisions left'; $('[data-kv-left]').textContent = '1 round';
+    stage(3, 'Draft 2 within 24 hours');
+    $('[data-h1]').textContent = 'Your writer is making your changes';
+    log(now(), 'You asked for changes', 'Grace will send draft 2');
+  });
+
+  const dlg = $('[data-confirm]');
+  $('[data-happy]').addEventListener('click', () => dlg.showModal());
+  $('[data-no]').addEventListener('click', () => dlg.close());
+  $('[data-yes]').addEventListener('click', () => {
+    dlg.close();
+    stage(4, 'Today'); stages[4].className = 'done'; stages[3].className = 'done'; stages[3].querySelector('small').textContent = 'Not needed';
+    $('[data-h1]').textContent = 'Your CV is ready';
+    $('[data-review-card]').hidden = true; $('[data-review]').hidden = false;
+    $('[data-files]').insertAdjacentHTML('afterbegin', `
+      <div class="file"><span class="ic" style="background:#2b579a">DOCX</span><div><b>Brian_Mwangi_CV.docx</b><small>Final · editable</small></div><a class="btn btn-primary btn-sm" href="#"><svg class="i s16"><use href="#i-download"/></svg>Download</a></div>
+      <div class="file"><span class="ic" style="background:#c0392b">PDF</span><div><b>Brian_Mwangi_CV.pdf</b><small>Final · ready to send</small></div><a class="btn btn-primary btn-sm" href="#"><svg class="i s16"><use href="#i-download"/></svg>Download</a></div>
+      <div class="file"><span class="ic" style="background:#2b579a">DOCX</span><div><b>Cover_letter_Accounts.docx</b><small>Final · editable</small></div><a class="btn btn-ghost btn-sm" href="#"><svg class="i s16"><use href="#i-download"/></svg>Download</a></div>`);
+    log(now(), 'Order complete', 'Your final files are ready to download');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Rating
+  const stars = $('[data-stars]');
+  stars.innerHTML = [1, 2, 3, 4, 5].map((n) => `<button type="button" role="radio" aria-checked="false" aria-label="${n} out of 5" data-n="${n}"><svg class="i"><use href="#i-star"/></svg></button>`).join('');
+  stars.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-n]'); if (!b) return;
+    $$('[data-n]').forEach((x) => { const on = +x.dataset.n <= +b.dataset.n; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(x === b)); });
+  });
+  $('[data-review-form]').addEventListener('submit', (e) => { e.preventDefault(); e.target.hidden = true; $('[data-thanks]').hidden = false; });
+})();
+</script>

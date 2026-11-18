@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find a job · Jay CVS</title>
+<meta name="description" content="Vacancies from across Kenya, checked and posted by the Jay CVS team every day.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<!--
+  Jay CVS: Find a job, unslop redesign mockup.
+  Features kept from ../jobs.html: keyword and location search, category filter with counts,
+  job type, closing within 7 days, clear filters, sort, empty state, WhatsApp channel, stay safe.
+  Data: ../js/jobs-data.js and ../js/inbox-data.js, dates moved to November 2026 so deadlines read live.
+  Redesign method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+-->
+<style>
+  /* ── Page head ── */
+  .page-head { padding: 48px 0 40px; border-bottom: 1px solid var(--line); }
+  .crumb { display: flex; gap: 8px; font-size: 14px; color: var(--muted); margin-bottom: 16px; }
+  .crumb a:hover { color: var(--text); }
+  .page-head h1 { font-size: 48px; line-height: 52px; }
+  .page-head .lead { margin-top: 16px; max-width: 600px; }
+  .finder { display: grid; grid-template-columns: minmax(0, 1fr) 240px auto; gap: 8px; margin-top: 32px; max-width: 880px; }
+  .field { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--muted); transition: box-shadow 140ms var(--ease); }
+  .field:focus-within { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .field input, .field select { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: 15px; }
+  .field select { appearance: none; cursor: pointer; }
+  .finder .btn { height: 48px; }
+  .channel-note { margin-top: 16px; font-size: 14px; color: var(--text-2); }
+  .channel-note .dot { display: inline-block; width: 6px; height: 6px; margin: 0 8px 2px 0; border-radius: 50%; background: #3fa45b; }
+  .channel-note a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ── Layout ── */
+  .board { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 48px; padding: 40px 0 96px; }
+
+  /* Sidebar filters */
+  .filters { position: sticky; top: 88px; align-self: start; display: grid; gap: 28px; }
+  .f-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; padding: 0 8px; }
+  .cats { display: grid; gap: 2px; }
+  .cat { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; height: 34px; padding: 0 8px; border-radius: 8px; font-size: 14px; color: var(--text-2); text-align: left; transition: background-color 140ms var(--ease), color 140ms var(--ease); }
+  .cat:hover { background: var(--raised); color: var(--text); }
+  .cat span { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cat[aria-pressed="true"] { background: var(--card); color: var(--text); font-weight: 500; box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(28, 27, 25, 0.04); }
+  .checks { display: grid; gap: 2px; }
+  .check { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 8px; border-radius: 8px; font-size: 14px; color: var(--text-2); cursor: pointer; transition: background-color 140ms var(--ease); }
+  .check:hover { background: var(--raised); }
+  .check span { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .check input { appearance: none; width: 16px; height: 16px; flex: none; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--line-strong); background: var(--card); display: grid; place-items: center; cursor: pointer; transition: background-color 140ms var(--ease); }
+  .check input:checked { background: var(--ink); box-shadow: none; }
+  .check input:checked::after { content: ""; width: 8px; height: 4px; border-left: 1.5px solid #fff; border-bottom: 1.5px solid #fff; transform: translateY(-1px) rotate(-45deg); }
+  .check input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .clear { justify-self: start; padding: 0 8px; font-size: 14px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+  .clear:hover { color: var(--text); }
+  .clear[hidden] { display: none; }
+
+  .side-card { padding: 16px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; line-height: 22px; }
+  .side-card h3 { font-size: 15px; line-height: 22px; margin-bottom: 4px; }
+  .side-card p { color: var(--text-2); }
+  .side-card .btn { margin-top: 12px; }
+  /* Stay safe: a real scam advert, marked up in red pen */
+  .scam { position: relative; margin: 12px 0 10px; padding: 12px; border-radius: 6px; background: #fbfaf7; box-shadow: inset 0 0 0 1px var(--line); font: 400 12px/18px var(--sans); color: var(--text-2); transform: rotate(-1deg); }
+  .scam b { display: block; color: var(--text); font-weight: 600; font-size: 12px; }
+  .scam .fee { position: relative; display: inline-block; color: var(--text); }
+  .scam .fee::after { content: ""; position: absolute; inset: -3px -6px; border: 1.5px solid var(--pen); border-radius: 50%; transform: rotate(-2deg); }
+  .scam .note { display: block; margin-top: 8px; font: italic 400 14px/18px 'Segoe Script', 'Bradley Hand', cursive; color: var(--pen); }
+
+  /* ── Results ── */
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; min-height: 36px; }
+  .bar p { color: var(--text-2); font-size: 15px; }
+  .bar p b { color: var(--text); font-weight: 500; }
+  .seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--raised); }
+  .seg button { height: 30px; padding: 0 12px; border-radius: 7px; font-size: 13px; color: var(--text-2); transition: background-color 140ms var(--ease), color 140ms var(--ease); }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08); }
+
+  .list { border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+  .row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 156px 16px; gap: 16px; align-items: center; padding: 20px 24px; transition: background-color 140ms var(--ease); }
+  .row + .row, .row + .pitch, .pitch + .row { border-top: 1px solid var(--line); }
+  .row:hover { background: #fcfbfa; }
+  .logo-tile { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--raised); color: var(--text-2); font: 500 13px/1 var(--mono); box-shadow: inset 0 0 0 1px var(--line); }
+  .row .t { font-weight: 500; }
+  .row .t .new { margin-left: 8px; font-size: 13px; font-weight: 400; color: var(--gold-ink); }
+  .row .c { font-size: 14px; color: var(--text-2); }
+  .row .m { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+  .row .m .pay { color: var(--text-2); }
+  .row .d { font-size: 13px; line-height: 20px; color: var(--muted); }
+  .row .d .runway { margin-bottom: 6px; }
+  .row .d.soon { color: var(--gold-ink); }
+  .row > svg { color: var(--muted); }
+
+  /* The funnel: a CV for the job you just found */
+  .pitch { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; padding: 24px; background: var(--alt); }
+  .pitch h3 { font: 500 20px/28px var(--serif); letter-spacing: -0.01em; }
+  .pitch p { margin-top: 4px; font-size: 15px; color: var(--text-2); }
+  .pitch .track { margin-top: 12px; }
+  .pitch .track i { width: 20px; }
+
+  .empty { padding: 64px 24px; text-align: center; }
+  .empty h3 { font: 500 22px/30px var(--serif); }
+  .empty p { margin: 8px auto 20px; max-width: 360px; color: var(--text-2); }
+  .empty[hidden], .list[hidden] { display: none; }
+
+  .more-filters { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1040px) {
+    .board { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .bar { margin-top: 20px; }
+    .filters { position: static; display: none; }
+    .more-filters { display: block; }
+    .cat-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin: 0 calc(var(--gutter) * -1); padding-left: var(--gutter); padding-right: var(--gutter); scrollbar-width: none; }
+    .cat-strip::-webkit-scrollbar { display: none; }
+    .cat-strip .cat { width: auto; flex: none; height: 36px; padding: 0 12px; gap: 8px; box-shadow: inset 0 0 0 1px var(--line-strong); background: var(--card); }
+    .cat-strip .cat[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); box-shadow: none; }
+    .cat-strip .cat[aria-pressed="true"] span { color: var(--ink-2); }
+    .more-filters details { margin-top: 12px; }
+    .more-filters summary { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: inset 0 0 0 1px var(--line-strong); background: var(--card); cursor: pointer; list-style: none; }
+    .more-filters summary::-webkit-details-marker { display: none; }
+    .more-filters .panel { margin-top: 12px; padding: 12px 8px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: 16px; }
+  }
+  @media (min-width: 1041px) { .cat-strip { display: none; } }
+  @media (max-width: 640px) {
+    .page-head { padding: 32px 0; }
+    .page-head h1 { font-size: 36px; line-height: 42px; }
+    .finder { grid-template-columns: 1fr; }
+    .bar { flex-direction: column; align-items: flex-start; }
+    .row { grid-template-columns: 40px minmax(0, 1fr) 16px; gap: 6px 14px; padding: 16px; }
+    .row .d { grid-column: 2; grid-row: 2; display: flex; align-items: center; gap: 10px; }
+    .row .d .runway { margin: 0; width: 64px; }
+    .row > svg { grid-row: 1 / 3; grid-column: 3; }
+    .row .logo-tile { grid-row: 1 / 3; align-self: start; }
+    .pitch { grid-template-columns: 1fr; padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></symbol>
+    <symbol id="i-facebook" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4A4 4 0 1 1 12.6 8 4 4 0 0 1 16 11.4zM17.5 6.5h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="jobs.html" aria-current="page">Find a job</a>
+      <a href="services.html">Services</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="samples.html">Samples</a>
+      <a href="blog.html">Career tips</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="head-actions">
+      <a class="quiet" href="track.html">Track an order</a>
+      <a class="btn btn-primary btn-sm" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20help%20with%20my%20CV" target="_blank" rel="noopener">WhatsApp us</a>
+      <button class="menu-btn" aria-label="Open menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="page-head">
+    <div class="wrap rise">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Find a job</span></nav>
+      <h1>Find a job in Kenya</h1>
+      <p class="lead">Vacancies from across Kenya, checked and posted by our team every day. Find one, then make sure your CV is ready for it.</p>
+      <form class="finder" id="finder" role="search">
+        <label class="field"><svg class="i"><use href="#i-search"/></svg><span class="sr-only">Keyword</span><input type="search" id="q" placeholder="Job title, company or keyword" autocomplete="off"></label>
+        <label class="field"><svg class="i"><use href="#i-pin"/></svg><span class="sr-only">Location</span><select id="loc"><option value="">All of Kenya</option></select><svg class="i s16"><use href="#i-down"/></svg></label>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+      <p class="channel-note"><span class="dot" aria-hidden="true"></span>New jobs every morning on our <a href="#" target="_blank" rel="noopener">WhatsApp jobs channel</a></p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="board">
+      <aside class="filters" aria-label="Filters">
+        <div>
+          <p class="f-label">Category</p>
+          <div class="cats" data-cats role="group" aria-label="Category"></div>
+        </div>
+        <div>
+          <p class="f-label">Job type</p>
+          <div class="checks" data-types></div>
+        </div>
+        <div>
+          <p class="f-label">Deadline</p>
+          <label class="check"><input type="checkbox" data-soon> Closing within 7 days <span data-soon-n></span></label>
+        </div>
+        <button class="clear" type="button" data-clear hidden>Clear all filters</button>
+
+        <div class="side-card">
+          <h3>Stay safe</h3>
+          <p>Genuine employers never ask for money to apply or to get an interview.</p>
+          <div class="scam" aria-label="Example of a scam advert">
+            <b>Airport jobs: cleaners, drivers, loaders</b>
+            Salary KES 85,000. No experience needed.
+            Pay <span class="fee">KES 1,000 registration</span> to 07•• ••• •••
+            <span class="note">Never pay to apply</span>
+          </div>
+          <a class="link" href="article.html">How to spot a fake job advert <svg class="i s16"><use href="#i-arrow"/></svg></a>
+        </div>
+      </aside>
+
+      <section aria-label="Results">
+        <div class="cat-strip" data-cats-strip role="group" aria-label="Category"></div>
+        <div class="more-filters">
+          <details>
+            <summary><svg class="i s16"><use href="#i-sliders"/></svg>More filters</summary>
+            <div class="panel">
+              <div><p class="f-label">Job type</p><div class="checks" data-types-m></div></div>
+              <div><p class="f-label">Deadline</p><label class="check"><input type="checkbox" data-soon-m> Closing within 7 days</label></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bar">
+          <p id="count" aria-live="polite"></p>
+          <div class="seg" role="group" aria-label="Sort">
+            <button type="button" data-sort="newest" aria-pressed="true">Newest</button>
+            <button type="button" data-sort="closing" aria-pressed="false">Closing soon</button>
+          </div>
+        </div>
+
+        <div class="list" id="list"></div>
+        <div class="list empty" id="empty" hidden>
+          <h3>No jobs match your search</h3>
+          <p>Try a different keyword or town, or clear the filters to see every open job.</p>
+          <button class="btn btn-ghost btn-sm" type="button" data-clear>Clear all filters</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="close">
+    <div class="wrap">
+      <div>
+        <h2>Found the job? Get the CV ready</h2>
+        <p>Send us the advert and your current CV on WhatsApp. We'll tailor it to the role, with a first draft within 48 hours.</p>
+      </div>
+      <div class="ctas">
+        <a class="btn btn-light" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20my%20CV%20tailored%20to%20a%20job" target="_blank" rel="noopener">Send the advert</a>
+        <a class="btn btn-ghost-dark" href="pricing.html">See packages</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+        <p class="about">CV writing and career services, helping Kenyans land the jobs they want since 2018.</p>
+        <div class="socials">
+          <a href="#" aria-label="LinkedIn"><svg class="i s16"><use href="#i-linkedin"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg class="i s16"><use href="#i-facebook"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg class="i s16"><use href="#i-instagram"/></svg></a>
+          <a href="#" aria-label="X"><svg class="i s16"><use href="#i-x"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#cv-writing">CV writing</a></li>
+          <li><a href="services.html#cover-letters">Cover letters</a></li>
+          <li><a href="services.html#linkedin">LinkedIn revamp</a></li>
+          <li><a href="services.html#career-coaching">Career coaching</a></li>
+          <li><a href="services.html#job-applications">Job applications</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Jay</a></li>
+          <li><a href="jobs.html">Find a job</a></li>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="samples.html">Samples</a></li>
+          <li><a href="blog.html">Career tips</a></li>
+          <li><a href="track.html">Track an order</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get in touch</h4>
+        <ul>
+          <li><a class="num" href="tel:+254725912186">+254 725 912 186</a></li>
+          <li><a href="mailto:info@jaycvs.co.ke">info@jaycvs.co.ke</a></li>
+          <li>Nairobi, Kenya</li>
+          <li class="pay">M-Pesa Pay Bill <span class="mono">4027127</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2018–2026 Jay CVS HR Consultancy</p>
+      <p><a href="#">Privacy policy</a></p>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-tab" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS" target="_blank" rel="noopener"><span class="dot" aria-hidden="true"></span>Chat with us</a>
+
+<script src="js/jobs-data.js"></script>
+<script>
+(() => {
+  // Shared data: js/jobs-data.js (mock TODAY = 18 Nov 2026 so the deadlines read live)
+  const TODAY = window.TODAY;
+  const DAY = 864e5;
+  const place = (l) => l.replace(/\s*\(([^)]*)\)/, ', $1').replace(/ & /g, ' and ');
+  const JOBS = window.JOBS.map((j) => ({ id: j.id, title: j.title, company: j.company, place: place(j.location), towns: j.towns, mode: j.workMode, type: j.type, cat: j.category, posted: j.posted, deadline: j.deadline, pay: j.salary }));
+  const CAT_NAMES = { 'IT & Tech': 'IT and tech', 'NGO & Development': 'NGO and development', 'Finance & Accounting': 'Finance and accounting', 'Sales & Marketing': 'Sales and marketing', 'Transport & Logistics': 'Transport and logistics', 'Engineering & Safety': 'Engineering and safety' };
+  const catName = (c) => CAT_NAMES[c] || c;
+
+  const d = (s) => new Date(s + 'T00:00:00');
+  const left = (j) => (j.deadline ? Math.round((d(j.deadline) - TODAY) / DAY) : null);
+  const open = JOBS.filter((j) => j.deadline === null || left(j) >= 0);
+  const fmt = (s) => d(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const initials = (n) => n.replace(/[^A-Za-z ]/g, '').split(' ').filter((w) => w && !/^(Ltd|and|of)$/i.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const ago = (j) => { const n = Math.round((TODAY - d(j.posted)) / DAY); return n === 0 ? 'Today' : n === 1 ? 'Yesterday' : `${n} days ago`; };
+
+  const runway = (j) => {
+    if (!j.deadline) return `<div class="d"><div class="runway open"></div>Open until filled</div>`;
+    const n = left(j), span = Math.max(1, (d(j.deadline) - d(j.posted)) / DAY);
+    const pct = Math.min(100, Math.max(6, Math.round(((TODAY - d(j.posted)) / DAY / span) * 100)));
+    const soon = n <= 3;
+    const txt = n === 0 ? 'Closes today' : n === 1 ? '1 day left' : `${n} days left`;
+    return `<div class="d num${soon ? ' soon' : ''}"><div class="runway${soon ? ' soon' : ''}"><span style="width:${pct}%"></span></div>${txt} · ${fmt(j.deadline)}</div>`;
+  };
+  const row = (j) => `
+    <a class="row" href="job.html?id=${esc(j.id)}">
+      <span class="logo-tile" aria-hidden="true">${esc(initials(j.company))}</span>
+      <div>
+        <div class="t">${esc(j.title)}${j.posted === '2026-11-18' ? '<span class="new">New today</span>' : ''}</div>
+        <div class="c">${esc(j.company)} · ${esc(j.place)}</div>
+        <div class="m"><span>${esc(j.type)}</span><span>${esc(j.mode)}</span>${j.pay ? `<span class="pay">${esc(j.pay)}</span>` : ''}${j.posted === '2026-11-18' ? '' : `<span>${ago(j)}</span>`}</div>
+      </div>
+      ${runway(j)}
+      <svg class="i s16" aria-hidden="true"><use href="#i-right"/></svg>
+    </a>`;
+  const pitch = `
+    <div class="pitch">
+      <div>
+        <h3>Applying to one of these?</h3>
+        <p>Send us the advert with your current CV. We'll rewrite it for that role, with a first draft within 48 hours, well before most deadlines.</p>
+        <span class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i></span>
+      </div>
+      <a class="btn btn-primary" href="order.html">Tailor my CV</a>
+    </div>`;
+
+  // ── State, seeded from the address bar so links like jobs.html?cat=Healthcare work ──
+  const params = new URLSearchParams(location.search);
+  const state = { q: params.get('q') || '', loc: params.get('loc') || '', cat: params.get('cat') || '', types: [], soon: false, sort: 'newest' };
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => [...document.querySelectorAll(s)];
+  const q = $('#q'), loc = $('#loc');
+  q.value = state.q;
+
+  const towns = [...new Set(open.flatMap((j) => j.towns))].sort();
+  loc.insertAdjacentHTML('beforeend', towns.map((t) => `<option>${esc(t)}</option>`).join(''));
+  loc.value = state.loc;
+
+  const count = (key) => open.reduce((m, j) => ((m[j[key]] = (m[j[key]] || 0) + 1), m), {});
+  const cats = count('cat'), types = count('type');
+  const catButtons = `<button type="button" class="cat" data-cat="">All jobs <span>${open.length}</span></button>` +
+    Object.keys(cats).sort((a, b) => cats[b] - cats[a] || a.localeCompare(b)).map((c) => `<button type="button" class="cat" data-cat="${esc(c)}">${esc(catName(c))} <span>${cats[c]}</span></button>`).join('');
+  $('[data-cats]').innerHTML = catButtons;
+  $('[data-cats-strip]').innerHTML = catButtons;
+  const typeChecks = Object.keys(types).sort().map((t) => `<label class="check"><input type="checkbox" value="${esc(t)}"> ${esc(t)} <span>${types[t]}</span></label>`).join('');
+  $('[data-types]').innerHTML = typeChecks;
+  $('[data-types-m]').innerHTML = typeChecks;
+  $('[data-soon-n]').textContent = open.filter((j) => j.deadline && left(j) <= 7).length;
+
+  const matches = (j) => {
+    const words = state.q.trim().toLowerCase();
+    const hay = `${j.title} ${j.company} ${j.place} ${j.cat}`.toLowerCase();
+    return (!words || words.split(/\s+/).every((w) => hay.includes(w))) &&
+      (!state.loc || j.towns.includes(state.loc)) &&
+      (!state.cat || j.cat === state.cat) &&
+      (!state.types.length || state.types.includes(j.type)) &&
+      (!state.soon || (j.deadline && left(j) <= 7));
+  };
+  const newest = (a, b) => d(b.posted) - d(a.posted);
+  const closing = (a, b) => (a.deadline ? left(a) : 1e9) - (b.deadline ? left(b) : 1e9) || newest(a, b);
+
+  function render() {
+    const list = open.filter(matches).sort(state.sort === 'closing' ? closing : newest);
+    const html = list.map(row);
+    if (list.length > 4) html.splice(4, 0, pitch);
+    $('#list').innerHTML = html.join('');
+    $('#list').hidden = !list.length;
+    $('#empty').hidden = !!list.length;
+    const where = state.loc ? ` in ${esc(state.loc)}` : '';
+    const what = state.cat ? ` in ${esc(catName(state.cat).toLowerCase())}` : '';
+    $('#count').innerHTML = `<b class="num">${list.length}</b> open ${list.length === 1 ? 'job' : 'jobs'}${what}${where}`;
+
+    $$('[data-cat]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.cat === state.cat)));
+    $$('[data-sort]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sort === state.sort)));
+    $$('.checks input').forEach((i) => (i.checked = state.types.includes(i.value)));
+    $$('[data-soon], [data-soon-m]').forEach((i) => (i.checked = state.soon));
+    const filtered = state.q || state.loc || state.cat || state.types.length || state.soon;
+    $$('[data-clear]').forEach((b) => { if (b.classList.contains('clear')) b.hidden = !filtered; });
+
+    const next = new URLSearchParams();
+    if (state.q) next.set('q', state.q);
+    if (state.loc) next.set('loc', state.loc);
+    if (state.cat) next.set('cat', state.cat);
+    history.replaceState(null, '', next.toString() ? `?${next}` : location.pathname);
+  }
+
+  $('#finder').addEventListener('submit', (e) => { e.preventDefault(); state.q = q.value; state.loc = loc.value; render(); });
+  q.addEventListener('input', () => { state.q = q.value; render(); });
+  loc.addEventListener('change', () => { state.loc = loc.value; render(); });
+  document.addEventListener('click', (e) => {
+    const c = e.target.closest('[data-cat]');
+    if (c) { state.cat = c.dataset.cat; render(); return; }
+    const s = e.target.closest('[data-sort]');
+    if (s) { state.sort = s.dataset.sort; render(); return; }
+    if (e.target.closest('[data-clear]')) {
+      Object.assign(state, { q: '', loc: '', cat: '', types: [], soon: false });
+      q.value = ''; loc.value = ''; render();
+    }
+  });
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('.checks input')) {
+      const v = e.target.value;
+      state.types = e.target.checked ? [...new Set([...state.types, v])] : state.types.filter((t) => t !== v);
+      render();
+    }
+    if (e.target.matches('[data-soon], [data-soon-m]')) { state.soon = e.target.checked; render(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

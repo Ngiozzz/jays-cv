@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jay CVS · CV writing in Kenya</title>
+<meta name="description" content="CVs, cover letters and LinkedIn profiles written by HR consultants for Kenyan and international roles. First draft in 48 hours, pay by M-Pesa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+<!--
+  Jay CVS home: unslop redesign mockup (static).
+  Sections and order kept from ../index.html. Prices match admin-unslop.html.
+  Mock content to replace before launch: testimonial names and quotes, the sample hero CV.
+  Redesign method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+-->
+<style>
+  /* ── Hero: text left, the writer's desk right ── */
+  .hero { padding: 64px 0 80px; }
+  .hero .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; align-items: center; }
+  .hero h1 { margin-bottom: 20px; }
+  .hero .ctas { display: flex; gap: 12px; margin-top: 32px; }
+
+  /* The moment: a CV on the desk, the old one under it with one red-pen note */
+  .desk { position: relative; height: 560px; border-radius: 20px; background: var(--desk); overflow: hidden; }
+  .sheet { position: absolute; width: 340px; aspect-ratio: 1 / 1.414; background: #fff; border-radius: 3px; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 32px rgba(28, 27, 25, 0.12); overflow: hidden; }
+
+  .before { left: 28px; top: 44px; transform: rotate(-5deg); padding: 28px 30px; font: 400 9px/14px 'Times New Roman', Times, serif; color: #333; }
+  .before .t { text-align: center; font-size: 13px; font-weight: 700; text-decoration: underline; margin-bottom: 14px; }
+  .before p { margin-bottom: 6px; }
+  .before b { font-weight: 700; }
+  .before .rule { height: 1px; background: #ccc; margin: 10px 0; }
+  .before .ring { position: relative; display: inline-block; }
+  .before .ring::after { content: ""; position: absolute; inset: -4px -6px; border: 1.5px solid var(--pen); border-radius: 50%; transform: rotate(-3deg); }
+  .pen-note { position: absolute; left: 60px; top: 340px; transform: rotate(-6deg); font: italic 400 17px/22px 'Segoe Script', 'Bradley Hand', cursive; color: var(--pen); width: 150px; }
+  .pen-note::before { content: ""; position: absolute; left: 8px; top: -30px; width: 2px; height: 24px; background: var(--pen); border-radius: 1px; transform: rotate(8deg); }
+
+  .after { right: 28px; top: 72px; transform: rotate(2deg); font-size: 8.5px; line-height: 12px; color: #2a2826; }
+  .after .cv-head { background: #0e0e0e; padding: 22px 24px 18px; border-bottom: 3px solid var(--gold); }
+  .after .cv-name { font: 600 17px/20px var(--serif); color: #faf6ec; }
+  .after .cv-role { font: 600 12px/16px var(--serif); color: var(--gold-light); margin-top: 4px; }
+  .after .cv-contact { margin-top: 8px; color: #a8a29e; font-size: 7.5px; }
+  .after .cv-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; padding: 16px 24px; }
+  .after h5 { font-size: 7.5px; line-height: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #1c1b19; padding-bottom: 3px; border-bottom: 1px solid var(--gold); margin: 10px 0 6px; }
+  .after h5:first-child { margin-top: 0; }
+  .after .ach { background: #f8f5ef; border-left: 2px solid var(--gold); border-radius: 0 3px 3px 0; padding: 6px 8px; }
+  .after .ach li, .after .bul li { position: relative; padding-left: 8px; }
+  .after .ach li::before, .after .bul li::before { content: ""; position: absolute; left: 0; top: 5px; width: 3px; height: 3px; border-radius: 50%; background: #57534e; }
+  .after .cv-job { font-weight: 600; color: #1c1b19; }
+  .after .when { color: #78716c; font-size: 7.5px; }
+  .after .chips { display: flex; flex-wrap: wrap; gap: 3px; }
+  .after .chips span { background: #f1e7d0; color: #6b5420; border-radius: 6px; padding: 1px 5px; font-size: 7px; }
+
+  .slip { position: absolute; right: 48px; bottom: 32px; width: 272px; padding: 16px; border-radius: 12px; background: var(--card); box-shadow: 0 1px 2px rgba(28, 27, 25, 0.06), 0 12px 28px rgba(28, 27, 25, 0.12); }
+  .slip .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; line-height: 20px; }
+  .slip .top b { font-weight: 500; }
+  .slip .track { margin: 12px 0 8px; }
+  .slip .track i { width: 40px; }
+  .slip .state { font-size: 14px; line-height: 20px; font-weight: 500; }
+  .slip .meta { font-size: 13px; line-height: 20px; color: var(--muted); }
+
+  /* ── Facts strip (was the stats bar) ── */
+  .facts { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .facts .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .fact { padding: 24px 0 24px 24px; border-left: 1px solid var(--line); }
+  .fact:first-child { border-left: 0; padding-left: 0; }
+  .fact b { display: block; font: 500 24px/32px var(--serif); font-variant-numeric: tabular-nums; }
+  .fact span { font-size: 14px; color: var(--text-2); }
+
+  /* ── Jobs ── */
+  .search { display: flex; gap: 8px; }
+  .search label { flex: 1; display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); color: var(--muted); transition: box-shadow 140ms var(--ease); }
+  .search label:focus-within { box-shadow: inset 0 0 0 1.5px var(--gold); }
+  .search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--text); font-size: 15px; }
+  .search .btn { height: 48px; }
+  .cats { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 16px 0 32px; font-size: 14px; color: var(--muted); }
+  .cats a { color: var(--text-2); }
+  .cats a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+
+  .jobs { border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .job { display: grid; grid-template-columns: minmax(0, 1fr) 160px 140px 20px; gap: 24px; align-items: center; padding: 20px 24px; transition: background-color 140ms var(--ease); }
+  .job + .job { border-top: 1px solid var(--line); }
+  .job:first-child { border-radius: 16px 16px 0 0; } .job:last-child { border-radius: 0 0 16px 16px; }
+  .job:hover { background: #fcfbfa; }
+  .job .t { font-weight: 500; }
+  .job .c { font-size: 14px; color: var(--text-2); }
+  .job .k { font-size: 14px; color: var(--text-2); }
+  .job .k small { display: block; font-size: 13px; color: var(--muted); }
+  .job .d { font-size: 13px; line-height: 20px; color: var(--muted); }
+  .job .d .runway { margin-bottom: 6px; }
+  .job .d.soon { color: var(--gold-ink); }
+  .job > svg { color: var(--muted); }
+  .channel { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding: 16px 24px; border-radius: 16px; background: var(--alt); }
+  .channel p { flex: 1; color: var(--text-2); font-size: 15px; }
+  .channel p b { color: var(--text); font-weight: 500; }
+
+  /* ── Services: a ledger, not six icon cards ── */
+  .services { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; }
+  .services .intro p { margin-top: 16px; color: var(--text-2); }
+  .services .advice { margin-top: 32px; padding: 20px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .services .advice h3 { margin-bottom: 4px; }
+  .services .advice p { margin: 0 0 12px; font-size: 15px; line-height: 24px; }
+  .svc { display: grid; grid-template-columns: 48px minmax(0, 1fr) 104px 20px; gap: 16px; align-items: center; padding: 24px 0; border-top: 1px solid var(--line-strong); transition: color 140ms var(--ease); }
+  .svc:last-child { border-bottom: 1px solid var(--line-strong); }
+  .svc .n { font-family: var(--mono); font-size: 13px; color: var(--muted); align-self: baseline; padding-top: 6px; }
+  .svc img { width: 104px; height: 72px; object-fit: cover; border-radius: 10px; }
+  .svc h3 { font: 500 22px/30px var(--serif); letter-spacing: -0.01em; }
+  .svc p { margin-top: 4px; color: var(--text-2); }
+  .svc svg { color: var(--muted); align-self: center; transition: transform 140ms var(--ease), color 140ms var(--ease); }
+  .svc:hover svg { color: var(--text); transform: translateX(2px); }
+
+  /* ── How it works: the stage track carries each step ── */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .step .track { margin-bottom: 20px; }
+  .step .track i { width: 28px; }
+  .step h3 { margin-bottom: 8px; }
+  .step p { color: var(--text-2); font-size: 15px; line-height: 24px; }
+  .after-steps { margin-top: 40px; }
+
+  /* ── Pricing ── */
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+  .plan { position: relative; padding: 28px; border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .plan.main { box-shadow: inset 0 0 0 1.5px var(--gold), 0 12px 32px rgba(28, 27, 25, 0.06); }
+  .plan .name { display: flex; justify-content: space-between; align-items: baseline; }
+  .plan .name small { font-size: 13px; color: var(--gold-ink); }
+  .plan .for { margin-top: 4px; font-size: 15px; color: var(--text-2); }
+  .plan .price { margin: 24px 0; font: 500 40px/44px var(--serif); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .plan .price small { font: 400 15px/20px var(--sans); color: var(--muted); margin-right: 4px; letter-spacing: 0; }
+  .plan ul { display: grid; gap: 10px; margin-bottom: 28px; font-size: 15px; line-height: 22px; }
+  .plan li { display: flex; gap: 10px; }
+  .plan li svg { margin-top: 3px; color: var(--muted); }
+  .plan.main li svg { color: var(--gold-ink); }
+  .plan .pay { margin-top: 12px; font-size: 13px; color: var(--muted); text-align: center; }
+  .plan .pay a { text-decoration: underline; text-underline-offset: 3px; }
+  .plans-note { margin-top: 24px; color: var(--text-2); }
+  .plans-note a { font-weight: 500; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ── Samples: one big before and after, two smaller ── */
+  .samples { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 24px; }
+  .pair { padding: 24px; border-radius: 20px; background: var(--desk); }
+  .pair .imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pair figure { position: relative; }
+  .pair img { border-radius: 4px; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 8px 24px rgba(28, 27, 25, 0.1); }
+  .pair figcaption, .mini figcaption { margin-top: 12px; font-size: 14px; color: var(--text-2); }
+  .pair .lbl { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .pair .cap { margin-top: 20px; display: flex; justify-content: space-between; align-items: baseline; }
+  .pair .cap b { font-weight: 500; }
+  .minis { display: grid; gap: 16px; align-content: start; }
+  .mini { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 16px; align-items: center; padding: 16px; border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow 140ms var(--ease); }
+  .mini:hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .mini img { border-radius: 3px; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.1), 0 0 0 1px var(--line); }
+  .mini b { font-weight: 500; display: block; }
+  .mini span { font-size: 14px; color: var(--text-2); }
+  .minis .link { margin-top: 8px; }
+
+  /* ── Meet Jay ── */
+  .jay { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 72px; align-items: center; }
+  .portrait { position: relative; aspect-ratio: 4 / 5; border-radius: 20px; background: var(--desk); overflow: hidden; }
+  .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .portrait .mono { position: absolute; inset: 0; display: grid; place-items: center; font: 500 200px/1 var(--serif); color: rgba(122, 94, 34, 0.18); }
+  .portrait .tagline { position: absolute; left: 20px; bottom: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.94); box-shadow: 0 8px 24px rgba(28, 27, 25, 0.1); font-size: 14px; line-height: 20px; }
+  .portrait .tagline b { display: block; font-weight: 500; }
+  .portrait .tagline span { color: var(--muted); }
+  .portrait .tagline .track i { width: 12px; }
+  .jay .story-text p { margin-top: 16px; font-size: 17px; line-height: 28px; color: var(--text-2); }
+  .jay .story-text .sign { margin-top: 28px; font: italic 400 30px/36px 'Segoe Script', 'Bradley Hand', cursive; color: var(--text); }
+  .jay .story-text .role { margin-top: 0; font-size: 14px; color: var(--muted); }
+  .jay-facts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 32px; border-top: 1px solid var(--line-strong); }
+  .jay-facts div { padding: 16px 16px 0 0; }
+  .jay-facts b { display: block; font-weight: 500; font-size: 15px; }
+  .jay-facts span { font-size: 14px; line-height: 20px; color: var(--text-2); }
+
+  /* ── Client wins wall: what clients sent back ── */
+  .wins { columns: 3; column-gap: 24px; }
+  .win { break-inside: avoid; margin-bottom: 24px; }
+  .win figcaption { margin-top: 12px; font-size: 14px; line-height: 20px; color: var(--text-2); }
+  .win figcaption b { color: var(--text); font-weight: 500; }
+  .blur { filter: blur(4px); user-select: none; }
+
+  .chat { border-radius: 16px; overflow: hidden; background: #efeae2; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 28px rgba(28, 27, 25, 0.08); font-size: 14px; line-height: 20px; }
+  .chat .top { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #1f2c33; color: #e9edef; }
+  .chat .top i { width: 28px; height: 28px; border-radius: 50%; background: #6b7c85; }
+  .chat .top small { display: block; font-size: 12px; color: #8696a0; }
+  .chat .msgs { display: grid; gap: 6px; padding: 16px 12px; }
+  .bub { max-width: 84%; padding: 6px 10px 4px; border-radius: 8px; background: #fff; color: #111b21; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06); }
+  .bub.me { justify-self: end; background: #d9fdd3; }
+  .bub time { display: block; text-align: right; font-size: 11px; line-height: 14px; color: #667781; }
+  .bub .file { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 4px; border-radius: 6px; background: rgba(0, 0, 0, 0.04); font-size: 13px; }
+  .bub .file i { width: 24px; height: 30px; border-radius: 3px; background: #c0392b; flex: none; }
+
+  .letter { position: relative; padding: 28px 28px 32px; border-radius: 3px; background: #fff; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 28px rgba(28, 27, 25, 0.1); transform: rotate(-1deg); font: 400 12px/18px 'Times New Roman', Times, serif; color: #333; }
+  .letter .head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 2px solid #1f4e79; }
+  .letter .head i { display: block; width: 96px; height: 22px; border-radius: 3px; background: #1f4e79; }
+  .letter .ref { font-size: 11px; color: #666; }
+  .letter h4 { margin: 12px 0 8px; font: 700 12px/18px 'Times New Roman', Times, serif; text-decoration: underline; }
+  .letter p + p { margin-top: 8px; }
+  .letter .clip { position: absolute; top: -10px; right: 36px; width: 14px; height: 44px; border: 2px solid #a8a29e; border-radius: 8px; }
+  .letter mark { background: rgba(230, 200, 119, 0.55); color: inherit; padding: 0 2px; }
+
+  .mail { border-radius: 16px; background: var(--card); box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 28px rgba(28, 27, 25, 0.08); font-size: 14px; line-height: 21px; overflow: hidden; }
+  .mail .subj { padding: 16px 20px 12px; font-size: 16px; font-weight: 500; border-bottom: 1px solid var(--line); }
+  .mail .from { display: flex; gap: 10px; align-items: center; padding: 12px 20px; font-size: 13px; color: var(--muted); }
+  .mail .from i { width: 28px; height: 28px; border-radius: 50%; background: #3b6e8f; flex: none; }
+  .mail .body { padding: 0 20px 20px; color: var(--text-2); }
+  .mail .body p + p { margin-top: 8px; }
+
+  .quote { padding: 32px; border-radius: 16px; background: var(--ink); color: var(--on-ink); }
+  .quote blockquote { font: 400 22px/32px var(--serif); letter-spacing: -0.01em; }
+  .quote footer { display: flex; align-items: center; gap: 12px; margin-top: 24px; font-size: 14px; line-height: 20px; }
+  .quote footer img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+  .quote footer b { display: block; font-weight: 500; }
+  .quote footer span { color: var(--ink-2); }
+
+  /* Services: photos from the desk */
+  .services .photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; margin-top: 32px; }
+
+  /* ── Career tips ── */
+  .posts { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 40px; }
+  .post-lead img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 16px; }
+  .post-lead .tag, .post-row .tag { font-size: 13px; color: var(--gold-ink); font-weight: 500; }
+  .post-lead .tag { display: block; margin-top: 20px; }
+  .post-lead h3 { margin-top: 6px; font: 500 26px/34px var(--serif); letter-spacing: -0.01em; }
+  .post-lead p { margin-top: 8px; color: var(--text-2); }
+  .post-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 20px; align-items: center; padding: 20px 0; border-top: 1px solid var(--line-strong); }
+  .post-row:last-child { border-bottom: 1px solid var(--line-strong); }
+  .post-row img { width: 120px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; }
+  .post-row h3 { margin-top: 4px; }
+  .post-row p { margin-top: 4px; font-size: 14px; line-height: 22px; color: var(--text-2); }
+  .posts h3 a:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+
+  /* ── FAQ ── */
+  .faq { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; }
+  .faq .intro p { margin-top: 12px; color: var(--text-2); }
+  .faq .intro a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+  details { border-top: 1px solid var(--line-strong); }
+  details:last-child { border-bottom: 1px solid var(--line-strong); }
+  summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0; font-size: 17px; font-weight: 500; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary svg { color: var(--muted); transition: transform 200ms var(--ease); }
+  details[open] summary svg { transform: rotate(45deg); }
+  details p { padding: 0 48px 24px 0; color: var(--text-2); }
+
+  /* ── Responsive ── */
+  @media (max-width: 1040px) {
+    .hero .wrap { grid-template-columns: 1fr; gap: 40px; }
+    .services, .faq { grid-template-columns: 1fr; gap: 32px; }
+    .steps { grid-template-columns: 1fr 1fr; gap: 32px 24px; }
+    .plans { grid-template-columns: 1fr; max-width: 520px; }
+    .samples, .posts, .jay { grid-template-columns: 1fr; }
+    .jay { gap: 40px; } .portrait { max-width: 480px; }
+    .wins { columns: 2; }
+  }
+  @media (max-width: 640px) {
+    .hero { padding: 40px 0 56px; }
+    .hero .ctas { flex-direction: column; }
+    .desk { height: 420px; }
+    .sheet { width: 250px; }
+    .before { left: -24px; top: 32px; font-size: 7px; line-height: 11px; padding: 20px; }
+    .pen-note, .before .ring::after { display: none; }
+    .after { right: 16px; top: 24px; font-size: 6.5px; line-height: 9px; }
+    .after .cv-body { grid-template-columns: 1fr; padding: 12px 16px; }
+    .after .cv-side { display: none; }
+    .after .cv-head { padding: 16px 16px 12px; }
+    .slip { right: 16px; bottom: 16px; width: 232px; }
+    .slip .track i { width: 34px; }
+    .facts .wrap { grid-template-columns: 1fr 1fr; }
+    .fact { padding: 20px 0 20px 16px; }
+    .fact:nth-child(3) { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); }
+    .fact:nth-child(4) { border-top: 1px solid var(--line); }
+    .search { flex-direction: column; }
+    .search label { flex: none; }
+    .job { grid-template-columns: minmax(0, 1fr) 20px; gap: 8px 16px; padding: 16px; }
+    .job .k { display: none; }
+    .job .d { grid-column: 1; grid-row: 2; display: flex; align-items: center; gap: 10px; }
+    .job .d .runway { margin: 0; width: 64px; }
+    .job > svg { grid-row: 1 / 3; grid-column: 2; }
+    .job:nth-child(n+5) { display: none; }
+    .channel { flex-direction: column; align-items: flex-start; padding: 20px; }
+    .svc { grid-template-columns: 28px minmax(0, 1fr) 72px; gap: 12px; }
+    .svc img { width: 72px; height: 56px; }
+    .svc svg { display: none; }
+    .wins { columns: 1; }
+    .jay-facts { grid-template-columns: 1fr; }
+    .portrait .mono { font-size: 140px; }
+    .svc h3 { font-size: 19px; line-height: 26px; }
+    .steps { grid-template-columns: 1fr; }
+    .pair { padding: 16px; } .pair .imgs { gap: 10px; }
+    .post-row { grid-template-columns: 88px minmax(0, 1fr); gap: 16px; }
+    .post-row img { width: 88px; }
+    .post-row p { display: none; }
+    details p { padding-right: 0; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></symbol>
+    <symbol id="i-facebook" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></symbol>
+    <symbol id="i-instagram" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.4A4 4 0 1 1 12.6 8 4 4 0 0 1 16 11.4zM17.5 6.5h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="jobs.html">Find a job</a>
+      <a href="services.html">Services</a>
+      <a href="how-it-works.html">How it works</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="samples.html">Samples</a>
+      <a href="blog.html">Career tips</a>
+      <a href="about.html">About</a>
+    </nav>
+    <div class="head-actions">
+      <a class="quiet" href="track.html">Track an order</a>
+      <a class="btn btn-primary btn-sm" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20help%20with%20my%20CV" target="_blank" rel="noopener">WhatsApp us</a>
+      <button class="menu-btn" aria-label="Open menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="rise">
+        <h1>A CV Kenyan recruiters read to the end</h1>
+        <p class="lead">CVs, cover letters and LinkedIn profiles written by HR consultants who know what Kenyan and international recruiters look for. Your first draft arrives within 48 hours.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="pricing.html">Choose a package</a>
+          <a class="btn btn-ghost" href="samples.html">See CV samples</a>
+        </div>
+      </div>
+
+      <div class="desk rise d1" role="img" aria-label="A client's old CV with a red-pen note, under the rewritten CV, and an order slip showing the draft was delivered 41 hours after payment">
+        <div class="sheet before" aria-hidden="true">
+          <div class="t">CURRICULUM VITAE</div>
+          <p><b>Name:</b> Wanjiru Kamau</p>
+          <p><b>Tel:</b> 07•• ••• 318 &nbsp; <b>Email:</b> wanjiru.k@•••.com</p>
+          <div class="rule"></div>
+          <p><b>CAREER OBJECTIVE</b></p>
+          <p>To work in a challenging and dynamic environment where I can utilise my skills and knowledge for the growth of the organisation.</p>
+          <div class="rule"></div>
+          <p><b>WORK EXPERIENCE</b></p>
+          <p>Level 5 Hospital, Nakuru (2020 to date)</p>
+          <p><span class="ring">Duties: Responsible for patients</span> in the ward and other duties as assigned by the supervisor.</p>
+          <p>Mission Hospital, Kiambu (2019 to 2020)</p>
+          <p>Rotation in various departments.</p>
+        </div>
+        <div class="pen-note" aria-hidden="true">How many patients? What changed?</div>
+
+        <div class="sheet after" aria-hidden="true">
+          <div class="cv-head">
+            <div class="cv-name">Wanjiru Kamau</div>
+            <div class="cv-role">Registered Nurse</div>
+            <div class="cv-contact">Nakuru, Kenya · NMC registered, UK 2025</div>
+          </div>
+          <div class="cv-body">
+            <div>
+              <h5>Profile</h5>
+              <p>NMC-registered nurse with five years of acute care in medical and surgical wards. OSCE passed and ready to join an NHS trust.</p>
+              <h5>Key achievements</h5>
+              <ul class="ach">
+                <li>Passed NMC OSCE on first attempt</li>
+                <li>Cut ward medication errors by 30% with a double-check protocol</li>
+                <li>Mentored 12 student nurses</li>
+              </ul>
+              <h5>Experience</h5>
+              <div class="cv-job">Registered Nurse</div>
+              <div class="when">Level 5 Hospital, Nakuru · 2020 to present</div>
+              <ul class="bul">
+                <li>Care for a 25-bed medical ward</li>
+                <li>IV therapy and wound management</li>
+                <li>Lead handovers for a team of 8 nurses</li>
+              </ul>
+            </div>
+            <div class="cv-side">
+              <h5>Core skills</h5>
+              <div class="chips"><span>Acute care</span><span>IV therapy</span><span>Wound care</span><span>Patient safety</span><span>EMR systems</span></div>
+              <h5>Education</h5>
+              <div class="cv-job">BSc Nursing</div>
+              <div class="when">Moi University, 2019</div>
+              <h5>Languages</h5>
+              <p>English, Kiswahili</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="slip">
+          <div class="top"><b>Professional package</b><span class="mono muted">JC-1052</span></div>
+          <div class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i><i></i></div>
+          <div class="state">Draft delivered</div>
+          <div class="meta num">41 hours after payment</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Facts (was the stats bar of unconfirmed numbers) -->
+  <section class="facts" aria-label="Jay CVS at a glance">
+    <div class="wrap">
+      <div class="fact"><b>Since 2018</b><span>Writing CVs from Nairobi</span></div>
+      <div class="fact"><b class="num">48 hours</b><span>To your first draft</span></div>
+      <div class="fact"><b class="num">4027127</b><span>M-Pesa Pay Bill, or pay by card</span></div>
+      <div class="fact"><b class="num">57,000</b><span>Follow our WhatsApp jobs channel</span></div>
+    </div>
+  </section>
+
+  <!-- Latest jobs -->
+  <section class="section" id="jobs">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Jobs open this week</h2>
+          <p>Vacancies from across Kenya, checked and posted by our team every day. <span class="num">15</span> are open right now.</p>
+        </div>
+        <a class="link" href="jobs.html">Browse all jobs <svg class="i s16"><use href="#i-arrow"/></svg></a>
+      </div>
+
+      <form class="search" action="jobs.html" method="get" role="search">
+        <label><svg class="i"><use href="#i-search"/></svg><span class="sr-only">Search jobs</span><input type="search" name="q" placeholder="Job title, company or town"></label>
+        <button class="btn btn-primary" type="submit">Search jobs</button>
+      </form>
+      <div class="cats">
+        <span>Popular</span>
+        <a href="jobs.html?cat=IT+%26+Tech">IT and tech</a>
+        <a href="jobs.html?cat=Healthcare">Healthcare</a>
+        <a href="jobs.html?cat=NGO+%26+Development">NGO</a>
+        <a href="jobs.html?cat=Finance+%26+Accounting">Finance</a>
+        <a href="jobs.html?cat=Sales+%26+Marketing">Sales</a>
+        <a href="jobs.html?cat=Hospitality">Hospitality</a>
+      </div>
+
+      <div class="jobs">
+        <a class="job" href="job.html?id=kilimall-it-specialist">
+          <div><div class="t">I.T Specialist</div><div class="c">Kilimall · Nairobi, Mombasa Road</div></div>
+          <div class="k">Full-time<small>IT and tech</small></div>
+          <div class="d num"><div class="runway"><span style="width:56%"></span></div>11 days left · 29 Nov</div>
+          <svg class="i s16"><use href="#i-right"/></svg>
+        </a>
+        <a class="job" href="job.html">
+          <div><div class="t">Registered Nurses</div><div class="c">Private hospital · Nairobi</div></div>
+          <div class="k">Full-time<small>Healthcare</small></div>
+          <div class="d soon num"><div class="runway soon"><span style="width:84%"></span></div>2 days left · 20 Nov</div>
+          <svg class="i s16"><use href="#i-right"/></svg>
+        </a>
+        <a class="job" href="job.html">
+          <div><div class="t">Project Officer: Livelihoods</div><div class="c">International NGO · Kisumu</div></div>
+          <div class="k">Contract<small>NGO</small></div>
+          <div class="d num"><div class="runway"><span style="width:40%"></span></div>9 days left · 27 Nov</div>
+          <svg class="i s16"><use href="#i-right"/></svg>
+        </a>
+        <a class="job" href="job.html">
+          <div><div class="t">Junior Software Developer</div><div class="c">Fintech startup · Nairobi, Westlands</div></div>
+          <div class="k">Hybrid<small>IT and tech</small></div>
+          <div class="d num"><div class="runway"><span style="width:60%"></span></div>6 days left · 24 Nov</div>
+          <svg class="i s16"><use href="#i-right"/></svg>
+        </a>
+        <a class="job" href="job.html">
+          <div><div class="t">Graduate Trainee: Finance</div><div class="c">Microfinance institution · Nairobi</div></div>
+          <div class="k">Graduate<small>Finance</small></div>
+          <div class="d num"><div class="runway"><span style="width:12%"></span></div>17 days left · 5 Dec</div>
+          <svg class="i s16"><use href="#i-right"/></svg>
+        </a>
+        <a class="job" href="job.html">
+          <div><div class="t">Accountant</div><div class="c">Logistics company · Mombasa</div></div>
+          <div class="k">Full-time<small>Finance</small></div>
+          <div class="d"><div class="runway open"></div>Open until filled</div>
+          <svg class="i s16"><use href="#i-right"/></svg>
+        </a>
+      </div>
+
+      <div class="channel">
+        <p><b>New jobs on WhatsApp every day.</b> Follow the Jay CVS Job Vacancies channel and see them first.</p>
+        <a class="btn btn-ghost btn-sm" href="#" target="_blank" rel="noopener">Follow the channel</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section class="section alt" id="services">
+    <div class="wrap services">
+      <div class="intro">
+        <h2>Everything you need for your next role</h2>
+        <p>From your first CV to a full career change. We do the writing so you can prepare for the interviews.</p>
+        <img class="photo" src="../img/photos/service-cover-letters.jpg" alt="Writing notes in a notebook at a desk" loading="lazy">
+        <div class="advice">
+          <h3>Not sure what you need?</h3>
+          <p>Send your current CV on WhatsApp and we'll recommend the right package, free.</p>
+          <a class="link" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27m%20not%20sure%20which%20service%20I%20need" target="_blank" rel="noopener">Get free advice <svg class="i s16"><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <a class="svc" href="services.html#cv-writing"><span class="n">01</span><div><h3>CV writing and design</h3><p>A professionally written, ATS-friendly CV tailored to your industry and level.</p></div><img src="../img/photos/service-cv-writing.jpg" alt="" loading="lazy"><svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="svc" href="services.html#cover-letters"><span class="n">02</span><div><h3>Cover and motivation letters</h3><p>Letters written for the specific role, scholarship or programme.</p></div><img src="../img/photos/service-job-applications.jpg" alt="" loading="lazy"><svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="svc" href="services.html#linkedin"><span class="n">03</span><div><h3>LinkedIn profile revamp</h3><p>A keyword-rich profile that recruiters find and want to message.</p></div><img src="../img/photos/service-linkedin.jpg" alt="" loading="lazy"><svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="svc" href="services.html#career-coaching"><span class="n">04</span><div><h3>Career coaching</h3><p>One-on-one sessions on career direction, interviews and salary negotiation.</p></div><img src="../img/photos/service-coaching.jpg" alt="" loading="lazy"><svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="svc" href="services.html#job-applications"><span class="n">05</span><div><h3>Job applications and assessments</h3><p>Help with online applications and preparation for aptitude tests.</p></div><img src="../img/photos/blog-cv-mistakes.jpg" alt="" loading="lazy"><svg class="i"><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section" id="how-it-works">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Four steps, all on WhatsApp or email</h2>
+          <p>No office visit needed. You can follow every step on your order page.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li class="step">
+          <span class="track" aria-hidden="true"><i class="now"></i><i></i><i></i><i></i></span>
+          <h3>Share your details</h3>
+          <p>Send your current CV, or your career details, and the jobs you're targeting.</p>
+        </li>
+        <li class="step">
+          <span class="track" aria-hidden="true"><i class="done"></i><i class="now"></i><i></i><i></i></span>
+          <h3>Upload and pay</h3>
+          <p>Pay by M-Pesa prompt or card. It's confirmed instantly, with no codes to send.</p>
+        </li>
+        <li class="step">
+          <span class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i class="now"></i><i></i></span>
+          <h3>Receive your draft</h3>
+          <p>Your writer delivers a first draft within 48 hours, often sooner.</p>
+        </li>
+        <li class="step">
+          <span class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i></span>
+          <h3>Review and finalise</h3>
+          <p>Ask for changes until you're happy, then get your CV in Word and PDF.</p>
+        </li>
+      </ol>
+      <p class="after-steps"><a class="link" href="how-it-works.html">The full process, what we need from you and how to pay <svg class="i s16"><use href="#i-arrow"/></svg></a></p>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section alt" id="pricing">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Three packages, one payment</h2>
+          <p>No hidden charges. Pay once by M-Pesa or card when you upload your CV.</p>
+        </div>
+      </div>
+      <div class="plans">
+        <article class="plan">
+          <div class="name"><h3>Basic CV</h3></div>
+          <p class="for">For graduates and entry-level roles</p>
+          <p class="price"><small>KES</small>1,500</p>
+          <ul>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Professionally written CV</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>ATS-friendly format</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Draft within 48 hours</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>1 round of revisions</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Word and PDF files</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href="order.html?pkg=basic">Choose Basic</a>
+          <p class="pay">One payment · <a href="pricing.html#payment">How to pay</a></p>
+        </article>
+        <article class="plan main">
+          <div class="name"><h3>Professional</h3><small>Chosen most often</small></div>
+          <p class="for">For mid-level professionals</p>
+          <p class="price"><small>KES</small>3,000</p>
+          <ul>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Everything in Basic</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Cover letter for your target role</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Rewrite around your achievements</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>2 rounds of revisions</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Priority draft within 24 hours</li>
+          </ul>
+          <a class="btn btn-primary btn-block" href="order.html?pkg=professional">Choose Professional</a>
+          <p class="pay">One payment · <a href="pricing.html#payment">How to pay</a></p>
+        </article>
+        <article class="plan">
+          <div class="name"><h3>Executive</h3></div>
+          <p class="for">For senior leaders and career changers</p>
+          <p class="price"><small>KES</small>6,000</p>
+          <ul>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Everything in Professional</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>LinkedIn profile revamp</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>1-hour career coaching call</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Unlimited revisions for 14 days</li>
+            <li><svg class="i s16"><use href="#i-check"/></svg>Written personally by Jay</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href="order.html?pkg=executive">Choose Executive</a>
+          <p class="pay">One payment · <a href="pricing.html#payment">How to pay</a></p>
+        </article>
+      </div>
+      <p class="plans-note">Only need a cover letter or a LinkedIn revamp? <a href="pricing.html#individual">See single service prices</a></p>
+    </div>
+  </section>
+
+  <!-- Samples -->
+  <section class="section" id="samples">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>The same career, rewritten</h2>
+          <p>Client CVs before and after, shared with permission and with personal details removed.</p>
+        </div>
+      </div>
+      <div class="samples">
+        <div class="pair">
+          <div class="imgs">
+            <figure><span class="lbl">Before</span><img src="../img/samples/nurse-before.jpeg" alt="Nurse CV before the rewrite" loading="lazy"></figure>
+            <figure><span class="lbl">After</span><img src="../img/samples/nurse-after.jpeg" alt="Nurse CV after the rewrite" loading="lazy"></figure>
+          </div>
+          <div class="cap"><span><b>Registered nurse</b> <span class="soft">· Applying from Kenya to the UK</span></span><a class="link" href="samples.html#nurse">Open <svg class="i s16"><use href="#i-arrow"/></svg></a></div>
+        </div>
+        <div class="minis">
+          <a class="mini" href="samples.html#accountant"><img src="../img/samples/accountant-after.jpeg" alt="" loading="lazy"><div><b>Accountant</b><span>Entry level</span></div></a>
+          <a class="mini" href="samples.html#project-manager"><img src="../img/samples/project-manager-after.jpeg" alt="" loading="lazy"><div><b>Project manager</b><span>Mid-level, moving into NGO work</span></div></a>
+          <a class="link" href="samples.html">All nine samples <svg class="i s16"><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Meet Jay. Story is a draft built from facts already on the site: Jay to rewrite in his own words.
+       Drop his portrait at img/photos/jay.jpg and it replaces the monogram automatically. -->
+  <section class="section alt" id="jay">
+    <div class="wrap jay">
+      <div class="portrait">
+        <span class="mono" aria-hidden="true">J</span>
+        <img src="../img/photos/jay.jpg" alt="Jay, founder of Jay CVS" onerror="this.remove()">
+        <div class="tagline">
+          <div><b>Jay</b><span>Founder, Jay CVS HR Consultancy</span></div>
+          <span class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i></span>
+        </div>
+      </div>
+      <div class="story-text">
+        <p class="kicker">The person behind the CVs</p>
+        <h2>Meet Jay</h2>
+        <p>Jay CVS started in Nairobi in 2018 as a small HR consultancy with one job: help Kenyans show employers what they have really done. Most CVs we receive aren't weak because the person is weak. They're weak because nobody told them what a recruiter reads first.</p>
+        <p>Today a small team of writers works on every order, the jobs channel goes out every morning, and every Executive CV is still written by Jay himself.</p>
+        <p class="sign">Jay</p>
+        <p class="role">Founder and lead CV writer</p>
+        <div class="jay-facts">
+          <div><b>Since 2018</b><span>Writing CVs from Nairobi</span></div>
+          <div><b>Executive CVs</b><span>Written personally by Jay</span></div>
+          <div><b>Every morning</b><span>New jobs on the WhatsApp channel</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Client wins wall. MOCK content drawn in code: replace with real screenshots and letters
+       clients have agreed to share, names blurred. -->
+  <section class="section" id="testimonials">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>What clients send Jay afterwards</h2>
+          <p>Messages, offer letters and interview invitations shared with permission, names hidden.</p>
+        </div>
+      </div>
+      <div class="wins">
+        <figure class="win">
+          <div class="chat" role="img" aria-label="WhatsApp message from a client saying they got the accounts assistant job">
+            <div class="top"><i></i><div><span class="blur">Brian Mwangi</span><small>online</small></div></div>
+            <div class="msgs">
+              <div class="bub">Jay I got it! Accounts assistant at the logistics company<time>09:14</time></div>
+              <div class="bub">HR said my CV was the clearest one they received<time>09:14</time></div>
+              <div class="bub"><span class="file"><i></i>Offer letter.pdf</span>Sending you the letter 🙏🏾<time>09:15</time></div>
+              <div class="bub me">Congratulations Brian, well deserved. Go and shine<time>09:21</time></div>
+            </div>
+          </div>
+          <figcaption><b>Accounts assistant, Mombasa</b> · offer three weeks after his new CV</figcaption>
+        </figure>
+
+        <figure class="win">
+          <div class="quote">
+            <blockquote>I had applied for months with no response. Two weeks after getting my new CV I had three interview invitations.</blockquote>
+            <footer><img src="../img/photos/avatar-1.jpg" alt=""><div><b>Faith W.</b><span>Graduate trainee, Nairobi</span></div></footer>
+          </div>
+        </figure>
+
+        <figure class="win">
+          <div class="letter" role="img" aria-label="Letter of offer for a graduate trainee in finance, name hidden">
+            <span class="clip" aria-hidden="true"></span>
+            <div class="head"><i></i><span class="ref">Ref: HR/OFF/2026/114</span></div>
+            <p>Dear <span class="blur">Faith Wambui</span>,</p>
+            <h4>LETTER OF OFFER: GRADUATE TRAINEE, FINANCE</h4>
+            <p>Following your interview on 3 November 2026, we are pleased to <mark>offer you the position of Graduate Trainee</mark> in our Finance department, starting 1 December 2026.</p>
+            <p>Your monthly stipend will be KES 30,000. Kindly confirm your acceptance by signing and returning this letter.</p>
+          </div>
+          <figcaption><b>Graduate trainee, Nairobi</b> · her first job after university</figcaption>
+        </figure>
+
+        <figure class="win">
+          <div class="mail" role="img" aria-label="Email inviting a client to interview for a staff nurse role in the UK">
+            <div class="subj">Interview invitation: Band 5 Staff Nurse</div>
+            <div class="from"><i></i><div><span class="blur">recruitment@nhs-trust.uk</span><br>to me · 12 Nov</div></div>
+            <div class="body">
+              <p>Dear <span class="blur">Joseph</span>,</p>
+              <p>Thank you for your application. We are delighted to invite you to an online interview for the Band 5 Staff Nurse position on the medical wards.</p>
+            </div>
+          </div>
+          <figcaption><b>Registered nurse, Nakuru to Leeds</b> · UK-format CV and cover letter</figcaption>
+        </figure>
+
+        <figure class="win">
+          <div class="chat" role="img" aria-label="WhatsApp message from a client thanking Jay for a LinkedIn revamp">
+            <div class="top"><i></i><div><span class="blur">Achieng Odhiambo</span><small>online</small></div></div>
+            <div class="msgs">
+              <div class="bub">Two recruiters messaged me on LinkedIn this week. That has never happened before<time>18:40</time></div>
+              <div class="bub me">That's the new headline working. Reply to both, today<time>18:52</time></div>
+            </div>
+          </div>
+          <figcaption><b>Programme officer, Kisumu</b> · LinkedIn revamp</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Career tips -->
+  <section class="section" id="insights">
+    <div class="wrap">
+      <div class="section-head">
+        <div><h2>Advice from people who hire</h2></div>
+        <a class="link" href="blog.html">All articles <svg class="i s16"><use href="#i-arrow"/></svg></a>
+      </div>
+      <div class="posts">
+        <article class="post-lead">
+          <img src="../img/photos/blog-cv-mistakes.jpg" alt="Recruiter reviewing a CV on a clipboard" loading="lazy">
+          <span class="tag">CV tips</span>
+          <h3><a href="article.html">7 CV mistakes that get you rejected in Kenya</a></h3>
+          <p>What recruiters see in the first six seconds, and how to fix it.</p>
+        </article>
+        <div>
+          <article class="post-row">
+            <img src="../img/photos/blog-linkedin.jpg" alt="" loading="lazy">
+            <div><span class="tag">LinkedIn</span><h3><a href="article.html">How to get recruiters to message you on LinkedIn</a></h3><p>Small profile changes that make you easier to find.</p></div>
+          </article>
+          <article class="post-row">
+            <img src="../img/photos/blog-tell-me-about-yourself.jpg" alt="" loading="lazy">
+            <div><span class="tag">Interviews</span><h3><a href="article.html">Answering "Tell me about yourself"</a></h3><p>A simple structure you can use in any interview.</p></div>
+          </article>
+          <article class="post-row">
+            <img src="../img/photos/blog-fake-jobs.jpg" alt="" loading="lazy">
+            <div><span class="tag">Job search</span><h3><a href="article.html">How to spot a fake job advert</a></h3><p>The signs that an offer is asking for your money, not your skills.</p></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section alt" id="faq">
+    <div class="wrap faq">
+      <div class="intro">
+        <h2>Questions, answered</h2>
+        <p>Can't find yours? <a href="https://wa.me/254725912186" target="_blank" rel="noopener">Ask us on WhatsApp</a></p>
+      </div>
+      <div>
+        <details open>
+          <summary>How long does it take to get my CV?<svg class="i"><use href="#i-plus"/></svg></summary>
+          <p>Your first draft arrives within 48 hours of payment. Professional and Executive packages get priority, within 24 hours.</p>
+        </details>
+        <details>
+          <summary>How do I pay?<svg class="i"><use href="#i-plus"/></svg></summary>
+          <p>After uploading your CV you'll see a Pay button. Choose M-Pesa and a prompt appears on your phone for your PIN, or pay by card. Payment is confirmed automatically and your writer starts right away.</p>
+        </details>
+        <details>
+          <summary>What if I don't like the draft?<svg class="i"><use href="#i-plus"/></svg></summary>
+          <p>Every package includes revisions. Tell us what to change and your writer will update it until you're happy.</p>
+        </details>
+        <details>
+          <summary>Do you write CVs for jobs abroad?<svg class="i"><use href="#i-plus"/></svg></summary>
+          <p>Yes. We write CVs for the UK, Canada, the Gulf and Europe, following each region's format.</p>
+        </details>
+        <details>
+          <summary>I don't have a CV at all. Can you still help?<svg class="i"><use href="#i-plus"/></svg></summary>
+          <p>Yes. We'll send you a short questionnaire and build your CV from scratch.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing -->
+  <section class="close">
+    <div class="wrap">
+      <div>
+        <h2>Send us your CV for a free review</h2>
+        <p>Share your current CV on WhatsApp and we'll tell you what to fix and which package fits. We usually reply within minutes.</p>
+      </div>
+      <div class="ctas">
+        <a class="btn btn-light" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20a%20free%20CV%20review" target="_blank" rel="noopener">Get a free review</a>
+        <a class="btn btn-ghost-dark" href="pricing.html">See packages</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="grid">
+      <div>
+        <a class="logo" href="index.html" aria-label="Jay CVS home"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span></a>
+        <p class="about">CV writing and career services, helping Kenyans land the jobs they want since 2018.</p>
+        <div class="socials">
+          <a href="#" aria-label="LinkedIn"><svg class="i s16"><use href="#i-linkedin"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg class="i s16"><use href="#i-facebook"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg class="i s16"><use href="#i-instagram"/></svg></a>
+          <a href="#" aria-label="X"><svg class="i s16"><use href="#i-x"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#cv-writing">CV writing</a></li>
+          <li><a href="services.html#cover-letters">Cover letters</a></li>
+          <li><a href="services.html#linkedin">LinkedIn revamp</a></li>
+          <li><a href="services.html#career-coaching">Career coaching</a></li>
+          <li><a href="services.html#job-applications">Job applications</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Jay</a></li>
+          <li><a href="jobs.html">Find a job</a></li>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="samples.html">Samples</a></li>
+          <li><a href="blog.html">Career tips</a></li>
+          <li><a href="track.html">Track an order</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get in touch</h4>
+        <ul>
+          <li><a class="num" href="tel:+254725912186">+254 725 912 186</a></li>
+          <li><a href="mailto:info@jaycvs.co.ke">info@jaycvs.co.ke</a></li>
+          <li>Nairobi, Kenya</li>
+          <li class="pay">M-Pesa Pay Bill <span class="mono">4027127</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2018–2026 Jay CVS HR Consultancy</p>
+      <p><a href="#">Privacy policy</a></p>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-tab" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS" target="_blank" rel="noopener"><span class="dot" aria-hidden="true"></span>Chat with us</a>
+</body>
+</html>

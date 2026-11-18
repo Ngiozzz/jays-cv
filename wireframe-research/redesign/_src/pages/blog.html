@@ -1,0 +1,133 @@
+<!-- title: Career tips · Jay CVS -->
+<!-- desc: Practical advice on CVs, LinkedIn, interviews and job hunting in Kenya and abroad, from the Jay CVS team. -->
+<!-- nav: blog.html -->
+<style>
+  .lead-post { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: center; margin-top: 40px; }
+  .lead-post img { width: 100%; aspect-ratio: 16 / 11; object-fit: cover; border-radius: 20px; }
+  .tag { font-size: 13px; color: var(--gold-ink); font-weight: 500; }
+  .lead-post h2 { margin-top: 8px; font-size: 36px; line-height: 44px; }
+  .lead-post h2 a:hover, .post h3 a:hover { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+  .lead-post p { margin-top: 12px; font-size: 17px; line-height: 28px; color: var(--text-2); }
+  .meta { display: flex; align-items: center; gap: 10px; margin-top: 20px; font-size: 14px; color: var(--muted); }
+  .meta .av { width: 28px; height: 28px; border-radius: 7px; background: var(--gold); color: var(--ink); display: grid; place-items: center; font: 600 15px/1 var(--serif); }
+  .lead-post .link { margin-top: 24px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .filters button { height: 36px; padding: 0 14px; border-radius: 8px; font-size: 14px; color: var(--text-2); background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); transition: background-color 140ms var(--ease), color 140ms var(--ease); }
+  .filters button:hover { color: var(--text); }
+  .filters button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); box-shadow: none; }
+  .posts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+  .post { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 20px; align-items: start; padding: 28px 0; border-bottom: 1px solid var(--line-strong); }
+  .post[hidden] { display: none; }
+  .post img { width: 160px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; }
+  .post h3 { margin-top: 4px; font: 500 21px/28px var(--serif); letter-spacing: -0.01em; }
+  .post p { margin-top: 6px; font-size: 15px; line-height: 24px; color: var(--text-2); }
+  .post .m { margin-top: 10px; font-size: 13px; color: var(--muted); }
+
+  .letter { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; padding: 40px; border-radius: 24px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .letter h2 { font-size: 30px; line-height: 38px; }
+  .letter p { margin-top: 8px; color: var(--text-2); }
+  .letter form { display: flex; gap: 8px; }
+  .letter .field { flex: 1; }
+  .letter .ok { display: none; margin-top: 12px; font-size: 14px; color: var(--good); }
+  .letter.done .ok { display: block; }
+
+  @media (max-width: 1040px) {
+    .lead-post, .letter { grid-template-columns: 1fr; gap: 24px; }
+    .posts { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .lead-post h2 { font-size: 28px; line-height: 34px; }
+    .post { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; padding: 20px 0; }
+    .post img { width: 96px; }
+    .post h3 { font-size: 18px; line-height: 24px; }
+    .post p { display: none; }
+    .letter { padding: 24px 16px; }
+    .letter form { flex-direction: column; }
+  }
+</style>
+
+<section class="page-head">
+  <div class="wrap rise">
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><span>Career tips</span></nav>
+    <h1>Advice from people who hire</h1>
+    <p class="lead">Practical advice on CVs, LinkedIn, interviews and job hunting in Kenya and abroad.</p>
+
+    <article class="lead-post">
+      <a href="article.html"><img src="../img/photos/blog-cv-mistakes.jpg" alt="A recruiter reviewing a CV on a clipboard"></a>
+      <div>
+        <span class="tag">CV tips</span>
+        <h2><a href="article.html">7 CV mistakes that get you rejected in Kenya</a></h2>
+        <p>Recruiters give your CV a few seconds on the first look. Here's what they notice, and the common mistakes that send good candidates to the "no" pile.</p>
+        <div class="meta"><span class="av" aria-hidden="true">J</span>Jay CVS team · Sep 2026 · 6 min read</div>
+        <a class="link" href="article.html">Read the article <svg class="i s16"><use href="#i-arrow"/></svg></a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="filters" role="group" aria-label="Filter by topic" data-filters>
+      <button type="button" data-cat="all" aria-pressed="true">All</button>
+      <button type="button" data-cat="CV tips" aria-pressed="false">CV tips</button>
+      <button type="button" data-cat="LinkedIn" aria-pressed="false">LinkedIn</button>
+      <button type="button" data-cat="Interviews" aria-pressed="false">Interviews</button>
+      <button type="button" data-cat="Job search" aria-pressed="false">Job search</button>
+      <button type="button" data-cat="Career growth" aria-pressed="false">Career growth</button>
+    </div>
+    <div class="posts" data-posts>
+      <article class="post" data-c="LinkedIn"><img src="../img/photos/blog-linkedin.jpg" alt="" loading="lazy"><div><span class="tag">LinkedIn</span><h3><a href="article.html">How to get recruiters to message you on LinkedIn</a></h3><p>Small profile changes that make you easier to find.</p><p class="m">Sep 2026 · 5 min read</p></div></article>
+      <article class="post" data-c="Interviews"><img src="../img/photos/blog-tell-me-about-yourself.jpg" alt="" loading="lazy"><div><span class="tag">Interviews</span><h3><a href="article.html">Answering "Tell me about yourself"</a></h3><p>A simple structure you can use in any interview.</p><p class="m">Aug 2026 · 4 min read</p></div></article>
+      <article class="post" data-c="Job search"><img src="../img/photos/blog-ngo-jobs.jpg" alt="" loading="lazy"><div><span class="tag">Job search</span><h3><a href="article.html">Where to find NGO and UN jobs in Kenya</a></h3><p>The job boards and application tips that work.</p><p class="m">Aug 2026 · 7 min read</p></div></article>
+      <article class="post" data-c="CV tips"><img src="../img/photos/blog-ats.jpg" alt="" loading="lazy"><div><span class="tag">CV tips</span><h3><a href="article.html">What is an ATS, and how do you get past it?</a></h3><p>Why good CVs get filtered out by software, and how to fix it.</p><p class="m">Jul 2026 · 5 min read</p></div></article>
+      <article class="post" data-c="Career growth"><img src="../img/photos/blog-salary.jpg" alt="" loading="lazy"><div><span class="tag">Career growth</span><h3><a href="article.html">How to negotiate your salary in Kenya</a></h3><p>What to say, and when, to get the offer you deserve.</p><p class="m">Jul 2026 · 6 min read</p></div></article>
+      <article class="post" data-c="CV tips"><img src="../img/photos/blog-uk-canada-cv.jpg" alt="" loading="lazy"><div><span class="tag">CV tips</span><h3><a href="article.html">How to write a CV for the UK and Canada</a></h3><p>The format differences that matter when applying abroad.</p><p class="m">Jun 2026 · 8 min read</p></div></article>
+      <article class="post" data-c="Interviews"><img src="../img/photos/blog-interview-questions.jpg" alt="" loading="lazy"><div><span class="tag">Interviews</span><h3><a href="article.html">10 interview questions Kenyan employers always ask</a></h3><p>With example answers you can adapt.</p><p class="m">Jun 2026 · 9 min read</p></div></article>
+      <article class="post" data-c="Job search"><img src="../img/photos/blog-fake-jobs.jpg" alt="" loading="lazy"><div><span class="tag">Job search</span><h3><a href="article.html">How to spot a fake job advert</a></h3><p>The warning signs that protect you from recruitment scams.</p><p class="m">May 2026 · 4 min read</p></div></article>
+      <article class="post" data-c="Career growth"><img src="../img/photos/blog-career-change.jpg" alt="" loading="lazy"><div><span class="tag">Career growth</span><h3><a href="article.html">Changing careers after 30</a></h3><p>How to reposition your experience for a new industry.</p><p class="m">May 2026 · 7 min read</p></div></article>
+      <article class="post" data-c="CV tips"><img src="../img/photos/blog-cv-mistakes.jpg" alt="" loading="lazy"><div><span class="tag">CV tips</span><h3><a href="article.html">7 CV mistakes that get you rejected in Kenya</a></h3><p>What recruiters see first, and how to fix it.</p><p class="m">Sep 2026 · 6 min read</p></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="section alt">
+  <div class="wrap">
+    <div class="letter" data-letter>
+      <div>
+        <h2>One useful email a month</h2>
+        <p>CV advice, interview tips and job-search guides from the Jay CVS team. No spam.</p>
+      </div>
+      <div>
+        <!-- Not connected yet: wire to an email service (Mailchimp, Brevo) when going live -->
+        <form data-letter-form>
+          <label class="field"><svg class="i s16"><use href="#i-mail"/></svg><span class="sr-only">Email address</span><input type="email" placeholder="Your email address" autocomplete="email" required></label>
+          <button class="btn btn-primary" type="submit" style="height:48px">Subscribe</button>
+        </form>
+        <p class="ok">Thanks, you're on the list.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <div>
+      <h2>Rather have an expert look at it?</h2>
+      <p>Send your current CV on WhatsApp for a free review. We'll tell you what to fix first.</p>
+    </div>
+    <div class="ctas">
+      <a class="btn btn-light" href="https://wa.me/254725912186?text=Hi%20Jay%20CVS%2C%20I%27d%20like%20a%20free%20CV%20review" target="_blank" rel="noopener">Get a free review</a>
+      <a class="btn btn-ghost-dark" href="pricing.html">See packages</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelector('[data-filters]').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cat]'); if (!b) return;
+    document.querySelectorAll('[data-cat]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    document.querySelectorAll('.post').forEach((p) => (p.hidden = b.dataset.cat !== 'all' && p.dataset.c !== b.dataset.cat));
+  });
+  document.querySelector('[data-letter-form]').addEventListener('submit', (e) => { e.preventDefault(); document.querySelector('[data-letter]').classList.add('done'); });
+</script>

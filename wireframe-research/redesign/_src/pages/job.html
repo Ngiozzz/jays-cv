@@ -1,0 +1,279 @@
+<!-- title: Job · Jay CVS -->
+<!-- desc: Job advert, how to apply, and getting your CV ready for it. -->
+<!-- nav: jobs.html -->
+<style>
+  .job-top { padding: 40px 0 32px; border-bottom: 1px solid var(--line); }
+  .job-title { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 20px; align-items: center; }
+  .job-title .logo-tile { width: 64px; height: 64px; border-radius: 14px; display: grid; place-items: center; background: var(--raised); color: var(--text-2); font: 500 18px/1 var(--mono); box-shadow: inset 0 0 0 1px var(--line); }
+  .job-title .cat { font-size: 14px; color: var(--gold-ink); font-weight: 500; }
+  .job-title h1 { font-size: 40px; line-height: 46px; margin-top: 2px; }
+  .job-title .co { margin-top: 4px; color: var(--text-2); }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 32px; border-radius: 14px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+  .facts > div { padding: 16px 20px; }
+  .facts > div + div { border-left: 1px solid var(--line); }
+  .facts dt { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .facts dd { margin-top: 4px; font-weight: 500; }
+  .facts dd small { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+  .facts dd.soon small { color: var(--gold-ink); }
+  .facts .runway { margin: 8px 0 2px; width: 100%; max-width: 160px; }
+
+  .closed-note { display: flex; gap: 10px; align-items: center; padding: 14px 16px; margin-top: 24px; border-radius: 12px; background: rgba(180, 35, 24, 0.06); color: var(--pen); font-size: 15px; }
+  .closed-note a { margin-left: auto; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  .job-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 48px; padding: 40px 0 96px; align-items: start; }
+  .advert h2 { font: 500 24px/32px var(--serif); letter-spacing: -0.01em; margin: 40px 0 12px; }
+  .advert h2:first-child { margin-top: 0; }
+  .advert p { color: var(--text-2); font-size: 17px; line-height: 28px; }
+  .advert ul.dots { display: grid; gap: 10px; }
+  .advert ul.dots li { position: relative; padding-left: 20px; color: var(--text-2); font-size: 16px; line-height: 26px; }
+  .advert ul.dots li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+  .advert ul.reqs { display: grid; gap: 8px; }
+  .advert ul.reqs li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 15px; line-height: 24px; color: var(--text-2); }
+  .advert ul.reqs li svg { margin-top: 4px; color: var(--muted); }
+  .advert .reqs-note { margin-top: 12px; font-size: 14px; line-height: 22px; color: var(--muted); }
+  .advert .reqs-note a { color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  .apply { margin-top: 40px; padding: 28px; }
+  .apply h2 { margin-top: 0; display: flex; align-items: center; gap: 10px; }
+  .apply > p { font-size: 15px; line-height: 24px; }
+  .apply-rows { display: grid; gap: 8px; margin: 16px 0 20px; }
+  .apply-row { display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px 10px 16px; border-radius: 10px; background: var(--alt); font-size: 15px; }
+  .apply-row span { font-size: 13px; color: var(--muted); }
+  .apply-row b { font-weight: 500; overflow-wrap: anywhere; }
+  .copy { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 7px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 13px; color: var(--text-2); transition: color 140ms var(--ease); }
+  .copy:hover { color: var(--text); }
+  .apply .note { display: flex; gap: 10px; margin-bottom: 20px; padding: 12px 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-strong); font-size: 14px; line-height: 22px; color: var(--text-2); }
+  .apply .note svg { margin-top: 2px; color: var(--muted); }
+  .apply .by { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 14px; color: var(--text-2); }
+  .apply .by b { color: var(--text); font-weight: 500; }
+
+  .poster { margin-top: 40px; }
+  .poster figure { padding: 24px; border-radius: 20px; background: var(--desk); }
+  .poster img { margin: 0 auto; max-height: 720px; border-radius: 4px; box-shadow: 0 1px 2px rgba(28, 27, 25, 0.08), 0 12px 32px rgba(28, 27, 25, 0.14); }
+  .poster figcaption { margin-top: 12px; font-size: 13px; color: var(--muted); text-align: center; }
+  .advert .source { margin-top: 24px; font-size: 13px; line-height: 20px; color: var(--muted); }
+
+  /* Aside: the moment, getting the CV ready for this exact job */
+  .aside { position: sticky; top: 88px; display: grid; gap: 16px; }
+  .ready { padding: 24px; border-radius: 20px; background: var(--ink); color: var(--on-ink); }
+  .ready .k { font-size: 13px; color: var(--gold-light); }
+  .ready h3 { margin-top: 6px; font: 500 24px/30px var(--serif); letter-spacing: -0.01em; }
+  .ready .opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin-top: 16px; padding: 16px; border-radius: 14px; background: rgba(250, 250, 249, 0.06); box-shadow: inset 0 0 0 1px rgba(250, 250, 249, 0.1); transition: background-color 140ms var(--ease); }
+  .ready .opt:hover { background: rgba(250, 250, 249, 0.1); }
+  .ready .opt b { font-weight: 500; }
+  .ready .opt .p { font-variant-numeric: tabular-nums; color: var(--gold-light); font-size: 14px; }
+  .ready .opt p { grid-column: 1 / -1; font-size: 14px; line-height: 21px; color: var(--ink-2); }
+  .meter { display: flex; align-items: center; gap: 12px; grid-column: 1 / -1; margin-top: 8px; }
+  .meter svg { width: 44px; height: 44px; flex: none; }
+  .meter span { font-size: 13px; color: var(--ink-2); }
+  .meter span b { color: var(--on-ink); }
+  .ready .opt .track { grid-column: 1 / -1; margin-top: 8px; }
+  .ready .opt .track i { width: 18px; background: rgba(250, 250, 249, 0.14); }
+  .ready .opt .track i.done { background: #d6d3d1; }
+  .side-card { padding: 20px; font-size: 14px; line-height: 22px; }
+  .side-card h3 { font-size: 15px; margin-bottom: 4px; }
+  .side-card p { color: var(--text-2); }
+  .share { display: flex; gap: 8px; margin-top: 12px; }
+  .side-card .report { display: inline-block; margin-top: 8px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+
+  .similar { padding: 72px 0 96px; background: var(--alt); }
+  .similar h2 { font-size: 28px; line-height: 36px; margin-bottom: 24px; }
+  .sim { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .sim a { display: block; padding: 20px; border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow 140ms var(--ease); }
+  .sim a:hover { box-shadow: inset 0 0 0 1px var(--line-strong), 0 4px 12px rgba(28, 27, 25, 0.05); }
+  .sim .t { font-weight: 500; }
+  .sim .c { font-size: 14px; color: var(--text-2); }
+  .sim .runway { margin: 16px 0 6px; }
+  .sim .d { font-size: 13px; color: var(--muted); }
+  .sim .d.soon { color: var(--gold-ink); }
+
+  .missing { padding: 96px 0; text-align: center; }
+  .missing p { margin: 12px 0 24px; color: var(--text-2); }
+
+  @media (max-width: 1040px) {
+    .job-layout { grid-template-columns: minmax(0, 1fr); }
+    .aside { position: static; }
+    .facts { grid-template-columns: 1fr 1fr; }
+    .facts > div:nth-child(3) { border-left: 0; }
+    .facts > div:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .sim { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .job-title { grid-template-columns: 48px minmax(0, 1fr); gap: 14px; }
+    .job-title .logo-tile { width: 48px; height: 48px; font-size: 14px; }
+    .job-title .share-top { display: none; }
+    .job-title h1 { font-size: 28px; line-height: 34px; }
+    .apply { padding: 20px 16px; }
+    .apply-row { grid-template-columns: minmax(0, 1fr) auto; }
+    .apply-row span { grid-column: 1 / -1; }
+    .poster figure { padding: 12px; }
+  }
+</style>
+
+<div id="job"></div>
+
+<script src="js/jobs-data.js"></script>
+<script>
+(() => {
+  const TODAY = window.TODAY, DAY = 864e5;
+  const d = (s) => new Date(s + 'T00:00:00');
+  const left = (j) => (j.deadline ? Math.round((d(j.deadline) - TODAY) / DAY) : null);
+  const isOpen = (j) => j.deadline === null || left(j) >= 0;
+  const fmt = (s, long) => d(s).toLocaleDateString('en-GB', long ? { weekday: 'short', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'short' });
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const icon = (n, cls = 's16') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  const initials = (n) => n.replace(/[^A-Za-z ]/g, '').split(' ').filter((w) => w && !/^(Ltd|and|of)$/i.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const place = (l) => l.replace(/\s*\(([^)]*)\)/, ', $1').replace(/ & /g, ' and ');
+  const catName = (c) => c.replace(/ & /g, ' and ').split(' ').map((w, i) => (i && !/^(IT|NGO)$/.test(w) ? w.toLowerCase() : w)).join(' ');
+  const leftText = (j) => { const n = left(j); return n < 0 ? 'Closed' : n === 0 ? 'Closes today' : n === 1 ? '1 day left' : `${n} days left`; };
+  const pct = (j) => { const span = Math.max(1, (d(j.deadline) - d(j.posted)) / DAY); return Math.min(100, Math.max(6, Math.round(((TODAY - d(j.posted)) / DAY / span) * 100))); };
+  const runway = (j) => !j.deadline ? '<div class="runway open"></div>' : `<div class="runway${left(j) <= 3 ? ' soon' : ''}"><span style="width:${pct(j)}%"></span></div>`;
+  const WA = 'https://wa.me/254725912186';
+  const CHECK_PRICE = 'KES 10';      // settings.cvCheckPrice in the platform (default 10): confirm
+  const TAILOR_PRICE = 'KES 1,000';  // "CV tailored to a job" service
+
+  const root = document.getElementById('job');
+  const id = new URLSearchParams(location.search).get('id') || 'kilimall-it-specialist';
+  const job = window.JOBS.find((j) => j.id === id);
+
+  if (!job) {
+    root.innerHTML = `<section class="missing"><div class="wrap"><h1>This job isn't here any more</h1><p>The advert may have been taken down by the employer.</p><a class="btn btn-primary" href="jobs.html">See open jobs</a></div></section>`;
+    return;
+  }
+  document.title = `${job.title} at ${job.company} · Jay CVS`;
+  const open = isOpen(job);
+  const a = job.apply || { method: 'other' };
+  const copy = (v) => `<button type="button" class="copy" data-copy="${esc(v)}">${icon('copy')}<span>Copy</span></button>`;
+  const row = (label, value, canCopy) => `<div class="apply-row"><span>${label}</span><b>${esc(value)}</b>${canCopy ? copy(value) : '<i></i>'}</div>`;
+  const note = a.notes ? `<p class="note">${icon('info')}<span>${esc(a.notes)}</span></p>` : '';
+  const attach = a.attach && a.attach.length ? row(a.method === 'in-person' ? 'Bring' : 'Attach', a.attach.join(', ')) : '';
+
+  let how = '', howIcon = 'mail';
+  if (a.method === 'email') {
+    how = `<p>Send your application by email.</p><div class="apply-rows">${row('Send to', a.email, true)}${a.subject ? row('Subject', a.subject, true) : ''}${attach}</div>${note}
+      <a class="btn btn-primary" href="mailto:${esc(a.email)}?subject=${encodeURIComponent(a.subject || job.title)}">${icon('mail')}Open in my email app</a>`;
+  } else if (a.method === 'link') {
+    howIcon = 'link';
+    how = `<p>Apply on the employer's own application page.</p><div class="apply-rows">${attach}</div>${note}
+      <a class="btn btn-primary" href="${esc(a.link || '#')}" target="_blank" rel="noopener nofollow">${icon('link')}Apply on the employer's website</a>`;
+  } else if (a.method === 'whatsapp') {
+    howIcon = 'chat';
+    how = `<p>Send your CV to the employer on WhatsApp.</p><div class="apply-rows">${row('Number', a.phone || a.whatsapp || '', true)}${attach}</div>${note}`;
+  } else if (a.method === 'in-person') {
+    howIcon = 'pin';
+    how = `<p>Apply in person.</p><div class="apply-rows">${row('Where', a.address || 'See the advert')}${a.when ? row('When', a.when) : ''}${attach}</div>${note}`;
+  } else {
+    howIcon = 'info';
+    how = `<p>${esc(a.notes || 'See the original advert for how to apply.')}</p>`;
+  }
+  const by = job.deadline
+    ? `${icon('clock')}<span>Apply by <b>${fmt(job.deadline, true)}</b>, ${leftText(job).toLowerCase()}</span>`
+    : `${icon('clock')}<span><b>Open until filled.</b> Apply early.</span>`;
+  const list = (items, cls) => items && items.length ? `<ul class="${cls}">${items.map((i) => `<li>${cls === 'reqs' ? icon('check') : ''}<span>${esc(i)}</span></li>`).join('')}</ul>` : '';
+
+  const others = window.JOBS.filter((j) => j.id !== job.id && isOpen(j))
+    .sort((x, y) => (y.category === job.category) - (x.category === job.category) || d(y.posted) - d(x.posted)).slice(0, 3);
+  const shareText = encodeURIComponent(`${job.title} at ${job.company}. Apply by ${job.deadline ? fmt(job.deadline) : 'soon'}: ${location.href}`);
+
+  root.innerHTML = `
+  <section class="job-top">
+    <div class="wrap rise">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><a href="jobs.html">Find a job</a><span>/</span><span>${esc(job.title)}</span></nav>
+      <div class="job-title">
+        <span class="logo-tile" aria-hidden="true">${esc(initials(job.company))}</span>
+        <div>
+          <div class="cat">${esc(catName(job.category))}</div>
+          <h1>${esc(job.title)}</h1>
+          <p class="co">${esc(job.company)}</p>
+        </div>
+        <a class="btn btn-ghost btn-sm share-top" href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener">${icon('share')}Share</a>
+      </div>
+      ${open ? '' : `<p class="closed-note">${icon('info')}This job closed on ${fmt(job.deadline)}.<a href="jobs.html">See open jobs</a></p>`}
+      <dl class="facts">
+        <div><dt>${icon('pin')}Location</dt><dd>${esc(place(job.location))}<small>${esc(job.workMode)}</small></dd></div>
+        <div><dt>${icon('briefcase')}Job type</dt><dd>${esc(job.type)}<small>Posted ${fmt(job.posted)}</small></dd></div>
+        <div><dt>${icon('clock')}Deadline</dt><dd class="${job.deadline && left(job) <= 3 ? 'soon' : ''}">${job.deadline ? fmt(job.deadline) : 'Open until filled'}${runway(job)}<small>${job.deadline ? leftText(job) : 'Apply early'}</small></dd></div>
+        <div><dt>${icon('cash')}Salary</dt><dd>${job.salary ? esc(job.salary) : 'Not stated'}<small>${job.salary ? 'As on the advert' : 'Ask at interview'}</small></dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="job-layout">
+      <article class="advert">
+        <h2>About the role</h2>
+        <p>${esc(job.summary)}</p>
+        ${job.responsibilities?.length ? `<h2>What you'll do</h2>${list(job.responsibilities, 'dots')}` : ''}
+        ${job.requirements?.length ? `<h2>What they're asking for</h2>${list(job.requirements, 'reqs')}
+          <p class="reqs-note">Does your CV show these? <a href="check.html?id=${esc(job.id)}">Check it against this job</a></p>` : ''}
+
+        ${open ? `<section class="card apply" id="how-to-apply">
+          <h2>${icon(howIcon, '')}How to apply</h2>
+          ${how}
+          <p class="by">${by}</p>
+        </section>` : ''}
+
+        ${job.poster ? `<section class="poster"><h2>Original advert</h2>
+          <figure><img src="${esc(job.poster)}" alt="Original job advert for ${esc(job.title)} at ${esc(job.company)}" loading="lazy"><figcaption>As it was shared · ${esc(job.source)}</figcaption></figure></section>` : ''}
+
+        <p class="source">Checked and posted by the Jay CVS team on ${fmt(job.posted, true)} · Source: ${esc(job.source)}</p>
+      </article>
+
+      <aside class="aside">
+        <div class="ready">
+          <p class="k">Before you apply</p>
+          <h3>Is your CV ready for this job?</h3>
+          <a class="opt" href="check.html?id=${esc(job.id)}">
+            <b>Check it yourself</b><span class="p">${CHECK_PRICE}</span>
+            <p>Upload your CV and get a match score out of 100, what already fits, and what this advert asks for that your CV doesn't show.</p>
+            <div class="meter">
+              <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="rgba(250,250,249,0.14)" stroke-width="4"/><circle cx="22" cy="22" r="18" fill="none" stroke="#e6c877" stroke-width="4" stroke-linecap="round" stroke-dasharray="81 113" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" font-size="12" font-family="Inter" fill="#fafaf9">72</text></svg>
+              <span>Example: <b>72 out of 100</b>, missing "CCTV" and "WMS"</span>
+            </div>
+          </a>
+          <a class="opt" href="order.html?job=${esc(job.id)}">
+            <b>Let us tailor it</b><span class="p">${TAILOR_PRICE}</span>
+            <p>A writer rewrites your CV for this advert. First draft within 48 hours${job.deadline && left(job) > 2 ? ', before the deadline' : ''}.</p>
+            <span class="track" aria-hidden="true"><i class="done"></i><i class="done"></i><i></i><i></i><i></i></span>
+          </a>
+        </div>
+        <div class="card side-card">
+          <h3>Share this job</h3>
+          <p>Know someone it suits? Send it on.</p>
+          <div class="share">
+            <a class="btn btn-ghost btn-sm" href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener">${icon('chat')}WhatsApp</a>
+            <button type="button" class="btn btn-ghost btn-sm" data-copy="${esc(location.href)}">${icon('copy')}<span>Copy link</span></button>
+          </div>
+        </div>
+        <div class="card side-card">
+          <h3>Stay safe</h3>
+          <p>Never pay anyone to get a job or an interview. Genuine employers don't charge application fees.</p>
+          <a class="report" href="${WA}?text=${encodeURIComponent(`Hi Jay CVS, I'd like to report this job advert: ${job.title} at ${job.company}.`)}" target="_blank" rel="noopener">Report this advert</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <section class="similar">
+    <div class="wrap">
+      <h2>Similar jobs</h2>
+      <div class="sim">${others.map((j) => `
+        <a href="job.html?id=${esc(j.id)}">
+          <div class="t">${esc(j.title)}</div>
+          <div class="c">${esc(j.company)} · ${esc(place(j.location))}</div>
+          ${runway(j)}
+          <div class="d num${j.deadline && left(j) <= 3 ? ' soon' : ''}">${j.deadline ? `${leftText(j)} · ${fmt(j.deadline)}` : 'Open until filled'}</div>
+        </a>`).join('')}
+      </div>
+    </div>
+  </section>`;
+
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-copy]');
+    if (!b) return;
+    const label = b.querySelector('span');
+    const done = () => { if (!label) return; const old = label.textContent; label.textContent = 'Copied'; setTimeout(() => (label.textContent = old), 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.copy).then(done, done); else done();
+  });
+})();
+</script>

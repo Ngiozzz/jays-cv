@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Jay CVS team</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!--
+  Jay CVS admin sign-in: unslop redesign mockup. Matches platform/src/app/(admin)/admin/login:
+  Google sign-in for invited team members only, error states, and test sign-in for this computer.
+  Try ?error=invite or ?error=paused for the error states.
+  Redesign method: unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+-->
+<style>
+  :root {
+    --bg: #fafaf9; --card: #ffffff; --raised: #f2f1ee; --desk: #ebe7df;
+    --text: #1c1b19; --text-2: #57534e; --muted: #78716c;
+    --line: rgba(28, 27, 25, 0.08); --line-strong: rgba(28, 27, 25, 0.14);
+    --gold: #b8913f; --gold-ink: #7a5e22; --gold-light: #e6c877;
+    --bad: #b42318; --ink: #1c1b19; --on-ink: #fafaf9; --ink-2: #a8a29e;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+    --mono: ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 15px/24px var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+  [hidden] { display: none !important; }
+
+  .split { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); min-height: 100vh; }
+
+  /* The world: the desk the team works at, with the day's orders on it */
+  .desk-side { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 40px 48px; background: var(--ink); color: var(--on-ink); }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .mark { width: 30px; height: 30px; border-radius: 8px; background: var(--gold); color: var(--ink); display: grid; place-items: center; font: 600 18px/1 var(--serif); }
+  .brand .word { font: 600 20px/1 var(--serif); }
+  .brand .word span { color: var(--gold-light); }
+  .brand .area { margin-left: 4px; font-size: 13px; color: var(--ink-2); }
+  .say h2 { font: 500 44px/50px var(--serif); letter-spacing: -0.015em; max-width: 440px; }
+  .say h2 em { font-style: normal; color: var(--gold-light); }
+  .say ul { list-style: none; display: grid; gap: 10px; margin-top: 24px; color: #d6d3d1; }
+  .say li { display: flex; align-items: center; gap: 10px; }
+  .say li i { width: 22px; height: 4px; border-radius: 2px; background: #57534e; flex: none; }
+  .say li:first-child i { background: var(--gold); }
+  .sheets { position: absolute; right: -40px; top: 120px; width: 360px; height: 420px; pointer-events: none; }
+  .sheet { position: absolute; width: 220px; padding: 14px 14px 12px; border-radius: 6px; background: #fff; color: var(--text); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); font-size: 13px; line-height: 18px; }
+  .sheet .ref { font: 500 11px/1 var(--mono); color: var(--muted); }
+  .sheet b { display: block; margin-top: 6px; font-weight: 500; font-size: 14px; }
+  .sheet .pk { color: var(--text-2); }
+  .sheet .lines { display: grid; gap: 4px; margin: 10px 0; }
+  .sheet .lines i { display: block; height: 3px; border-radius: 2px; background: var(--raised); }
+  .sheet .foot { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .sheet .track { display: flex; gap: 3px; margin-top: 10px; }
+  .sheet .track i { width: 14px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+  .sheet .track i.d { background: var(--text-2); } .sheet .track i.n { background: var(--gold); }
+  .s1 { left: 0; top: 40px; transform: rotate(-6deg); }
+  .s2 { left: 90px; top: 150px; transform: rotate(3deg); }
+  .s3 { left: 30px; top: 270px; transform: rotate(-2deg); }
+  .foot-note { font-size: 13px; color: var(--ink-2); }
+  .foot-note a { color: var(--on-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+  .form-side { display: grid; place-items: center; padding: 40px 24px; }
+  .box { width: 100%; max-width: 400px; }
+  .box h1 { font: 500 36px/42px var(--serif); letter-spacing: -0.015em; }
+  .box > p { margin-top: 8px; color: var(--text-2); }
+  .google { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 48px; margin-top: 28px; border-radius: 10px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line-strong), 0 1px 2px rgba(28, 27, 25, 0.04); font-weight: 500; transition: background-color 140ms var(--ease), transform 120ms var(--ease); }
+  .google:hover { background: var(--raised); }
+  .google:active { transform: scale(0.99); }
+  .google:disabled { opacity: 0.5; cursor: not-allowed; }
+  .google .g { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px var(--line-strong); font: 600 13px/1 var(--sans); color: var(--text-2); }
+  .google .spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--text); animation: spin 700ms linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .keys { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .err { display: flex; gap: 10px; margin-top: 20px; padding: 12px 14px; border-radius: 10px; background: rgba(180, 35, 24, 0.06); color: var(--bad); font-size: 14px; line-height: 21px; }
+  .err svg { width: 16px; height: 16px; flex: none; margin-top: 2px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; }
+  .test { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .test h2 { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .test .opts { display: grid; gap: 8px; margin-top: 12px; }
+  .test a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line-strong); transition: background-color 140ms var(--ease); }
+  .test a:hover { background: var(--raised); }
+  .test .av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 500; background: var(--raised); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .test .av.dark { background: var(--ink); color: var(--gold-light); box-shadow: none; }
+  .test b { display: block; font-weight: 500; font-size: 14px; }
+  .test span { font-size: 13px; color: var(--muted); }
+  .test .arr { margin-left: auto; color: var(--muted); }
+  .back { display: inline-block; margin-top: 28px; font-size: 14px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .box, .say { animation: rise 520ms var(--ease) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  }
+  @media (max-width: 960px) {
+    .split { grid-template-columns: 1fr; }
+    .desk-side { padding: 24px; min-height: auto; gap: 24px; }
+    .sheets { display: none; }
+    .say h2 { font-size: 28px; line-height: 34px; }
+    .say ul { display: none; }
+    .foot-note { display: none; }
+    .form-side { place-items: start center; padding: 32px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="split">
+  <aside class="desk-side">
+    <div class="brand"><span class="mark">J</span><span class="word">Jay <span>CVS</span></span><span class="area">Team area</span></div>
+    <div class="sheets" aria-hidden="true">
+      <div class="sheet s1"><span class="ref">JC-1052</span><b>Ann Chebet</b><span class="pk">Professional</span><div class="lines"><i style="width:80%"></i><i style="width:60%"></i></div><div class="foot"><span>Grace</span><span>Due in 3h</span></div><div class="track"><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i></div></div>
+      <div class="sheet s2"><span class="ref">JC-1046</span><b>Dr. Amina Hassan</b><span class="pk">Executive</span><div class="lines"><i style="width:90%"></i><i style="width:70%"></i></div><div class="foot"><span>Jay</span><span>Due in 15h</span></div><div class="track"><i class="d"></i><i class="n"></i><i></i><i></i><i></i></div></div>
+      <div class="sheet s3"><span class="ref">JC-1048</span><b>Faith Njeri</b><span class="pk">Professional</span><div class="lines"><i style="width:70%"></i><i style="width:45%"></i></div><div class="foot"><span>Nobody yet</span><span>Paid</span></div><div class="track"><i class="n"></i><i></i><i></i><i></i><i></i></div></div>
+    </div>
+    <div class="say">
+      <h2>Where the team <em>gets the work done</em></h2>
+      <ul>
+        <li><i></i>Accept and write CV orders</li>
+        <li><i></i>Post jobs for 57,000+ job seekers</li>
+        <li><i></i>Keep the website up to date</li>
+      </ul>
+    </div>
+    <p class="foot-note">Not on the team? <a href="index.html">Go to the Jay CVS website</a></p>
+  </aside>
+
+  <main class="form-side">
+    <div class="box">
+      <h1>Welcome back</h1>
+      <p>Sign in with the Google account your Jay CVS invite was sent to.</p>
+
+      <button class="google" type="button" data-google><span class="g" aria-hidden="true">G</span><span>Sign in with Google</span></button>
+      <p class="keys" data-keys hidden>Google sign-in switches on once its keys are added.</p>
+
+      <p class="err" data-err hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span data-err-text></span></p>
+
+      <section class="test">
+        <h2>For testing on this computer</h2>
+        <div class="opts">
+          <a href="admin-unslop.html#dashboard" aria-label="Proceed as Jay (owner)"><span class="av dark">JA</span><div><b>Jay</b><span>Owner · sees everything</span></div><span class="arr">→</span></a>
+          <a href="admin-unslop.html#orders" aria-label="Proceed as Mary (writer)"><span class="av">MK</span><div><b>Mary</b><span>Writer · orders only</span></div><span class="arr">→</span></a>
+        </div>
+      </section>
+
+      <a class="back" href="index.html">Back to the website</a>
+    </div>
+  </main>
+</div>
+
+<script>
+  const ERR = {
+    invite: "This Google account hasn't been invited. Ask the owner to invite your email address, then try again.",
+    paused: "Your access to this business is paused or has ended. Contact the owner if you think this is a mistake.",
+    failed: "Sign-in didn't work. Please try again.",
+  };
+  const showErr = (k) => { document.querySelector('[data-err-text]').textContent = ERR[k]; document.querySelector('[data-err]').hidden = false; };
+  const e = new URLSearchParams(location.search).get('error');
+  if (ERR[e]) showErr(e);
+  // Mockup: Google keys aren't set, so the button shows a short wait then explains, like the platform does
+  document.querySelector('[data-google]').addEventListener('click', (ev) => {
+    const b = ev.currentTarget; b.disabled = true;
+    b.innerHTML = '<span class="spin" aria-hidden="true"></span><span>Opening Google…</span>';
+    setTimeout(() => { b.innerHTML = '<span class="g" aria-hidden="true">G</span><span>Sign in with Google</span>'; b.disabled = false; document.querySelector('[data-keys]').hidden = false; }, 1200);
+  });
+</script>
+</body>
+</html>
