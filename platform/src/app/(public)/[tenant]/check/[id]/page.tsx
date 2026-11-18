@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type CSSProperties } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { HowToApply } from "@/components/jobs/HowToApply";
 import { Breadcrumb } from "@/components/site/PageHero";
@@ -17,8 +17,8 @@ export const metadata: Metadata = { title: "Your CV feedback", robots: { index: 
 
 export default function CvFeedbackPage({ params }: PageProps<"/[tenant]/check/[id]">) {
   return (
-    <section className="section check-page">
-      <div className="container check-wrap">
+    <section className="check-page">
+      <div className="container check-narrow">
         <Suspense fallback={<p className="track-meta">Loading your feedback…</p>}>
           <Feedback params={params} />
         </Suspense>
@@ -33,7 +33,7 @@ async function Feedback({ params }: { params: PageProps<"/[tenant]/check/[id]">[
   const [check, prices] = await Promise.all([loadCvCheck(tenant, decodeURIComponent(id)), getPriceList(tenant.id)]);
   if (!check)
     return (
-      <div className="check-card">
+      <div className="card check-card">
         <h1>We couldn&apos;t find this feedback</h1>
         <p>Your feedback can only be opened in the browser you used to check your CV.</p>
         <Link className="btn btn-primary" href="/jobs">
@@ -50,7 +50,6 @@ async function Feedback({ params }: { params: PageProps<"/[tenant]/check/[id]">[
   return (
     <>
       <Breadcrumb
-        left
         crumbs={[
           { label: "Find a job", href: "/jobs" },
           { label: check.jobLabel, href: `/jobs/${check.jobSlug}` },
@@ -63,7 +62,7 @@ async function Feedback({ params }: { params: PageProps<"/[tenant]/check/[id]">[
           <div className="check-apply-head">
             <Icon name="check" />
             <div>
-              <strong>You&apos;re a strong fit: send your application</strong>
+              <b>You&apos;re a strong fit: send your application</b>
               <p>
                 Your CV already shows what {job.company} is asking for. Apply the way they ask below, before the
                 deadline.
@@ -76,14 +75,14 @@ async function Feedback({ params }: { params: PageProps<"/[tenant]/check/[id]">[
       {tailoring && check.status === "DONE" && (
         <div className="check-upsell">
           <div>
-            <strong>{strongFit ? "Want it polished before you apply?" : "Rather we did it for you?"}</strong>
+            <b>{strongFit ? "Want it polished before you apply?" : "Rather we did it for you?"}</b>
             <p>
               A writer tailors your CV to this job, using everything above.
               {check.cvKeptUntil && " Your details and this CV are filled in for you."}
             </p>
           </div>
           <Link
-            className="btn btn-primary"
+            className="btn btn-light"
             href={`/order?job=${encodeURIComponent(check.jobSlug)}&check=${encodeURIComponent(id)}`}
           >
             Let us tailor it · {formatKes(tailoring.price)}
@@ -98,7 +97,7 @@ function FeedbackCard({ check }: { check: LoadedCvCheck }) {
   const feedback = check.feedback;
   if (check.status !== "DONE" || !feedback)
     return (
-      <div className="check-card">
+      <div className="card check-card">
         <h1>Your feedback isn&apos;t ready</h1>
         <p>
           {check.status === "FAILED"
@@ -112,7 +111,7 @@ function FeedbackCard({ check }: { check: LoadedCvCheck }) {
     );
   if (!feedback.isCv)
     return (
-      <div className="check-card">
+      <div className="card check-card">
         <h1>This doesn&apos;t look like a CV</h1>
         <p>
           The file you uploaded doesn&apos;t seem to be a CV, so we couldn&apos;t compare it with {check.jobLabel}.
@@ -121,37 +120,71 @@ function FeedbackCard({ check }: { check: LoadedCvCheck }) {
       </div>
     );
   const band = matchBand(feedback.matchPercent);
+  // The ring's arc: a circle of radius 64 is 402 long; the gold part is the match
+  const offset = Math.round(402 * (1 - feedback.matchPercent / 100));
   return (
-    <div className="check-card feedback">
-      <span className="cv-cta-eyebrow">Your CV feedback</span>
-      <h1>{check.jobLabel}</h1>
-      <div className={`match match-${band.tone}`}>
-        <strong>{feedback.matchPercent}%</strong>
-        <span>
-          <b>{band.label}</b>
-          {feedback.verdict}
-        </span>
-      </div>
-      <div className="feedback-grid">
-        <section>
+    <div className="feedback">
+      <h1>Your CV feedback</h1>
+      <p className="for-job">
+        <Icon name="briefcase" size={16} />
+        <Link className="text-link" href={`/jobs/${check.jobSlug}`}>
+          {check.jobLabel}
+        </Link>
+      </p>
+      <section className={`card score match-${band.tone}`}>
+        <div className="ring" role="img" aria-label={`Match score ${feedback.matchPercent} out of 100`}>
+          <svg viewBox="0 0 148 148" aria-hidden="true">
+            <circle cx="74" cy="74" r="64" fill="none" stroke="var(--raised)" strokeWidth="10" />
+            <circle
+              className="arc"
+              cx="74"
+              cy="74"
+              r="64"
+              fill="none"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray="402"
+              style={{ "--off": offset } as CSSProperties}
+            />
+          </svg>
+          <b>
+            <span className="num">{feedback.matchPercent}</span>
+            <small>out of 100</small>
+          </b>
+        </div>
+        <div>
+          <p className="band">{band.label}</p>
+          <p className="verdict">{feedback.verdict}</p>
+        </div>
+      </section>
+      <div className="two">
+        <section className="card">
           <h2>
-            <Icon name="check" />
+            <Icon name="check" size={16} />
             What already fits
           </h2>
-          <ul>
+          <ul className="fits">
             {feedback.strengths.map((point) => (
-              <li key={point}>{point}</li>
+              <li key={point}>
+                <Icon name="check" size={16} />
+                <span>{point}</span>
+              </li>
             ))}
           </ul>
         </section>
-        <section>
+        <section className="card">
           <h2>
-            <Icon name="alert" />
+            <Icon name="pen" size={16} />
             What the job asks for that your CV doesn&apos;t show
           </h2>
-          <ul>
+          <ul className="gaps">
             {feedback.gaps.map((point) => (
-              <li key={point}>{point}</li>
+              <li key={point}>
+                <span className="mk" aria-hidden="true">
+                  ?
+                </span>
+                <span>{point}</span>
+              </li>
             ))}
           </ul>
         </section>
@@ -159,7 +192,6 @@ function FeedbackCard({ check }: { check: LoadedCvCheck }) {
       {/* The keywords and "what to change first" tips aren't shown: the fixing is what Jay CVS's
           tailoring service is for (the box under this card) */}
       <p className="check-note">
-        <Icon name="info" />
         AI feedback to help you improve your CV. Only add what&apos;s true about you.{" "}
         {check.cvKeptUntil
           ? `Your CV is kept privately for ${CHECK_CV_KEEP_HOURS} hours (until ${keptUntilText(check.cvKeptUntil)}) in case you'd like us to tailor it, then deleted.`

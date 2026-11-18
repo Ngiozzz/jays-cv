@@ -1,14 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Icon } from "@/components/icons/Icon";
 import type { SiteSample } from "@/modules/content/content.service";
 
-type Props = { sample: SiteSample; showTag?: boolean };
+type Props = { sample: SiteSample; showTag?: boolean; variant?: "stack" | "feature" };
 type Side = "before" | "after";
 
-// A before/after pair. Clicking either page opens it full screen, where the visitor can switch
-// between the two and tap to zoom in, so the CV can actually be read.
-export function SampleFigure({ sample, showTag = false }: Props) {
+// A before/after pair. "feature" lays the two pages side by side on the desk (homepage); "stack" shows the new
+// CV on top of the old one (samples page). Clicking opens the viewer, where the visitor can switch between
+// the two and tap to zoom in, so the CV can actually be read.
+export function SampleFigure({ sample, showTag = false, variant = "stack" }: Props) {
   const viewer = useRef<HTMLDialogElement>(null);
   const [side, setSide] = useState<Side>("after");
   const [zoomed, setZoomed] = useState(false);
@@ -22,34 +24,38 @@ export function SampleFigure({ sample, showTag = false }: Props) {
     setSide(chosen);
     setZoomed(false);
   };
-  const label = (s: Side) => `${sample.role} CV ${s === "before" ? "before rewrite" : "after professional rewrite"}`;
+  const label = (s: Side) => `${sample.role} CV ${s === "before" ? "before the rewrite" : "after the rewrite"}`;
   const url = side === "before" ? sample.beforeUrl : sample.afterUrl;
 
   return (
-    <figure className="sample reveal">
-      <div className="sample-pair">
-        {(["before", "after"] as const).map((s) => (
-          <button key={s} type="button" className="sample-open" onClick={() => open(s)} aria-label={`Open ${s} CV`}>
-            <img
-              className={s === "after" ? "media after" : "media"}
-              src={s === "before" ? sample.beforeUrl : sample.afterUrl}
-              alt={label(s)}
-              loading="lazy"
-            />
-          </button>
-        ))}
-      </div>
+    <figure className={variant === "feature" ? "sample sample-feature" : "sample sample-stack"} data-c={sample.tag}>
+      {variant === "feature" ? (
+        <div className="sample-pair">
+          {(["before", "after"] as const).map((s) => (
+            <button key={s} type="button" className="sample-open" onClick={() => open(s)} aria-label={`Open ${s} CV`}>
+              <span className="lbl">{s === "before" ? "Before" : "After"}</span>
+              <img src={s === "before" ? sample.beforeUrl : sample.afterUrl} alt={label(s)} loading="lazy" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="stackbox"
+          onClick={() => open("after")}
+          aria-label={`Open the ${sample.role} CVs`}
+        >
+          <img className="b" src={sample.beforeUrl} alt="" loading="lazy" />
+          <img className="a" src={sample.afterUrl} alt={label("after")} loading="lazy" />
+        </button>
+      )}
       <figcaption>
-        {showTag && (
-          <>
-            <span className="sample-tag">{sample.tag}</span>
-            <br />
-          </>
-        )}
-        <strong>{sample.role}</strong> · {sample.caption}
-        <br />
-        <button type="button" className="sample-read" onClick={() => open("after")}>
-          Read the CVs →
+        <span>
+          {showTag && <span className="sample-tag">{sample.tag}</span>}
+          <b>{sample.role}</b> <span className="soft">· {sample.caption}</span>
+        </span>
+        <button type="button" className="sample-read link" onClick={() => open("after")}>
+          Read the CVs <Icon name="arrow" size={16} />
         </button>
       </figcaption>
 
@@ -67,8 +73,8 @@ export function SampleFigure({ sample, showTag = false }: Props) {
         }}
       >
         <div className="sample-viewer-bar">
-          <strong>{sample.role}</strong>
-          <div className="sample-viewer-tabs" role="group" aria-label="Before or after">
+          <b>{sample.role}</b>
+          <div className="seg" role="group" aria-label="Before or after">
             {(["before", "after"] as const).map((s) => (
               <button key={s} type="button" aria-pressed={side === s} onClick={() => show(s)}>
                 {s === "before" ? "Before" : "After"}
@@ -81,7 +87,7 @@ export function SampleFigure({ sample, showTag = false }: Props) {
             onClick={() => viewer.current?.close()}
             aria-label="Close"
           >
-            ×
+            <Icon name="close" />
           </button>
         </div>
         <div className={zoomed ? "sample-viewer-page zoomed" : "sample-viewer-page"}>
@@ -93,8 +99,8 @@ export function SampleFigure({ sample, showTag = false }: Props) {
           />
         </div>
         <p className="sample-viewer-hint">
-          {zoomed ? "Tap the page to fit the screen" : "Tap the page to zoom in"} · Personal details removed with
-          permission
+          {zoomed ? "Tap the page to fit the screen" : "Tap the page to zoom in"} · Shared with permission, personal
+          details removed
         </p>
       </dialog>
     </figure>

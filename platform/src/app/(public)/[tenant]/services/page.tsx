@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { formatKes } from "@/lib/money";
+import { orderHref } from "@/modules/content/packages";
 import Link from "next/link";
 import { PackageTable } from "@/components/content/PackageTable";
 import { ServiceDetail } from "@/components/services/ServiceDetail";
@@ -15,47 +17,84 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage({ params }: PageProps<"/[tenant]/services">) {
-  const { tenant, freeReviewHref } = await siteContext(params);
+  const { tenant, settings, freeReviewHref } = await siteContext(params);
   const prices = await getPriceList(tenant.id);
-  const details = serviceDetails(prices);
+  const details = serviceDetails(prices, settings.cvCheckPrice);
+  const cheapestSingle = prices.services.length ? Math.min(...prices.services.map((service) => service.price)) : null;
+  // "What do you need?": the first step of ordering, straight into the order card with the right item picked
+  const choices = [
+    ...prices.packages.map((pkg) => ({
+      key: pkg.id,
+      href: orderHref(pkg.shortName),
+      title: pkg.name,
+      text: `For ${pkg.bestFor.charAt(0).toLowerCase()}${pkg.bestFor.slice(1)}`,
+      tag: pkg.popular ? "Chosen most often" : "Package",
+      price: formatKes(pkg.price),
+    })),
+    {
+      key: "single",
+      href: "/pricing#individual",
+      title: "Just one service",
+      text: "Cover letter, LinkedIn, coaching, interview practice",
+      tag: "From",
+      price: cheapestSingle === null ? "Ask us" : formatKes(cheapestSingle),
+    },
+  ];
 
   return (
     <>
       <PageHero
         crumbs={[{ label: "Services" }]}
-        title="Services to move your career forward"
-        lead="Whether you need a sharper CV, a stronger LinkedIn profile or help preparing for interviews, our HR experts have you covered."
+        title="Services for your next move"
+        lead="A sharper CV, a stronger LinkedIn profile or help preparing for interviews. Written by HR consultants who know what Kenyan and international recruiters look for."
       >
-        <div className="jump-links">
+        <nav className="jump-links" aria-label="On this page">
           {details.map((detail) => (
             <a key={detail.id} href={`#${detail.id}`}>
               {detail.shortTitle}
             </a>
           ))}
+          <a href="#packages">Packages</a>
+        </nav>
+        <div className="chooser">
+          <h2>What do you need?</h2>
+          <p>Pick the closest match and we&apos;ll take you to the right order, already filled in.</p>
+          <div className="choices">
+            {choices.map((choice) => (
+              <Link key={choice.key} className="choice" href={choice.href}>
+                <b>{choice.title}</b>
+                <span>{choice.text}</span>
+                <small>
+                  {choice.tag} <em>{choice.price}</em>
+                </small>
+              </Link>
+            ))}
+          </div>
         </div>
       </PageHero>
 
-      <section>
-        <div className="container">
-          {details.map((detail) => (
-            <ServiceDetail key={detail.id} {...detail} />
-          ))}
-        </div>
-      </section>
+      <div className="container svc-list">
+        {details.map((detail, i) => (
+          <ServiceDetail key={detail.id} {...detail} n={i + 1} />
+        ))}
+      </div>
 
       <section className="section section-alt" id="packages">
         <div className="container">
-          <SectionHead eyebrow="Next step" title="Ready to order? Pick a package">
-            <p>
-              Most clients start with a package that combines the services above. Pay once via M-Pesa.{" "}
-              <Link href="/pricing#payment">How payment works</Link>.
-            </p>
+          <SectionHead title="Most clients start with a package">
+            <p>Packages combine the services above for one payment by M-Pesa.</p>
           </SectionHead>
           <PackageTable packages={prices.packages} />
         </div>
       </section>
 
-      <CtaBand whatsappHref={freeReviewHref} />
+      <CtaBand
+        whatsappHref={freeReviewHref}
+        title="Not sure which one you need?"
+        text="Send your current CV on WhatsApp and we'll recommend the right service, free."
+        primaryLabel="Ask on WhatsApp"
+        secondary={{ href: "/pricing", label: "See all prices" }}
+      />
     </>
   );
 }

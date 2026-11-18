@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { JobCard } from "@/components/jobs/JobCard";
 import { JobDetail } from "@/components/jobs/JobDetail";
+import { JobRow } from "@/components/jobs/JobRow";
+import { Icon } from "@/components/icons/Icon";
 import { SectionHead } from "@/components/site/SectionHead";
 import { env } from "@/lib/env";
 import { whatsappLink } from "@/modules/content/contact";
@@ -63,55 +64,37 @@ export default async function JobPage({ params }: PageProps<"/[tenant]/jobs/[slu
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(jobPostingSchema(job, pageUrl)) }} />
-      <section className="job-page">
-        <div className="container">
-          <nav className="breadcrumb breadcrumb-left" aria-label="Breadcrumb">
-            <Link href="/">Home</Link>
-            <span>/</span>
-            <Link href="/jobs">Find a job</Link>
-            <span>/</span>
-            <span>{job.title}</span>
-          </nav>
-          <JobDetail
-            job={job}
-            today={today}
-            pageUrl={pageUrl}
-            draftTime={draftTimeLabel(standardDraftHours(prices.packages))}
-            check={{ href: `/jobs/${job.slug}/check`, price: settings.cvCheckPrice }}
-            tailor={tailoring ? { href: `/order?job=${encodeURIComponent(job.slug)}`, price: tailoring.price } : null}
-            cvHelpHref={whatsappLink(
-              settings.whatsapp,
-              `Hi Jay CVS, I'd like my CV ready for the ${job.title} job at ${job.company}.`,
-            )}
-            reportHref={whatsappLink(
-              settings.whatsapp,
-              `Hi Jay CVS, I'd like to report this job advert: ${job.title} at ${job.company}.`,
-            )}
-          />
-        </div>
-      </section>
+      <JobDetail
+        job={job}
+        today={today}
+        pageUrl={pageUrl}
+        draftTime={draftTimeLabel(standardDraftHours(prices.packages))}
+        check={{ href: `/jobs/${job.slug}/check`, price: settings.cvCheckPrice }}
+        tailor={tailoring ? { href: `/order?job=${encodeURIComponent(job.slug)}`, price: tailoring.price } : null}
+        cvHelpHref={whatsappLink(
+          settings.whatsapp,
+          `Hi Jay CVS, I'd like my CV ready for the ${job.title} job at ${job.company}.`,
+        )}
+        reportHref={whatsappLink(
+          settings.whatsapp,
+          `Hi Jay CVS, I'd like to report this job advert: ${job.title} at ${job.company}.`,
+        )}
+      />
 
       {similar.length > 0 && (
         <section className="section section-alt">
           <div className="container">
             <SectionHead
-              eyebrow="More vacancies"
               title="Similar jobs"
               action={
-                <Link className="btn btn-ghost" href="/jobs">
-                  Browse all jobs
+                <Link className="link" href="/jobs">
+                  Browse all jobs <Icon name="arrow" size={16} />
                 </Link>
               }
             />
-            <div className="job-grid">
+            <div className="job-list">
               {similar.map((other) => (
-                <JobCard
-                  key={other.slug}
-                  {...other}
-                  href={`/jobs/${other.slug}`}
-                  applyMethod={other.apply.method}
-                  today={board.today}
-                />
+                <JobRow key={other.slug} {...other} href={`/jobs/${other.slug}`} today={board.today} />
               ))}
             </div>
           </div>

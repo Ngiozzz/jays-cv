@@ -102,3 +102,16 @@ export function applyDeadlineLine(deadline: string | null, today: string): strin
     ? `Deadline: ${formatDay(deadline)} (${daysLeftText(deadline, today)})`
     : "Open until filled. Apply early.";
 }
+
+// The deadline "runway" drawn under a job: how much of the time from posting to the deadline has gone,
+// and whether it's closing soon (3 days or fewer). Jobs open until filled have no runway.
+export type Runway = { open: true } | { open: false; usedPct: number; soon: boolean; closed: boolean };
+
+export function jobRunway(deadline: string | null, postedDay: string, today: string): Runway {
+  if (!deadline) return { open: true };
+  const total = Math.max(1, daysUntil(deadline, postedDay));
+  const gone = total - daysUntil(deadline, today);
+  const usedPct = Math.min(100, Math.max(6, Math.round((gone / total) * 100)));
+  const left = daysUntil(deadline, today);
+  return { open: false, usedPct, soon: left >= 0 && left <= 3, closed: left < 0 };
+}

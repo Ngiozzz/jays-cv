@@ -20,7 +20,7 @@ export function CopyButton({ text, label, className = "btn btn-primary btn-sm" }
   return (
     <button type="button" className={className} onClick={copy}>
       <Icon name="copy" size={16} />
-      {copied === "yes" ? "Copied!" : copied === "failed" ? "Select the text and copy it" : label}
+      {copied === "yes" ? "Copied" : copied === "failed" ? "Select the text and copy it" : label}
     </button>
   );
 }

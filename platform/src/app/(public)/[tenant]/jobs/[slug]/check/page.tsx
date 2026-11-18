@@ -31,44 +31,68 @@ export default async function CvCheckPage({ params }: PageProps<"/[tenant]/jobs/
   const jobLabel = `${job.title} at ${job.company}`;
 
   return (
-    <section className="section check-page">
-      <div className="container check-wrap">
+    <section className="check-page">
+      <div className="container">
         <Breadcrumb
-          left
           crumbs={[
             { label: "Find a job", href: "/jobs" },
             { label: job.title, href: `/jobs/${job.slug}` },
             { label: "Check my CV" },
           ]}
         />
-        <div className="check-card">
-          <span className="cv-cta-eyebrow">Check it yourself · {formatKes(settings.cvCheckPrice)}</span>
-          <h1>How well does your CV fit this job?</h1>
-          <p className="check-job">
-            <Icon name="briefcase" />
-            {jobLabel}
-          </p>
-          <ul className="check-gets">
-            <li>Your match for this job, out of 100</li>
-            <li>What already fits, and what the job asks for that your CV doesn&apos;t show</li>
-            <li>The keywords recruiters look for, and what to change first</li>
-          </ul>
-          <p className="check-note">You get feedback to improve your CV yourself. We don&apos;t rewrite it.</p>
-          <CvCheckFlow
-            jobSlug={job.slug}
-            jobLabel={jobLabel}
-            price={settings.cvCheckPrice}
-            businessName={tenant.name}
-          />
+        <div className="check-grid">
+          <div>
+            <h1>How well does your CV fit this job?</h1>
+            <p className="for-job">
+              <Icon name="briefcase" size={16} />
+              <Link className="text-link" href={`/jobs/${job.slug}`}>
+                {jobLabel}
+              </Link>
+            </p>
+            <CvCheckFlow
+              jobSlug={job.slug}
+              jobLabel={jobLabel}
+              price={settings.cvCheckPrice}
+              businessName={tenant.name}
+            />
+          </div>
+          <aside className="check-side">
+            <div className="card">
+              <h3>What you get</h3>
+              {/* Only what the feedback page actually shows */}
+              <ul className="gets">
+                <li>
+                  <Icon name="target" size={16} />
+                  Your match for this job, out of 100
+                </li>
+                <li>
+                  <Icon name="check" size={16} />
+                  What already fits
+                </li>
+                <li>
+                  <Icon name="pen" size={16} />
+                  What the job asks for that your CV doesn&apos;t show
+                </li>
+              </ul>
+              <div className="price-line">
+                <span className="soft">One check</span>
+                <b className="num">{formatKes(settings.cvCheckPrice)}</b>
+              </div>
+              <p className="note">Feedback to improve your CV yourself. We don&apos;t rewrite it.</p>
+            </div>
+            {tailoring && (
+              <div className="card check-alt">
+                <h3>Rather we did it for you?</h3>
+                <p>
+                  A writer tailors your CV to this advert.{" "}
+                  <Link className="text-link" href={`/order?job=${encodeURIComponent(job.slug)}`}>
+                    Let us tailor it · {formatKes(tailoring.price)}
+                  </Link>
+                </p>
+              </div>
+            )}
+          </aside>
         </div>
-        {tailoring && (
-          <p className="check-alt">
-            Rather we did it for you?{" "}
-            <Link href={`/order?job=${encodeURIComponent(job.slug)}`}>
-              Let us tailor it · {formatKes(tailoring.price)}
-            </Link>
-          </p>
-        )}
       </div>
     </section>
   );

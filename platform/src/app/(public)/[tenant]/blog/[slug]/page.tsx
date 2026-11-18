@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArticleBody } from "@/components/content/ArticleBody";
+import { ArticleBody, articleHeadings } from "@/components/content/ArticleBody";
+import { Icon } from "@/components/icons/Icon";
 import { PostCard, postMeta } from "@/components/content/PostCard";
 import { CtaBand } from "@/components/site/CtaBand";
 import { Breadcrumb } from "@/components/site/PageHero";
@@ -33,22 +34,27 @@ export default async function ArticlePage({ params }: PageProps<"/[tenant]/blog/
   if (!post) notFound();
   const related = posts.filter((other) => other.slug !== post.slug).slice(0, 3);
 
+  const headings = articleHeadings(post.body);
+  const shareText = encodeURIComponent(post.title);
+
   return (
     <>
       <article>
-        <header className="article-hero">
-          <div className="container">
+        <header className="a-head">
+          <div className="container rise">
             <Breadcrumb crumbs={[{ href: "/blog", label: "Career tips" }, { label: post.category }]} />
-            <span className="tag">{post.category}</span>
-            <h1 style={{ marginTop: "14px" }}>{post.title}</h1>
-            <p className="lead" style={{ marginBottom: 0 }}>
-              {post.excerpt}
-            </p>
-            <div className="author">
-              <img className="avatar" src="/img/photos/avatar-author.jpg" alt="" loading="lazy" />
-              <div>
-                <strong>{post.authorName}</strong>
-                <span>{postMeta(post)}</span>
+            <div className="inner">
+              <span className="tag">{post.category}</span>
+              <h1>{post.title}</h1>
+              <p className="lead">{post.excerpt}</p>
+              <div className="byline">
+                <span className="av" aria-hidden="true">
+                  {post.authorName.charAt(0)}
+                </span>
+                <div>
+                  <b>{post.authorName}</b>
+                  <span>{postMeta(post)}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -56,40 +62,65 @@ export default async function ArticlePage({ params }: PageProps<"/[tenant]/blog/
 
         <div className="container">
           {post.cover && (
-            <div className="article-cover">
-              <img className="media" src={post.cover} alt={post.coverAlt ?? ""} loading="lazy" />
-            </div>
+            <figure className="a-hero">
+              <img src={post.cover} alt={post.coverAlt ?? ""} />
+            </figure>
           )}
-          <ArticleBody markdown={post.body} />
-          <div className="prose">
-            <div className="callout">
-              <h3>Want an expert to fix these for you?</h3>
-              <p>Send us your current CV on WhatsApp for a free review. We&apos;ll tell you exactly what to improve.</p>
-              <p>
-                <a className="btn btn-primary" href={freeReviewHref} target="_blank" rel="noopener">
+          <div className="a-body">
+            <aside className="toc" aria-label="In this article">
+              {headings.length > 0 && (
+                <>
+                  <p>In this article</p>
+                  {headings.map((heading) => (
+                    <a key={heading.id} href={`#${heading.id}`}>
+                      {heading.text}
+                    </a>
+                  ))}
+                </>
+              )}
+              <div className="share">
+                <a
+                  href={`https://wa.me/?text=${shareText}`}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Share on WhatsApp"
+                >
+                  <Icon name="chat" size={16} />
+                </a>
+              </div>
+            </aside>
+            <div>
+              <ArticleBody markdown={post.body} />
+              <div className="callout">
+                <div>
+                  <b>Want an expert to fix these for you?</b>
+                  <span>
+                    Send us your current CV on WhatsApp for a free review. We&apos;ll tell you what to improve.
+                  </span>
+                </div>
+                <a className="btn btn-light" href={freeReviewHref} target="_blank" rel="noopener">
                   Get a free CV review
                 </a>
-              </p>
+              </div>
             </div>
           </div>
         </div>
       </article>
 
       {related.length > 0 && (
-        <section className="section">
+        <section className="section section-alt">
           <div className="container">
             <SectionHead
-              eyebrow="Keep reading"
               title="Related articles"
               action={
-                <Link className="btn btn-ghost" href="/blog">
-                  All career tips
+                <Link className="link" href="/blog">
+                  All career tips <Icon name="arrow" size={16} />
                 </Link>
               }
             />
-            <div className="card-grid blog-grid">
+            <div className="rel">
               {related.map((other) => (
-                <PostCard key={other.slug} post={other} />
+                <PostCard key={other.slug} post={other} variant="lead" />
               ))}
             </div>
           </div>

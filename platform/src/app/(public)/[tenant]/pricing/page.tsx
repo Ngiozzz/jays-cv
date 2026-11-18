@@ -31,12 +31,12 @@ const PRICING_FAQS = [
   },
   {
     question: "Do you offer student or group discounts?",
-    answer: "[Yes. Students and groups of 3 or more get [X]% off. Ask us on WhatsApp.]",
+    answer: "Ask us on WhatsApp before you order and we'll tell you what's available.",
   },
   {
     question: "What's your refund policy?",
     answer:
-      "[If we haven't started work, we'll refund you in full. Once a draft is delivered, we'll keep revising it until you're satisfied.]",
+      "If we haven't started work, we refund you in full. Once a draft is delivered, we keep revising it until you're satisfied.",
   },
 ];
 
@@ -49,60 +49,75 @@ export default async function PricingPage({ params }: PageProps<"/[tenant]/prici
     <>
       <PageHero
         crumbs={[{ label: "Pricing" }]}
-        title="Simple, transparent pricing"
-        lead={`Pick the package that fits your career stage, pay once via M-Pesa, and get your first draft within ${draftTime}. No hidden charges.`}
-      />
-
-      <section className="section">
-        <div className="container">
-          <PackageCards packages={prices.packages} />
+        title="One price, paid once"
+        lead={`Pick the package that fits your career stage, pay by M-Pesa, and get your first draft within ${draftTime}. Revisions are included and there are no hidden charges.`}
+      >
+        <div className="hero-plans">
+          <PackageCards packages={prices.packages} showEta />
         </div>
-      </section>
-
-      <PaymentSection prices={prices} whatsapp={settings.whatsapp} paybill={settings.paybill} />
+      </PageHero>
 
       <section className="section" id="compare">
         <div className="container">
-          <SectionHead eyebrow="Compare packages" title="What's included" />
+          <SectionHead title="What each package includes" />
           <CompareTable packages={prices.packages} />
         </div>
       </section>
 
       <section className="section section-alt" id="individual">
         <div className="container">
-          <SectionHead eyebrow="Individual services" title="Just need one thing?">
+          <SectionHead title="Just need one thing?">
             <p>Order any service on its own, or add it to a package.</p>
           </SectionHead>
-          <div className="price-list">
+          <div className="singles">
             {prices.services.map((service) => (
-              <div key={service.id} className="price-row reveal">
+              <Link key={service.id} className="single" href={`/order?service=${service.id}`}>
                 <div>
-                  <strong>{service.name}</strong>
+                  <b>{service.name}</b>
                   <small>{service.note}</small>
                 </div>
-                <span className="amount">{formatKes(service.price)}</span>
-                <Link className="btn btn-ghost btn-sm" href={`/order?service=${service.id}`}>
-                  Order
-                </Link>
-              </div>
+                <span className="t">{draftTimeLabel(service.firstDraftHours)}</span>
+                <span className="p num">{formatKes(service.price)}</span>
+              </Link>
             ))}
+            {settings.cvCheckPrice > 0 && (
+              <Link className="single" href="/jobs">
+                <div>
+                  <b>CV check for a job</b>
+                  <small>Your match out of 100 for one advert, from any job on our board</small>
+                </div>
+                <span className="t">Minutes</span>
+                <span className="p num">{formatKes(settings.cvCheckPrice)}</span>
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
-      <section className="section">
-        <div className="container faq-inner">
-          <SectionHead eyebrow="Payment FAQ" title="Questions about pricing">
+      <PaymentSection prices={prices} whatsapp={settings.whatsapp} paybill={settings.paybill} />
+
+      <section className="section" id="faq">
+        <div className="container faq">
+          <div className="intro">
+            <h2>Questions about pricing</h2>
             <p>
-              See <a href="#payment">how payment works</a> or the{" "}
-              <Link href="/how-it-works">full ordering process</Link>.
+              See the{" "}
+              <Link className="text-link" href="/how-it-works">
+                full ordering process
+              </Link>
             </p>
-          </SectionHead>
+          </div>
           <FaqList faqs={PRICING_FAQS} />
         </div>
       </section>
 
-      <CtaBand whatsappHref={freeReviewHref} secondary={{ href: "#payment", label: "How to pay" }} />
+      <CtaBand
+        whatsappHref={freeReviewHref}
+        title="Ready when you are"
+        text="Choose a package and upload your CV in a few minutes, or send it on WhatsApp for a free review first."
+        primaryLabel="Free review on WhatsApp"
+        secondary={{ href: "/order", label: "Start your order" }}
+      />
     </>
   );
 }

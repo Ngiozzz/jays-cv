@@ -14,7 +14,7 @@ export function CategoryFilter({ label, items, gridClassName }: Props) {
 
   return (
     <>
-      <div className="filters" role="group" aria-label={label}>
+      <div className="filters-row" role="group" aria-label={label}>
         <FilterButton pressed={active === null} onClick={() => setActive(null)}>
           All
         </FilterButton>
@@ -35,7 +35,7 @@ export function CategoryFilter({ label, items, gridClassName }: Props) {
 
 function FilterButton({ pressed, onClick, children }: { pressed: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" className="filter-btn" aria-pressed={pressed} onClick={onClick}>
+    <button type="button" className="filter" aria-pressed={pressed} onClick={onClick}>
       {children}
     </button>
   );

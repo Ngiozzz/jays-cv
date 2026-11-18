@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import "@/styles/site.css";
 
 // Brand fonts (see the brand guide): Inter for text, Playfair Display for headings
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });

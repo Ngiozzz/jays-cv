@@ -39,10 +39,10 @@ function ApplySteps({ apply, jobTitle }: { apply: ApplyDetails; jobTitle: string
           <Attachments label="Attach" items={apply.attach} />
           {notes}
           <a
-            className="btn btn-primary btn-block"
+            className="btn btn-primary"
             href={`mailto:${apply.email}?subject=${encodeURIComponent(apply.subject || jobTitle)}`}
           >
-            <Icon name="mail" />
+            <Icon name="mail" size={16} />
             Open in my email app
           </a>
         </>
@@ -53,8 +53,8 @@ function ApplySteps({ apply, jobTitle }: { apply: ApplyDetails; jobTitle: string
           <p>Apply through the employer&apos;s online application page.</p>
           {notes}
           {/* nofollow: we don't vouch for every employer's site */}
-          <a className="btn btn-primary btn-block" href={apply.url} target="_blank" rel="noopener nofollow">
-            <Icon name="link" />
+          <a className="btn btn-primary" href={apply.url} target="_blank" rel="noopener nofollow">
+            <Icon name="link" size={16} />
             Apply on the employer&apos;s website
           </a>
         </>
@@ -87,7 +87,7 @@ function ApplyRow({ label, value, copy = false }: { label: string; value: string
     <div className="apply-row">
       <span>{label}</span>
       <strong>{value}</strong>
-      {copy && <CopyButton text={value} label="Copy" className="copy-btn" />}
+      {copy ? <CopyButton text={value} label="Copy" className="copy-btn" /> : <i />}
     </div>
   );
 }

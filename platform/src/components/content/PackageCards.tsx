@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { Icon } from "@/components/icons/Icon";
 import { formatNumber } from "@/lib/money";
-import { forWhomSentence, orderHref } from "@/modules/content/packages";
+import { orderHref } from "@/modules/content/packages";
 
 // The fields a price card shows; the admin's live preview passes an unsaved package in the same shape
 export type PackageCardData = {
@@ -10,33 +11,52 @@ export type PackageCardData = {
   bestFor: string;
   features: string[];
   popular: boolean;
+  firstDraftHours?: number;
 };
 
-type Props = { packages: (PackageCardData & { id: string })[] };
+type Props = { packages: (PackageCardData & { id: string })[]; showEta?: boolean };
 
-export function PackageCards({ packages }: Props) {
+export function PackageCards({ packages, showEta = false }: Props) {
   return (
     <div className="pricing-grid">
       {packages.map((pkg) => (
-        <PackageCard key={pkg.id} pkg={pkg} className="reveal" />
+        <PackageCard key={pkg.id} pkg={pkg} showEta={showEta} />
       ))}
     </div>
   );
 }
 
-export function PackageCard({ pkg, className }: { pkg: PackageCardData; className?: string }) {
-  const classes = ["price-card", pkg.popular && "price-card-featured", className].filter(Boolean).join(" ");
+// "Order today, draft by Thu 19 Nov": the turnaround made concrete. Worked out in the browser, so a cached
+// page still shows the right day.
+function DraftBy({ hours }: { hours: number }) {
   return (
-    <article className={classes}>
-      {pkg.popular && <span className="ribbon">Most popular</span>}
-      <h3>{pkg.name}</h3>
-      <p className="price-desc">{forWhomSentence(pkg.bestFor)}</p>
+    <div className="eta">
+      <span>Order today</span>
+      <i />
+      <b data-draft-hours={hours}>Draft within {hours} hours</b>
+    </div>
+  );
+}
+
+export function PackageCard({ pkg, showEta = false }: { pkg: PackageCardData; className?: string; showEta?: boolean }) {
+  return (
+    <article className={pkg.popular ? "price-card main" : "price-card"}>
+      <div className="name">
+        <h3>{pkg.name}</h3>
+        {pkg.popular && <small>Chosen most often</small>}
+      </div>
+      <p className="for">For {pkg.bestFor.charAt(0).toLowerCase() + pkg.bestFor.slice(1)}</p>
       <p className="price">
-        <span className="currency">KES</span> <span>{formatNumber(pkg.price)}</span>
+        <small>KES</small>
+        {formatNumber(pkg.price)}
       </p>
+      {showEta && pkg.firstDraftHours ? <DraftBy hours={pkg.firstDraftHours} /> : <p className="once">One payment</p>}
       <ul className="price-features">
         {pkg.features.map((feature, i) => (
-          <li key={`${i}-${feature}`}>{feature}</li>
+          <li key={`${i}-${feature}`}>
+            <Icon name="check" size={16} />
+            {feature}
+          </li>
         ))}
       </ul>
       <Link
@@ -46,7 +66,10 @@ export function PackageCard({ pkg, className }: { pkg: PackageCardData; classNam
         Choose {pkg.shortName}
       </Link>
       <p className="price-pay">
-        One-off payment · M-Pesa · <Link href="/pricing#payment">How to pay</Link>
+        One payment by M-Pesa ·{" "}
+        <Link className="text-link" href="/pricing#payment">
+          How to pay
+        </Link>
       </p>
     </article>
   );

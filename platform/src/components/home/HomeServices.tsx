@@ -1,69 +1,73 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
-import type { IconName } from "@/components/icons/IconSprite";
-import { SectionHead } from "@/components/site/SectionHead";
 
-const SERVICES: { icon: IconName; title: string; text: string; href: string }[] = [
+const SERVICES = [
   {
-    icon: "doc",
-    title: "CV writing & design",
+    title: "CV writing and design",
     text: "A professionally written, ATS-friendly CV tailored to your industry and level.",
     href: "/services#cv-writing",
+    photo: "/img/photos/service-cv-writing.jpg",
   },
   {
-    icon: "mail",
-    title: "Cover & motivation letters",
-    text: "Persuasive letters written for the specific role, scholarship or programme.",
+    title: "Cover and motivation letters",
+    text: "Letters written for the specific role, scholarship or programme.",
     href: "/services#cover-letters",
+    photo: "/img/photos/service-job-applications.jpg",
   },
   {
-    icon: "linkedin",
     title: "LinkedIn profile revamp",
     text: "A keyword-rich profile that recruiters find and want to message.",
     href: "/services#linkedin",
+    photo: "/img/photos/service-linkedin.jpg",
   },
   {
-    icon: "compass",
     title: "Career coaching",
     text: "One-on-one sessions on career direction, interviews and salary negotiation.",
     href: "/services#career-coaching",
+    photo: "/img/photos/service-coaching.jpg",
   },
   {
-    icon: "send",
-    title: "Job applications & assessments",
-    text: "Support with online applications and preparation for aptitude tests.",
+    title: "Job applications and assessments",
+    text: "Help with online applications and preparation for aptitude tests.",
     href: "/services#job-applications",
+    photo: "/img/photos/blog-cv-mistakes.jpg",
   },
 ];
 
+// Services as a ledger: numbered rows, each with a photo from the desk, rather than six icon cards
 export function HomeServices({ adviceHref }: { adviceHref: string }) {
   return (
-    <section className="section" id="services">
-      <div className="container">
-        <SectionHead eyebrow="What we do" title="Everything you need to land your next role">
-          <p>From your first CV to a full career makeover. We handle the writing so you can focus on the interviews.</p>
-        </SectionHead>
-
-        <div className="card-grid grid-3">
-          {SERVICES.map((service) => (
-            <Link key={service.href} className="card service-card reveal" href={service.href}>
-              <span className="icon-box">
-                <Icon name={service.icon} />
-              </span>
-              <h3>{service.title}</h3>
-              <p>{service.text}</p>
-              <span className="card-link">
-                Learn more <Icon name="arrow" />
-              </span>
+    <section className="section section-alt" id="services">
+      <div className="container services-ledger">
+        <div className="intro">
+          <h2>Everything you need for your next role</h2>
+          <p>From your first CV to a full career change. We do the writing so you can prepare for the interviews.</p>
+          <img
+            className="photo"
+            src="/img/photos/service-cover-letters.jpg"
+            alt="Writing notes in a notebook at a desk"
+            loading="lazy"
+          />
+          <div className="advice">
+            <h3>Not sure what you need?</h3>
+            <p>Send your current CV on WhatsApp and we&apos;ll recommend the right package, free.</p>
+            <a className="link" href={adviceHref} target="_blank" rel="noopener">
+              Get free advice <Icon name="arrow" size={16} />
+            </a>
+          </div>
+        </div>
+        <div>
+          {SERVICES.map((service, i) => (
+            <Link key={service.href} className="svc" href={service.href}>
+              <span className="n">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <h3>{service.title}</h3>
+                <p>{service.text}</p>
+              </div>
+              <img src={service.photo} alt="" loading="lazy" />
+              <Icon name="arrow" className="go" />
             </Link>
           ))}
-          <a className="card service-card service-card-cta reveal" href={adviceHref} target="_blank" rel="noopener">
-            <h3>Not sure what you need?</h3>
-            <p>Send us your current CV on WhatsApp and we&apos;ll recommend the right package. Free.</p>
-            <span className="card-link">
-              Get free advice <Icon name="arrow" />
-            </span>
-          </a>
         </div>
       </div>
     </section>

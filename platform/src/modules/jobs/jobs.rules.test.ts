@@ -4,6 +4,7 @@ import {
   daysUntil,
   deadlineLabel,
   displayStatus,
+  jobRunway,
   postedLabel,
   slugify,
   todayInNairobi,
@@ -76,5 +77,28 @@ describe("companyInitials", () => {
   it("takes the first two words", () => {
     expect(companyInitials("Kenya Power & Lighting")).toBe("KP");
     expect(companyInitials("")).toBe("?");
+  });
+});
+
+describe("jobRunway", () => {
+  it("has no runway for jobs open until filled", () => {
+    expect(jobRunway(null, "2026-10-01", today)).toEqual({ open: true });
+  });
+  it("shows how much of the time to the deadline has gone", () => {
+    // Posted 2 Oct, closes 22 Oct, today 12 Oct: half the time has gone
+    expect(jobRunway("2026-10-22", "2026-10-02", today)).toEqual({
+      open: false,
+      usedPct: 50,
+      soon: false,
+      closed: false,
+    });
+  });
+  it("flags the last three days as soon", () => {
+    expect(jobRunway("2026-10-15", "2026-10-01", today)).toMatchObject({ soon: true, closed: false });
+    expect(jobRunway("2026-10-12", "2026-10-01", today)).toMatchObject({ soon: true, usedPct: 100 });
+  });
+  it("never draws an empty bar for a job posted today, and marks closed jobs", () => {
+    expect(jobRunway("2026-11-12", today, today)).toMatchObject({ usedPct: 6 });
+    expect(jobRunway("2026-10-10", "2026-10-01", today)).toMatchObject({ closed: true, soon: false });
   });
 });

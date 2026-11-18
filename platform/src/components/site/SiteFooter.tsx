@@ -20,7 +20,7 @@ export function SiteFooter({ contact, businessName }: { contact: FooterContact; 
       <div className="container footer-grid">
         <div className="footer-brand">
           <Logo light />
-          <p>Professional CV writing and career services, helping Kenyans land the jobs they deserve since 2018.</p>
+          <p>CV writing and career services, helping Kenyans land the jobs they want since 2018.</p>
           {socials.length > 0 && (
             <div className="socials">
               {socials.map((social) => (
@@ -50,7 +50,7 @@ export function SiteFooter({ contact, businessName }: { contact: FooterContact; 
             </li>
             <li>{contact.address}</li>
             <li className="paybill">
-              Pay by M-Pesa: <strong>Pay Bill {contact.paybill}</strong>
+              M-Pesa Pay Bill <span className="mono">{contact.paybill}</span>
             </li>
           </ul>
         </div>
@@ -63,7 +63,10 @@ export function SiteFooter({ contact, businessName }: { contact: FooterContact; 
             ©
           </Link>{" "}
           2018–
-          <CurrentYear /> {businessName} HR Consultancy. All rights reserved.
+          <CurrentYear /> {businessName} HR Consultancy
+        </p>
+        <p>
+          <Link href="/track">Track an order</Link>
         </p>
       </div>
     </footer>

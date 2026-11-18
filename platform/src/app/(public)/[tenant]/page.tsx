@@ -5,7 +5,9 @@ import { PackageCards } from "@/components/content/PackageCards";
 import { PostCard } from "@/components/content/PostCard";
 import { ReviewCards } from "@/components/content/ReviewCards";
 import { SampleFigure } from "@/components/content/SampleFigure";
+import { Icon } from "@/components/icons/Icon";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomeJay } from "@/components/home/HomeJay";
 import { HomeJobs } from "@/components/home/HomeJobs";
 import { HomeServices } from "@/components/home/HomeServices";
 import { HomeSteps } from "@/components/home/HomeSteps";
@@ -27,8 +29,9 @@ export const metadata: Metadata = {
 
 export default async function HomePage({ params }: PageProps<"/[tenant]">) {
   const { tenant, settings, freeReviewHref } = await siteContext(params);
-  const [home, prices, samples, reviews, posts, faqs, board] = await Promise.all([
+  const [home, about, prices, samples, reviews, posts, faqs, board] = await Promise.all([
     content.getHomepage(tenant.id),
+    content.getAboutPage(tenant.id),
     content.getPriceList(tenant.id),
     content.getSamples(tenant.id),
     content.getFeaturedReviews(tenant.id),
@@ -38,6 +41,8 @@ export default async function HomePage({ params }: PageProps<"/[tenant]">) {
   ]);
   const wa = settings.whatsapp;
   const draftTime = draftTimeLabel(standardDraftHours(prices.packages));
+  const [leadSample, ...moreSamples] = samples;
+  const [leadPost, ...morePosts] = posts;
 
   return (
     <>
@@ -51,74 +56,100 @@ export default async function HomePage({ params }: PageProps<"/[tenant]">) {
       <HomeServices adviceHref={whatsappLink(wa, "Hi Jay CVS, I'm not sure which service I need")} />
       <HomeSteps draftTime={draftTime} />
 
-      <section className="section" id="pricing">
+      <section className="section section-alt" id="pricing">
         <div className="container">
-          <SectionHead eyebrow="Pricing" title="Simple, transparent packages">
-            <p>No hidden charges. Pay securely by M-Pesa.</p>
+          <SectionHead title="Three packages, one payment">
+            <p>No hidden charges. Pay once by M-Pesa when you upload your CV.</p>
           </SectionHead>
           <PackageCards packages={prices.packages} />
-          <p className="pricing-note">
-            Need just a cover letter or LinkedIn revamp?{" "}
-            <Link href="/pricing#individual">See individual service prices →</Link>
+          <p className="plans-note">
+            Only need a cover letter or a LinkedIn revamp?{" "}
+            <Link className="text-link" href="/pricing#individual">
+              See single service prices
+            </Link>
           </p>
         </div>
       </section>
 
-      <section className="section section-alt" id="samples">
-        <div className="container">
-          <SectionHead eyebrow="Our work" title="See the difference">
-            <p>Real client CVs, before and after. Personal details removed with permission.</p>
-          </SectionHead>
-          <div className="samples-grid">
-            {samples.slice(0, 2).map((sample) => (
-              <SampleFigure key={sample.id} sample={sample} />
-            ))}
+      {leadSample && (
+        <section className="section" id="samples">
+          <div className="container">
+            <SectionHead title="The same career, rewritten">
+              <p>Client CVs before and after, shared with permission and with personal details removed.</p>
+            </SectionHead>
+            <div className="home-samples">
+              <SampleFigure sample={leadSample} variant="feature" />
+              <div className="minis">
+                {moreSamples.slice(0, 2).map((sample) => (
+                  <Link key={sample.id} className="mini" href="/samples">
+                    <img src={sample.afterUrl} alt="" loading="lazy" />
+                    <div>
+                      <b>{sample.role}</b>
+                      <span>{sample.caption}</span>
+                    </div>
+                  </Link>
+                ))}
+                <Link className="link" href="/samples">
+                  All {samples.length} samples <Icon name="arrow" size={16} />
+                </Link>
+              </div>
+            </div>
           </div>
-          <p className="pricing-note">
-            <Link href="/samples">See more samples →</Link>
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
+
+      <HomeJay
+        name={about.ownerName}
+        role={about.ownerRole}
+        lead={about.lead}
+        story={about.story}
+        photoUrl={about.photoUrl}
+        businessName={tenant.name}
+      />
 
       {reviews.length > 0 && (
         <section className="section" id="testimonials">
           <div className="container">
-            <SectionHead eyebrow="Client stories" title="People who landed the job" />
+            <SectionHead title="People who landed the job" />
             <ReviewCards reviews={reviews} />
           </div>
         </section>
       )}
 
-      <section className="section" id="insights">
-        <div className="container">
-          <SectionHead
-            eyebrow="Career tips"
-            title="Advice from our HR experts"
-            action={
-              <Link className="btn btn-ghost" href="/blog">
-                View all articles
-              </Link>
-            }
-          />
-          <div className="card-grid blog-grid">
-            {posts.slice(0, 3).map((post) => (
-              <PostCard key={post.slug} post={post} />
-            ))}
+      {leadPost && (
+        <section className="section section-alt" id="insights">
+          <div className="container">
+            <SectionHead
+              title="Advice from people who hire"
+              action={
+                <Link className="link" href="/blog">
+                  All articles <Icon name="arrow" size={16} />
+                </Link>
+              }
+            />
+            <div className="posts">
+              <PostCard post={leadPost} variant="lead" />
+              <div>
+                {morePosts.slice(0, 3).map((post) => (
+                  <PostCard key={post.slug} post={post} />
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section className="section section-alt" id="faq">
-        <div className="container faq-inner">
-          <SectionHead eyebrow="FAQ" title="Questions, answered">
+      <section className="section" id="faq">
+        <div className="container faq">
+          <div className="intro">
+            <h2>Questions, answered</h2>
             <p>
-              Can&apos;t find what you&apos;re looking for?{" "}
-              <a href={whatsappLink(wa)} target="_blank" rel="noopener">
-                Chat with us
+              Can&apos;t find yours?{" "}
+              <a className="text-link" href={whatsappLink(wa)} target="_blank" rel="noopener">
+                Ask us on WhatsApp
               </a>
-              .
             </p>
-          </SectionHead>
+          </div>
           <FaqList faqs={faqs} />
         </div>
       </section>

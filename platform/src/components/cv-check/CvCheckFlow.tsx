@@ -75,66 +75,108 @@ export function CvCheckFlow({ jobSlug, jobLabel, price, businessName }: Props) {
   const answer = (started: Started, outcome: PretendOutcome) =>
     startBusy(async () => apply(started, await pretendCheckPaymentAction(started.checkId, started.paymentId, outcome)));
 
+  const step = stage.name === "reading" ? 1 : stage.name === "waiting" ? 0 : 0;
+  const rail = (
+    <ol className="steps-rail" aria-label="Steps">
+      {["Upload and pay", "Reading your CV", "Your feedback"].map((label, i) => (
+        <li key={label} className={i < step ? "done" : i === step ? "now" : undefined}>
+          <i />
+          <span>{label}</span>
+        </li>
+      ))}
+    </ol>
+  );
+
   if (stage.name === "reading")
     return (
-      <div className="ps-wait check-reading" role="status">
-        <strong>Reading your CV…</strong>
-        <p>Payment received. We&apos;re comparing your CV with {jobLabel}. This takes about half a minute.</p>
-        <AiProgress
-          active
-          seconds={30}
-          steps={["Opening your CV", "Reading your CV", "Comparing it with the job", "Writing your feedback"]}
-        />
-      </div>
+      <>
+        {rail}
+        <div className="card panel check-reading" role="status">
+          <h2>Reading your CV</h2>
+          <p className="hint">
+            Payment received. We&apos;re comparing your CV with {jobLabel}. This takes about half a minute.
+          </p>
+          <AiProgress
+            active
+            seconds={30}
+            steps={["Opening your CV", "Reading your CV", "Comparing it with the job", "Writing your feedback"]}
+          />
+        </div>
+      </>
     );
 
   if (stage.name === "waiting") {
     const left = Math.max(0, PROMPT_SECONDS - Math.floor((now - stage.started) / 1000));
     return (
-      <div className="ps-wait" role="status">
-        <div className="ps-phone-art" aria-hidden="true">
-          <span>M-PESA</span>
-          <small>
-            Do you want to pay Ksh{stage.amount.toLocaleString("en-KE")}.00 to {businessName} account no. CVCHECK? Enter
-            M-PESA PIN
-          </small>
-        </div>
-        <strong>Check your phone</strong>
-        <p>
-          Enter your M-Pesa PIN on the prompt sent to <b>{stage.phone}</b>.
-        </p>
-        <p className="ps-count">
-          {left > 0 ? `Waiting for M-Pesa… 0:${String(left).padStart(2, "0")}` : "Still waiting for M-Pesa…"}
-        </p>
-        {stage.pretend && (
-          <div className="ps-sim">
-            <small>Test mode: you play the client&apos;s phone</small>
-            <button type="button" className="ps-pay" disabled={busy} onClick={() => answer(stage, "paid")}>
-              ✓ Entered PIN
-            </button>
-            <div className="mp-sim-row">
-              <button type="button" className="ps-link" disabled={busy} onClick={() => answer(stage, "cancelled")}>
-                Cancelled
-              </button>
-              <button type="button" className="ps-link" disabled={busy} onClick={() => answer(stage, "noFunds")}>
-                Not enough money
-              </button>
+      <>
+        {rail}
+        <div className="card panel ps-wait" role="status">
+          <div className="phone-wait">
+            <div className="phone-mini" aria-hidden="true">
+              <div className="stk">
+                Pay Ksh{stage.amount.toLocaleString("en-KE")}.00 to {businessName}, account CVCHECK?
+                <span className="pin">••••</span>
+              </div>
+            </div>
+            <div>
+              <h2>Check your phone</h2>
+              <p className="hint">
+                Enter your M-Pesa PIN on the prompt sent to <b>{stage.phone}</b>. This page moves on by itself once
+                it&apos;s paid.
+              </p>
+              <p className="ps-count num">
+                {left > 0 ? `Waiting for M-Pesa… 0:${String(left).padStart(2, "0")}` : "Still waiting for M-Pesa…"}
+              </p>
             </div>
           </div>
-        )}
-      </div>
+          {stage.pretend && (
+            <div className="ps-sim">
+              <small>Test mode: you play the client&apos;s phone</small>
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={busy}
+                  onClick={() => answer(stage, "paid")}
+                >
+                  Entered PIN
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={busy}
+                  onClick={() => answer(stage, "cancelled")}
+                >
+                  Cancelled
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={busy}
+                  onClick={() => answer(stage, "noFunds")}
+                >
+                  Not enough money
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
     );
   }
 
   if (stage.name === "failed" || stage.name === "error")
     return (
-      <div className="ps-failed" role="alert">
-        <strong>{stage.name === "failed" ? "Payment didn't go through" : "Something went wrong"}</strong>
-        <p>{stage.message}</p>
-        <button type="button" className="ps-pay" onClick={() => setStage({ name: "form" })}>
-          Try again
-        </button>
-      </div>
+      <>
+        {rail}
+        <div className="card panel ps-failed" role="alert">
+          <h2>{stage.name === "failed" ? "Payment didn't go through" : "Something went wrong"}</h2>
+          <p className="hint">{stage.message}</p>
+          <button type="button" className="btn btn-primary" onClick={() => setStage({ name: "form" })}>
+            Try again
+          </button>
+        </div>
+      </>
     );
 
   const fieldError = (field: string) =>
@@ -146,43 +188,56 @@ export function CvCheckFlow({ jobSlug, jobLabel, price, businessName }: Props) {
     );
 
   return (
-    <form className="check-form" noValidate onSubmit={submit}>
-      <label className={cvName ? "cv-drop has-file" : "cv-drop"}>
-        <input
-          type="file"
-          name="cv"
-          accept="application/pdf,image/*"
-          onChange={(event) => setCvName(event.target.files?.[0]?.name ?? "")}
-        />
-        <Icon name="upload" />
-        <span>
-          <strong>{cvName || "Upload your CV"}</strong>
-          <small>A PDF or a clear photo of it · up to 10 MB</small>
-        </span>
-      </label>
-      {fieldError("cv")}
-      <div className="od-field">
-        <label htmlFor="check-phone">
-          M-Pesa number <em>*</em>
+    <>
+      {rail}
+      <form className="card panel check-form" noValidate onSubmit={submit}>
+        <h2>Upload your CV</h2>
+        <p className="hint">The CV you&apos;d send for this job, as it is today.</p>
+        <label className={cvName ? "cv-drop has-file" : "cv-drop"}>
+          <input
+            type="file"
+            name="cv"
+            accept="application/pdf,image/*"
+            onChange={(event) => setCvName(event.target.files?.[0]?.name ?? "")}
+          />
+          <Icon name={cvName ? "check" : "upload"} />
+          <span>
+            <strong>{cvName || "Choose your CV or drop it here"}</strong>
+            <small>A PDF or a clear photo of it · up to 10 MB</small>
+          </span>
         </label>
-        <input id="check-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="07XX XXX XXX" />
+        {fieldError("cv")}
+        <label className="in" htmlFor="check-phone">
+          <span className="label">M-Pesa number</span>
+          <span className="field">
+            <input
+              id="check-phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="07XX XXX XXX"
+            />
+          </span>
+        </label>
         {fieldError("phone")}
-      </div>
-      {stage.error && !stage.field && (
-        <p className="od-error" role="alert">
-          {stage.error}
+        {stage.error && !stage.field && (
+          <p className="form-error od-error" role="alert">
+            {stage.error}
+          </p>
+        )}
+        <button type="submit" className="btn btn-primary btn-lg" disabled={busy}>
+          {busy ? "Sending the M-Pesa prompt…" : `Pay ${formatKes(price)} and check my CV`}
+        </button>
+        <p className="check-privacy">
+          <Icon name="lock" size={16} />
+          <span>
+            Our AI reads your CV to give you feedback. It&apos;s kept privately for {CHECK_CV_KEEP_HOURS} hours in case
+            you&apos;d like {businessName} to tailor it for this job, then deleted. Nobody at {businessName} sees it
+            unless you order.
+          </span>
         </p>
-      )}
-      <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
-        <Icon name="phone" />
-        {busy ? "Sending the M-Pesa prompt…" : `Pay ${formatKes(price)} & check my CV`}
-      </button>
-      <p className="check-privacy">
-        <Icon name="lock" />
-        Our AI reads your CV to give you feedback. It&apos;s kept privately for {CHECK_CV_KEEP_HOURS} hours in case
-        you&apos;d like {businessName} to tailor it for this job, then deleted. Nobody at {businessName} sees it unless
-        you order.
-      </p>
-    </form>
+      </form>
+    </>
   );
 }

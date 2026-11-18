@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
 import type { SitePackage } from "@/modules/content/content.service";
 import { draftTimeLabel, revisionsLabel } from "@/modules/content/packages";
@@ -9,29 +10,32 @@ type Cell = string | boolean;
 const FEATURE_ROWS: { label: string; values: Record<string, Cell> }[] = [
   { label: "Professionally written CV", values: { Basic: true, Professional: true, Executive: true } },
   { label: "ATS-friendly format", values: { Basic: true, Professional: true, Executive: true } },
-  { label: "Word & PDF formats", values: { Basic: true, Professional: true, Executive: true } },
+  { label: "Word and PDF files", values: { Basic: true, Professional: true, Executive: true } },
   {
-    label: "Consultation with writer",
-    values: { Basic: "Chat", Professional: "Phone call", Executive: "Phone / video call" },
+    label: "Talk to your writer",
+    values: { Basic: "On WhatsApp", Professional: "Phone call", Executive: "Phone or video call" },
   },
-  { label: "Tailored cover letter", values: { Professional: true, Executive: true } },
+  { label: "Cover letter for your target role", values: { Professional: true, Executive: true } },
   { label: "LinkedIn profile revamp", values: { Executive: true } },
   { label: "Career coaching call", values: { Executive: "1 hour" } },
 ];
 
 export function CompareTable({ packages }: { packages: SitePackage[] }) {
   const cellClass = (pkg: SitePackage, base?: string) =>
-    [base, pkg.popular ? "col-featured" : undefined].filter(Boolean).join(" ") || undefined;
+    [base, pkg.popular ? "col" : undefined].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className="table-wrap reveal">
-      <table className="compare">
+    <div className="table-wrap">
+      <table className="cmp">
         <thead>
           <tr>
-            <th scope="col">Feature</th>
+            <th scope="col">
+              <span className="sr-only">Feature</span>
+            </th>
             {packages.map((pkg) => (
               <th key={pkg.id} scope="col" className={cellClass(pkg)}>
-                {pkg.shortName}
+                {pkg.name}
+                <small>{formatKes(pkg.price)}</small>
               </th>
             ))}
           </tr>
@@ -50,7 +54,8 @@ export function CompareTable({ packages }: { packages: SitePackage[] }) {
                   );
                 return (
                   <td key={pkg.id} className={cellClass(pkg, value ? "yes" : "no")}>
-                    {value ? "✓" : "–"}
+                    {value ? <Icon name="check" size={16} /> : "Not included"}
+                    {value && <span className="sr-only">Included</span>}
                   </td>
                 );
               })}
@@ -67,7 +72,7 @@ export function CompareTable({ packages }: { packages: SitePackage[] }) {
             label="Price"
             packages={packages}
             cellClass={cellClass}
-            render={(pkg) => <strong>{formatKes(pkg.price)}</strong>}
+            render={(pkg) => <b className="num">{formatKes(pkg.price)}</b>}
           />
         </tbody>
       </table>

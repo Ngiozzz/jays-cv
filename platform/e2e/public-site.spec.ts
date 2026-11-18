@@ -5,7 +5,7 @@ test("the homepage shows the packages and prices from the database", async ({ pa
   await expect(page.getByRole("heading", { level: 1 })).toContainText("shortlisted.");
   const pricing = page.locator("#pricing");
   await expect(pricing.getByRole("heading", { name: "Professional" })).toBeVisible();
-  await expect(pricing.getByText("Most popular")).toBeVisible();
+  await expect(pricing.getByText("Chosen most often")).toBeVisible();
 });
 
 test("every main page opens from the menu", async ({ page }) => {

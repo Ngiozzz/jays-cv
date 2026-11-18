@@ -43,12 +43,10 @@ export function MainNav({ whatsappHref }: Props) {
             </li>
           ))}
         </ul>
-        <NavLink className="btn btn-ghost btn-sm nav-track" href="/track" onClick={close}>
-          <Icon name="search" size={18} />
+        <NavLink className="nav-track" href="/track" onClick={close}>
           Track my order
         </NavLink>
         <a className="btn btn-primary btn-sm nav-cta" href={whatsappHref} target="_blank" rel="noopener">
-          <Icon name="whatsapp" size={18} />
           WhatsApp us
         </a>
       </nav>
@@ -59,9 +57,7 @@ export function MainNav({ whatsappHref }: Props) {
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen(!open)}
       >
-        <span></span>
-        <span></span>
-        <span></span>
+        <Icon name={open ? "close" : "menu"} size={18} />
       </button>
     </>
   );

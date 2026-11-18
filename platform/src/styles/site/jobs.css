@@ -1,0 +1,746 @@
+/* =========================================================
+   Find a job · a single job · tag pages
+   ========================================================= */
+.finder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px auto;
+  gap: 8px;
+  max-width: 900px;
+  margin-top: 32px;
+}
+.channel-note {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.channel-note .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 8px 2px 0;
+  border-radius: 50%;
+  background: #3fa45b;
+}
+
+/* Board: filters on the left, results on the right */
+.board {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  gap: 48px;
+  padding: 40px 0 96px;
+}
+.board-filters {
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  display: grid;
+  gap: 28px;
+}
+.f-label {
+  margin-bottom: 8px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.cats,
+.checks {
+  display: grid;
+  gap: 2px;
+}
+.cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-2);
+  text-align: left;
+  transition:
+    background-color 140ms var(--ease),
+    color 140ms var(--ease);
+}
+.cat:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+.cat span {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.cat[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 1px 2px rgba(28, 27, 25, 0.04);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background-color 140ms var(--ease);
+}
+.check:hover {
+  background: var(--raised);
+}
+.check span {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.check input,
+.tick input {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  background: var(--card);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.check input:checked,
+.tick input:checked {
+  background: var(--ink);
+  box-shadow: none;
+}
+.check input:checked::after,
+.tick input:checked::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border-left: 1.5px solid #fff;
+  border-bottom: 1.5px solid #fff;
+  transform: translateY(-1px) rotate(-45deg);
+}
+.clear {
+  justify-self: start;
+  padding: 0 8px;
+  font-size: 14px;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.side-card {
+  padding: 16px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.side-card h3 {
+  margin-bottom: 4px;
+  font-size: 15px;
+  line-height: 22px;
+}
+.side-card p {
+  color: var(--text-2);
+}
+.scam {
+  margin: 12px 0 0;
+  padding: 12px;
+  border-radius: 6px;
+  background: #fbfaf7;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-2);
+  transform: rotate(-1deg);
+}
+.scam b {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+}
+.scam .fee {
+  position: relative;
+  display: inline-block;
+  color: var(--text);
+}
+.scam .fee::after {
+  content: "";
+  position: absolute;
+  inset: -3px -6px;
+  border: 1.5px solid var(--pen);
+  border-radius: 50%;
+  transform: rotate(-2deg);
+}
+.scam .note {
+  display: block;
+  margin-top: 8px;
+  font: italic 400 14px/18px var(--hand);
+  color: var(--pen);
+}
+.results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 36px;
+  margin-bottom: 16px;
+}
+.results-bar p {
+  font-size: 15px;
+  color: var(--text-2);
+}
+.results-bar b {
+  font-weight: 500;
+  color: var(--text);
+}
+.job-promo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  padding: 24px;
+  background: var(--alt);
+}
+.job-promo h3 {
+  font: 500 20px/28px var(--serif);
+  letter-spacing: -0.01em;
+}
+.job-promo p {
+  margin: 4px 0 12px;
+  font-size: 15px;
+  color: var(--text-2);
+}
+.job-promo b {
+  font-weight: 500;
+  color: var(--text);
+}
+.job-promo .track i {
+  width: 20px;
+}
+.job-empty {
+  padding: 64px 24px;
+  text-align: center;
+}
+.job-empty h3 {
+  font: 500 22px/30px var(--serif);
+}
+.job-empty p {
+  max-width: 380px;
+  margin: 8px auto 20px;
+  color: var(--text-2);
+}
+.cat-strip,
+.more-filters {
+  display: none;
+}
+
+/* A single job */
+.job-top {
+  padding: 40px 0 32px;
+  border-bottom: 1px solid var(--line);
+}
+.job-title {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+}
+.job-title .job-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  font-size: 18px;
+}
+.job-title .cat {
+  display: block;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gold-ink);
+}
+.job-title h1 {
+  margin-top: 2px;
+  font-size: 40px;
+  line-height: 46px;
+}
+.job-title .co {
+  margin-top: 4px;
+  color: var(--text-2);
+}
+.job-closed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(180, 35, 24, 0.06);
+  color: var(--pen);
+  font-size: 15px;
+}
+.job-closed a {
+  margin-left: auto;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.job-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 32px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.job-facts > div {
+  padding: 16px 20px;
+}
+.job-facts > div + div {
+  border-left: 1px solid var(--line);
+}
+.job-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.job-facts dd {
+  margin-top: 4px;
+  font-weight: 500;
+}
+.job-facts dd small {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--muted);
+}
+.job-facts dd.soon small {
+  color: var(--gold-ink);
+}
+.job-facts .job-deadline {
+  margin: 8px 0 2px;
+  font-size: 0;
+  line-height: 0;
+}
+.job-facts .job-deadline .runway {
+  width: 100%;
+  max-width: 160px;
+  margin: 0;
+}
+
+.job-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 48px;
+  padding: 40px 0 96px;
+  align-items: start;
+}
+.advert h2 {
+  margin: 40px 0 12px;
+  font: 500 24px/32px var(--serif);
+  letter-spacing: -0.01em;
+}
+.advert > h2:first-child {
+  margin-top: 0;
+}
+.advert > p {
+  font-size: 17px;
+  line-height: 28px;
+  color: var(--text-2);
+}
+.dots {
+  display: grid;
+  gap: 10px;
+}
+.dots li {
+  position: relative;
+  padding-left: 20px;
+  color: var(--text-2);
+}
+.dots li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 11px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.reqs {
+  display: grid;
+  gap: 8px;
+}
+.reqs li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--text-2);
+}
+.reqs li svg {
+  margin-top: 4px;
+  color: var(--muted);
+}
+.advert .reqs-note {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--muted);
+}
+.job-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.job-tags .chip:hover {
+  color: var(--text);
+}
+
+/* How to apply */
+.apply-box {
+  margin-top: 40px;
+  padding: 28px;
+}
+.apply-box h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+}
+.apply-box > p {
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--text-2);
+}
+.apply-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 10px;
+  background: var(--alt);
+  font-size: 15px;
+}
+.apply-box > p + .apply-row {
+  margin-top: 16px;
+}
+.apply-row > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.apply-row strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.apply-row .ticks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: 13px;
+  color: var(--text-2);
+}
+.copy-btn:hover {
+  color: var(--text);
+}
+.apply-notes {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text-2);
+}
+.apply-notes svg {
+  margin-top: 2px;
+  color: var(--muted);
+}
+.apply-box > .btn {
+  margin-top: 20px;
+}
+.apply-deadline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.job-poster {
+  margin-top: 40px;
+}
+.job-poster figure {
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--desk);
+}
+.job-poster img {
+  margin: 0 auto;
+  max-height: 720px;
+  border-radius: 4px;
+  box-shadow:
+    0 1px 2px rgba(28, 27, 25, 0.08),
+    0 12px 32px rgba(28, 27, 25, 0.14);
+}
+.job-poster figcaption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.job-advert-pdf {
+  margin-top: 16px;
+}
+.advert .job-source {
+  margin-top: 24px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+/* The moment on a job page: getting the CV ready for this exact job */
+.job-aside {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 16px;
+}
+.ready {
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.ready .k {
+  font-size: 13px;
+  color: var(--gold-light);
+}
+.ready h3 {
+  margin-top: 6px;
+  font: 500 24px/30px var(--serif);
+  letter-spacing: -0.01em;
+}
+.ready .opt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(250, 250, 249, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(250, 250, 249, 0.1);
+  transition: background-color 140ms var(--ease);
+}
+.ready .opt:hover {
+  background: rgba(250, 250, 249, 0.1);
+}
+.ready .opt b {
+  font-weight: 500;
+}
+.ready .opt .p {
+  font-size: 14px;
+  color: var(--gold-light);
+  font-variant-numeric: tabular-nums;
+}
+.ready .opt p {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--ink-2);
+}
+.ready .opt .track {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+.ready .opt .track i {
+  width: 18px;
+  background: rgba(250, 250, 249, 0.14);
+}
+.ready .opt .track i.done {
+  background: #d6d3d1;
+}
+.ready .opt .track i.now {
+  background: var(--gold);
+}
+.ready .ask {
+  display: block;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ready .ask:hover {
+  color: var(--on-ink);
+}
+.job-aside .side-card {
+  padding: 20px;
+}
+.share {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.side-card .report {
+  display: inline-block;
+  margin-top: 8px;
+}
+
+@media (max-width: 1120px) {
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .board-filters {
+    display: none;
+  }
+  .cat-strip {
+    display: flex;
+    gap: 8px;
+    margin: 0 calc(var(--gutter) * -1);
+    padding: 0 var(--gutter) 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cat-strip::-webkit-scrollbar {
+    display: none;
+  }
+  .cat-strip .cat {
+    width: auto;
+    flex: none;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+  }
+  .cat-strip .cat[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--on-ink);
+    box-shadow: none;
+  }
+  .cat-strip .cat[aria-pressed="true"] span {
+    color: var(--ink-2);
+  }
+  .more-filters {
+    display: block;
+    margin: 12px 0 20px;
+  }
+  .more-filters summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+  }
+  .more-filters summary::-webkit-details-marker {
+    display: none;
+  }
+  .more-filters .panel {
+    display: grid;
+    gap: 16px;
+    margin-top: 12px;
+    padding: 12px 8px;
+    border-radius: 14px;
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .job-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .job-aside {
+    position: static;
+  }
+  .job-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .job-facts > div:nth-child(3) {
+    border-left: 0;
+  }
+  .job-facts > div:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+}
+@media (max-width: 640px) {
+  .finder {
+    grid-template-columns: 1fr;
+  }
+  .results-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .job-promo {
+    grid-template-columns: 1fr;
+    padding: 20px 16px;
+  }
+  .job-title {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .job-title .job-logo {
+    width: 48px;
+    height: 48px;
+    font-size: 14px;
+  }
+  .job-title .share-top {
+    display: none;
+  }
+  .job-title h1 {
+    font-size: 28px;
+    line-height: 34px;
+  }
+  .apply-box {
+    padding: 20px 16px;
+  }
+  .apply-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .apply-row > span {
+    grid-column: 1 / -1;
+  }
+  .job-poster figure {
+    padding: 12px;
+  }
+}

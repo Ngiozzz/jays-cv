@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useMemo, useState, type FormEvent } from "react";
+import { StageTrack } from "@/components/site/StageTrack";
 import { Icon } from "@/components/icons/Icon";
 import {
   NO_FILTERS,
@@ -13,7 +14,8 @@ import {
   type BoardListing,
 } from "@/modules/jobs/board-filter";
 import { isCounty } from "@/modules/jobs/counties";
-import { JobCard } from "./JobCard";
+import { daysUntil } from "@/modules/jobs/jobs.rules";
+import { JobRow } from "./JobRow";
 
 type Props = {
   jobs: BoardListing[];
@@ -32,6 +34,10 @@ export function JobsBrowser({ jobs, today, channelLink, draftTime, initial = NO_
   const places = useMemo(() => boardPlaces(jobs), [jobs]);
   const categories = useMemo(() => countBy(jobs, "category"), [jobs]);
   const types = useMemo(() => countBy(jobs, "type"), [jobs]);
+  const closingSoon = useMemo(
+    () => jobs.filter((job) => job.deadline && daysUntil(job.deadline, today) <= 7).length,
+    [jobs, today],
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -43,11 +49,63 @@ export function JobsBrowser({ jobs, today, channelLink, draftTime, initial = NO_
   }, [filters.q, filters.loc, filters.cat]);
 
   const shown = useMemo(() => filterJobs(jobs, filters, today), [jobs, filters, today]);
+  const filtered = Boolean(filters.q || filters.loc || filters.cat || filters.types.length || filters.soon);
+  const categoryNames = Object.keys(categories)
+    .filter(Boolean)
+    .sort((a, b) => categories[b] - categories[a] || a.localeCompare(b));
+
+  const categoryButtons = (
+    <>
+      <CategoryButton label="All jobs" count={jobs.length} pressed={!filters.cat} onClick={() => set({ cat: "" })} />
+      {/* Jobs saved without a category only count under "All jobs" */}
+      {categoryNames.map((category) => (
+        <CategoryButton
+          key={category}
+          label={category}
+          count={categories[category]}
+          pressed={filters.cat === category}
+          onClick={() => set({ cat: category })}
+        />
+      ))}
+    </>
+  );
+  const otherFilters = (
+    <>
+      <div>
+        <p className="f-label">Job type</p>
+        <div className="checks">
+          {Object.keys(types)
+            .sort()
+            .map((type) => (
+              <label key={type} className="check">
+                <input
+                  type="checkbox"
+                  checked={filters.types.includes(type)}
+                  onChange={(event) =>
+                    set({
+                      types: event.target.checked ? [...filters.types, type] : filters.types.filter((t) => t !== type),
+                    })
+                  }
+                />
+                {type} <span>{types[type]}</span>
+              </label>
+            ))}
+        </div>
+      </div>
+      <div>
+        <p className="f-label">Deadline</p>
+        <label className="check">
+          <input type="checkbox" checked={filters.soon} onChange={(event) => set({ soon: event.target.checked })} />
+          Closing within 7 days <span>{closingSoon}</span>
+        </label>
+      </div>
+    </>
+  );
 
   return (
     <>
       <section className="page-hero jobs-hero">
-        <div className="container">
+        <div className="container rise">
           <nav className="breadcrumb" aria-label="Breadcrumb">
             <Link href="/">Home</Link>
             <span>/</span>
@@ -55,11 +113,11 @@ export function JobsBrowser({ jobs, today, channelLink, draftTime, initial = NO_
           </nav>
           <h1>Find a job in Kenya</h1>
           <p className="lead">
-            Fresh vacancies from across Kenya, shared daily by the Jay CVS team. Search, filter and apply, then make
-            sure your CV is ready.
+            Vacancies from across Kenya, checked and posted by our team every day. Find one, then make sure your CV is
+            ready for it.
           </p>
-          <form className="job-search" role="search" onSubmit={(event: FormEvent) => event.preventDefault()}>
-            <label className="job-search-field">
+          <form className="finder" role="search" onSubmit={(event: FormEvent) => event.preventDefault()}>
+            <label className="field">
               <Icon name="search" />
               <span className="sr-only">Keyword</span>
               <input
@@ -70,176 +128,146 @@ export function JobsBrowser({ jobs, today, channelLink, draftTime, initial = NO_
                 autoComplete="off"
               />
             </label>
-            <label className="job-search-field job-search-loc">
+            <label className="field">
               <Icon name="pin" />
               <span className="sr-only">County</span>
               <select value={filters.loc} onChange={(event) => set({ loc: event.target.value })}>
-                <option value="">All counties</option>
+                <option value="">All of Kenya</option>
                 {places.map((place) => (
                   <option key={place} value={place}>
                     {isCounty(place) ? `${place} County` : place}
                   </option>
                 ))}
               </select>
+              <Icon name="chevron-down" size={16} />
             </label>
-            <button className="btn btn-primary" type="submit">
+            <button className="btn btn-primary btn-lg" type="submit">
               Search
             </button>
           </form>
           {channelLink && (
-            <p className="jobs-hero-note">
-              <Icon name="whatsapp" />
-              Join 57,000+ job seekers on our{" "}
-              <a href={channelLink} target="_blank" rel="noopener">
-                WhatsApp job channel
+            <p className="channel-note">
+              <span className="dot" aria-hidden="true" />
+              New jobs every morning on our{" "}
+              <a className="text-link" href={channelLink} target="_blank" rel="noopener">
+                WhatsApp jobs channel
               </a>
             </p>
           )}
         </div>
       </section>
 
-      <section className="section jobs-section">
-        <div className="container">
-          <div className="filters jobs-cats" role="group" aria-label="Filter by category">
-            <CategoryButton
-              label="All jobs"
-              count={jobs.length}
-              pressed={!filters.cat}
-              onClick={() => set({ cat: "" })}
-            />
-            {/* Jobs saved without a category only count under "All jobs" */}
-            {Object.keys(categories)
-              .filter(Boolean)
-              .sort()
-              .map((category) => (
-                <CategoryButton
-                  key={category}
-                  label={category}
-                  count={categories[category]}
-                  pressed={filters.cat === category}
-                  onClick={() => set({ cat: category })}
-                />
-              ))}
-          </div>
-
-          <div className="jobs-layout">
-            <aside className="jobs-sidebar" aria-label="Filters">
-              <div className="card side-block">
-                <h3>Job type</h3>
-                {Object.keys(types)
-                  .sort()
-                  .map((type) => (
-                    <label key={type} className="check">
-                      <input
-                        type="checkbox"
-                        checked={filters.types.includes(type)}
-                        onChange={(event) =>
-                          set({
-                            types: event.target.checked
-                              ? [...filters.types, type]
-                              : filters.types.filter((t) => t !== type),
-                          })
-                        }
-                      />{" "}
-                      {type} <span>{types[type]}</span>
-                    </label>
-                  ))}
+      <div className="container">
+        <div className="board">
+          <aside className="board-filters" aria-label="Filters">
+            <div>
+              <p className="f-label">Category</p>
+              <div className="cats" role="group" aria-label="Filter by category">
+                {categoryButtons}
               </div>
-              <div className="card side-block">
-                <h3>Deadline</h3>
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={filters.soon}
-                    onChange={(event) => set({ soon: event.target.checked })}
-                  />{" "}
-                  Closing within 7 days
-                </label>
-              </div>
-              <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => setFilters(NO_FILTERS)}>
+            </div>
+            {otherFilters}
+            {filtered && (
+              <button type="button" className="clear" onClick={() => setFilters(NO_FILTERS)}>
                 Clear all filters
               </button>
-              {channelLink && (
-                <div className="card side-block channel-card">
-                  <span className="channel-icon">
-                    <Icon name="whatsapp" />
-                  </span>
-                  <h3>Never miss a job</h3>
-                  <p>New vacancies every day on our WhatsApp channel.</p>
-                  <a className="btn btn-wa btn-sm btn-block" href={channelLink} target="_blank" rel="noopener">
-                    Follow the channel
-                  </a>
-                </div>
-              )}
-              <div className="card side-block safety">
-                <h3>
-                  <Icon name="shield" />
-                  Stay safe
-                </h3>
-                <p>Genuine employers never ask for money to apply or to get an interview.</p>
+            )}
+            <div className="card side-card">
+              <h3>Stay safe</h3>
+              <p>Genuine employers never ask for money to apply or to get an interview.</p>
+              <div className="scam" aria-label="Example of a scam advert">
+                <b>Airport jobs: cleaners, drivers, loaders</b>
+                Salary KES 85,000. No experience needed. Pay <span className="fee">KES 1,000 registration</span> to 07••
+                ••• •••
+                <span className="note">Never pay to apply</span>
               </div>
-            </aside>
+            </div>
+          </aside>
 
-            <div className="jobs-results">
-              <div className="results-bar">
-                <p aria-live="polite">
-                  {shown.length} {shown.length === 1 ? "job" : "jobs"} found
-                </p>
-                <label className="sort">
-                  Sort by{" "}
-                  <select
-                    value={filters.sort}
-                    onChange={(event) => set({ sort: event.target.value === "closing" ? "closing" : "newest" })}
-                  >
-                    <option value="newest">Newest first</option>
-                    <option value="closing">Closing soon</option>
-                  </select>
-                </label>
+          <section className="board-results" aria-label="Results">
+            <div className="cat-strip" role="group" aria-label="Filter by category">
+              {categoryButtons}
+            </div>
+            <details className="more-filters">
+              <summary>
+                <Icon name="sliders" size={16} />
+                More filters
+              </summary>
+              <div className="panel">{otherFilters}</div>
+            </details>
+
+            <div className="results-bar">
+              <p aria-live="polite">
+                <b className="num">{shown.length}</b> open {shown.length === 1 ? "job" : "jobs"}
+                {filters.cat && ` in ${filters.cat}`}
+              </p>
+              <div className="seg" role="group" aria-label="Sort">
+                <button type="button" aria-pressed={filters.sort !== "closing"} onClick={() => set({ sort: "newest" })}>
+                  Newest
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={filters.sort === "closing"}
+                  onClick={() => set({ sort: "closing" })}
+                >
+                  Closing soon
+                </button>
               </div>
-              <div className="job-stack">
+            </div>
+
+            {shown.length > 0 ? (
+              <div className="job-list">
                 {shown.map((job, index) => (
                   <Fragment key={job.slug}>
-                    {index === 3 && <CvPromo draftTime={draftTime} />}
-                    <JobCard {...job} href={`/jobs/${job.slug}`} today={today} />
+                    {index === 4 && <CvPromo draftTime={draftTime} />}
+                    <JobRow {...job} href={`/jobs/${job.slug}`} today={today} />
                   </Fragment>
                 ))}
               </div>
-              {shown.length === 0 && (
-                <div className="job-empty">
-                  <Icon name="search" />
-                  <h3>{jobs.length ? "No jobs match your search" : "No open jobs right now"}</h3>
-                  <p>
-                    {jobs.length
-                      ? "Try a different keyword or location, or clear the filters."
-                      : "New vacancies are added every day. Check back soon."}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+            ) : (
+              <div className="job-list job-empty">
+                <h3>{jobs.length ? "No jobs match your search" : "No open jobs right now"}</h3>
+                <p>
+                  {jobs.length
+                    ? "Try a different keyword or county, or clear the filters to see every open job."
+                    : "New vacancies are added every day. Check back soon."}
+                </p>
+                {jobs.length > 0 && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFilters(NO_FILTERS)}>
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
         </div>
-      </section>
+      </div>
     </>
   );
 }
 
 function CategoryButton(props: { label: string; count: number; pressed: boolean; onClick: () => void }) {
   return (
-    <button type="button" className="filter-btn" aria-pressed={props.pressed} onClick={props.onClick}>
+    <button type="button" className="cat" aria-pressed={props.pressed} onClick={props.onClick}>
       {props.label} <span>{props.count}</span>
     </button>
   );
 }
 
+// After the fourth job: every job someone finds is a chance to get their CV ready for it
 function CvPromo({ draftTime }: { draftTime: string }) {
   return (
     <aside className="job-promo">
       <div>
-        <strong>Found a job you like? Make sure your CV is ready.</strong>
-        <p>Recruiters spend about 6 seconds on a CV. We&apos;ll write one that gets you shortlisted, in {draftTime}.</p>
+        <h3>Applying to one of these?</h3>
+        <p>
+          Open the job and choose <b>Let us tailor it</b>. We&apos;ll rewrite your CV for that advert, with a first
+          draft within {draftTime}, well before most deadlines.
+        </p>
+        <StageTrack of={5} at={2} />
       </div>
-      <Link className="btn btn-primary" href="/services">
-        Get my CV done
+      <Link className="btn btn-primary" href="/order">
+        Tailor my CV
       </Link>
     </aside>
   );

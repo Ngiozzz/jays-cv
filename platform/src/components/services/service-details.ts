@@ -6,7 +6,7 @@ import { lowestPrice, priceByName } from "@/modules/content/pricing";
 
 // "From" prices come from the live price list; copy is the preview's Services page.
 // Each button opens the order card: CV writing on "Choose a service", the others with their service picked.
-export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
+export function serviceDetails(prices: PriceList, checkPrice?: number): ServiceDetailProps[] {
   const from = (amount: number | null, unit = "") => (amount === null ? "Ask us" : `${formatKes(amount)}${unit}`);
   const service = (name: string) => priceByName(prices.services, name);
   const draftTimes = prices.packages.map((p) => p.firstDraftHours);
@@ -21,7 +21,7 @@ export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
       id: "cv-writing",
       shortTitle: "CV writing",
       icon: "doc",
-      title: "CV writing & design",
+      title: "CV writing and design",
       text: "Your CV has about six seconds to make an impression. We rewrite it around your achievements, not just your duties, and format it to get past the screening software (ATS) many employers use.",
       ticks: [
         "One-on-one consultation with your writer",
@@ -41,11 +41,12 @@ export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
       showSamples: true,
       image: { src: "/img/photos/service-cv-writing.jpg", alt: "Professional writing notes beside a laptop" },
     },
+    ...tailoredService(prices, checkPrice),
     {
       id: "cover-letters",
       shortTitle: "Cover letters",
       icon: "mail",
-      title: "Cover & motivation letters",
+      title: "Cover and motivation letters",
       text: "A strong letter explains why you're the right fit for this role. We write a letter for each specific job, scholarship or programme, so it never reads like a template.",
       ticks: [
         "Job-specific cover letters",
@@ -59,7 +60,6 @@ export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
       ],
       action: { label: "Order a letter", href: order("Cover letter") },
       image: { src: "/img/photos/service-cover-letters.jpg", alt: "Writing a letter in a notebook" },
-      flip: true,
     },
     {
       id: "linkedin",
@@ -79,6 +79,7 @@ export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
       ],
       action: { label: "Revamp my LinkedIn", href: order("LinkedIn profile revamp") },
       image: { src: "/img/photos/service-linkedin.jpg", alt: "Professional updating an online profile at his desk" },
+      flip: true,
     },
     {
       id: "career-coaching",
@@ -98,13 +99,12 @@ export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
       ],
       action: { label: "Book a session", href: order("Career coaching session") },
       image: { src: "/img/photos/service-coaching.jpg", alt: "Career coach in a one-on-one session with a client" },
-      flip: true,
     },
     {
       id: "job-applications",
       shortTitle: "Job applications",
       icon: "send",
-      title: "Job applications & online assessments",
+      title: "Job applications and assessments",
       text: "Online application portals can be confusing and slow. We guide you through each step and help you prepare for the aptitude and psychometric tests that often come next.",
       ticks: [
         "Support with online application portals",
@@ -118,6 +118,37 @@ export function serviceDetails(prices: PriceList): ServiceDetailProps[] {
         src: "/img/photos/service-job-applications.jpg",
         alt: "Filling in an online job application on a laptop",
       },
+      flip: true,
+    },
+  ];
+}
+
+// "A CV for one specific job": the tailoring service (ordered from a job page) and the CV check. Only shown when
+// the business offers tailoring.
+function tailoredService(prices: PriceList, checkPrice?: number): ServiceDetailProps[] {
+  const tailoring = prices.services.find((service) => service.needsJobAdvert);
+  if (!tailoring) return [];
+  return [
+    {
+      id: "tailored",
+      shortTitle: "CV for one job",
+      icon: "target",
+      title: "A CV for one specific job",
+      text: "Found the advert? Send it with your CV and we'll rewrite it for that job, matching the words and requirements the employer listed. Or check it yourself first and see your match out of 100.",
+      ticks: [
+        "Order it straight from any job on our board",
+        "Rewritten around that advert's requirements",
+        `First draft within ${draftTimeLabel(tailoring.firstDraftHours)}, before most deadlines`,
+      ],
+      meta: [
+        { label: "Tailored by a writer", value: formatKes(tailoring.price) },
+        ...(checkPrice ? [{ label: "Check it yourself", value: formatKes(checkPrice) }] : []),
+        { label: "First draft", value: draftTimeLabel(tailoring.firstDraftHours) },
+      ],
+      action: { label: "Find the job first", href: "/jobs" },
+      secondary: { label: "I have the advert", href: `/order?service=${tailoring.id}` },
+      image: { src: "/img/photos/service-job-applications.jpg", alt: "Applying for a job on a laptop" },
+      flip: true,
     },
   ];
 }

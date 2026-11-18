@@ -1,9 +1,9 @@
-import { Icon } from "@/components/icons/Icon";
-
+// A quiet tab in the corner, not a pulsing green ball
 export function WhatsAppFloat({ href }: { href: string }) {
   return (
     <a className="wa-float" href={href} target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
-      <Icon name="whatsapp" />
+      <span className="dot" aria-hidden="true"></span>
+      Chat with us
     </a>
   );
 }

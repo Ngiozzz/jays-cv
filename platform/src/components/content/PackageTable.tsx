@@ -9,7 +9,7 @@ export function PackageTable({ packages }: Props) {
   return (
     <>
       <div className="table-wrap">
-        <table className="compare package-table">
+        <table className="pk-table">
           <thead>
             <tr>
               <th scope="col">Package</th>
@@ -24,24 +24,20 @@ export function PackageTable({ packages }: Props) {
           </thead>
           <tbody>
             {packages.map((pkg) => (
-              <tr key={pkg.id} className={pkg.popular ? "row-featured" : undefined}>
+              <tr key={pkg.id} className={pkg.popular ? "main" : undefined}>
                 <th scope="row">
-                  <span>{pkg.name}</span>
-                  {pkg.popular && (
-                    <>
-                      {" "}
-                      <span className="mini-badge">Popular</span>
-                    </>
-                  )}
+                  {pkg.name}
+                  {pkg.popular && <small>Chosen most often</small>}
                 </th>
-                <td>{pkg.bestFor}</td>
-                <td>{draftTimeLabel(pkg.firstDraftHours)}</td>
+                <td className="best">{pkg.bestFor}</td>
+                <td className="num">{draftTimeLabel(pkg.firstDraftHours)}</td>
                 <td>{revisionsLabel(pkg)}</td>
+                <td className="p num">{formatKes(pkg.price)}</td>
                 <td>
-                  <strong>{formatKes(pkg.price)}</strong>
-                </td>
-                <td>
-                  <Link className="btn btn-primary btn-sm" href={orderHref(pkg.shortName)}>
+                  <Link
+                    className={pkg.popular ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                    href={orderHref(pkg.shortName)}
+                  >
                     Order
                   </Link>
                 </td>
@@ -50,8 +46,11 @@ export function PackageTable({ packages }: Props) {
           </tbody>
         </table>
       </div>
-      <p className="pricing-note">
-        <Link href="/pricing">Compare everything included in each package →</Link>
+      <p className="plans-note">
+        See everything each package includes on the{" "}
+        <Link className="text-link" href="/pricing">
+          pricing page
+        </Link>
       </p>
     </>
   );
