@@ -90,7 +90,10 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
     const bar = barRef.current;
     const root = document.documentElement;
     const measure = () => {
-      root.style.setProperty("--admin-top-h", `${top?.offsetHeight ?? 0}px`);
+      // Only a header that stays pinned takes room at the top; the redesigned one scrolls away, and
+      // counting it left a gap above the tabs that the rows showed through
+      const pinned = top && ["sticky", "fixed"].includes(getComputedStyle(top).position);
+      root.style.setProperty("--admin-top-h", `${pinned ? top.offsetHeight : 0}px`);
       root.style.setProperty("--inbox-bar-h", `${bar?.offsetHeight ?? 0}px`);
     };
     measure();
