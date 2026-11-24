@@ -4,6 +4,9 @@ import { useState, type ReactNode } from "react";
 import { LOGO_SIZE, shrinkImage } from "@/components/admin/jobs/shrink-image";
 import type { KnownCompany } from "@/components/admin/jobs/CompanyLogoField";
 import { CountyPicker } from "@/components/admin/jobs/CountyPicker";
+import { PointsEditor } from "@/components/admin/jobs/PointsEditor";
+import { Icon } from "@/components/icons/Icon";
+import type { IconName } from "@/components/icons/IconSprite";
 import { JobLogo } from "@/components/jobs/JobLogo";
 import { companyKey } from "@/modules/jobs/companies";
 import {
@@ -19,6 +22,23 @@ import {
   type ApplyMethod,
   type JobInput,
 } from "@/modules/jobs/jobs.schema";
+
+const METHOD_ICON: Record<ApplyMethod, IconName> = {
+  email: "mail",
+  link: "link",
+  whatsapp: "whatsapp",
+  "in-person": "pin",
+  other: "chat",
+};
+
+// What the job page will tell job seekers to do, so it's clear what each method needs
+const METHOD_HINT: Record<ApplyMethod, string> = {
+  email: "Job seekers email their CV to this address, with this subject line.",
+  link: "Job seekers apply on the employer's own page.",
+  whatsapp: "Job seekers send their CV to this number on WhatsApp.",
+  "in-person": "Job seekers take their documents to this place.",
+  other: "Write the steps exactly as the advert gives them.",
+};
 
 const METHOD_LABEL: Record<ApplyMethod, string> = {
   email: "Email",
@@ -40,8 +60,6 @@ type Props = {
   onConfirm: (field: string) => void;
   onLogo: (logo: ChosenLogo) => void;
 };
-
-const lines = (text: string) => text.split("\n");
 
 // Everything the AI read from the poster, corrected in place. The same steps and fields as
 // Post a job (step 1, the poster, is beside this form), all open on one screen.
@@ -185,6 +203,16 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
             </select>,
           )}
           {field(
+            "source",
+            "Where did you find this advert?",
+            <input
+              id="q-source"
+              value={job.source}
+              placeholder="e.g. Company's LinkedIn page"
+              onChange={(e) => set({ source: e.target.value })}
+            />,
+          )}
+          {field(
             "salary",
             "Salary",
             <input
@@ -210,23 +238,29 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
           )}
           {field(
             "responsibilities",
-            "Responsibilities (one per line)",
-            <textarea
+            "Responsibilities",
+            <PointsEditor
               id="q-responsibilities"
-              rows={5}
-              value={job.responsibilities.join("\n")}
-              onChange={(e) => set({ responsibilities: lines(e.target.value) })}
+              points={job.responsibilities}
+              onChange={(responsibilities) => set({ responsibilities })}
+              addLabel="Add a responsibility"
+              placeholder="e.g. Prepare monthly financial reports"
             />,
+            true,
+            "q-responsibilities-0",
           )}
           {field(
             "requirements",
-            "Requirements (one per line)",
-            <textarea
+            "Requirements",
+            <PointsEditor
               id="q-requirements"
-              rows={5}
-              value={job.requirements.join("\n")}
-              onChange={(e) => set({ requirements: lines(e.target.value) })}
+              points={job.requirements}
+              onChange={(requirements) => set({ requirements })}
+              addLabel="Add a requirement"
+              placeholder="e.g. Degree in Accounting or Finance"
             />,
+            true,
+            "q-requirements-0",
           )}
           {field(
             "tags",
@@ -273,138 +307,135 @@ export function QuickForm({ job, unsure, companies, logo, onChange, onConfirm, o
         <h3>
           <span className="n">5</span>How to apply
         </h3>
-        <div className="method-picker" role="radiogroup" aria-label="Application method">
+        <div className="apply-methods" role="radiogroup" aria-label="How people apply">
           {APPLY_METHODS.map((value) => (
             <label key={value}>
               <input
                 type="radio"
-                name={`q-method`}
+                name="q-method"
                 value={value}
                 checked={method === value}
                 onChange={() => setApply({ method: value })}
               />
-              {METHOD_LABEL[value]}
+              <Icon name={METHOD_ICON[value]} size={18} />
+              <span>{METHOD_LABEL[value]}</span>
             </label>
           ))}
         </div>
-        <div className="d-fields">
-          {only("email") &&
-            field(
-              "target",
-              "Send applications to *",
-              <input
-                id="q-target"
-                type="email"
-                value={job.apply.email}
-                placeholder="recruitment@company.com"
-                onChange={(e) => setApply({ email: e.target.value })}
-              />,
+        <div className="apply-box">
+          <p className="apply-hint">{METHOD_HINT[method]}</p>
+          <div className="d-fields">
+            {only("email") &&
+              field(
+                "target",
+                "Send applications to *",
+                <input
+                  id="q-target"
+                  type="email"
+                  value={job.apply.email}
+                  placeholder="recruitment@company.com"
+                  onChange={(e) => setApply({ email: e.target.value })}
+                />,
+              )}
+            {only("email") &&
+              field(
+                "subject",
+                "Email subject line",
+                <input
+                  id="q-subject"
+                  value={job.apply.subject}
+                  placeholder="e.g. I.T SPECIALIST"
+                  onChange={(e) => setApply({ subject: e.target.value })}
+                />,
+              )}
+            {only("link") &&
+              field(
+                "target",
+                "Application link *",
+                <input
+                  id="q-target"
+                  type="url"
+                  value={job.apply.url}
+                  placeholder="https://"
+                  onChange={(e) => setApply({ url: e.target.value })}
+                />,
+                true,
+              )}
+            {only("whatsapp") &&
+              field(
+                "target",
+                "WhatsApp or phone number *",
+                <input
+                  id="q-target"
+                  type="tel"
+                  value={job.apply.phone}
+                  placeholder="07XX XXX XXX"
+                  onChange={(e) => setApply({ phone: e.target.value })}
+                />,
+              )}
+            {only("in-person") &&
+              field(
+                "target",
+                "Where to apply *",
+                <input
+                  id="q-target"
+                  value={job.apply.address}
+                  placeholder="Address or building"
+                  onChange={(e) => setApply({ address: e.target.value })}
+                />,
+              )}
+            {only("in-person") &&
+              field(
+                "when",
+                "When",
+                <input
+                  id="q-when"
+                  value={job.apply.when}
+                  placeholder="e.g. Monday 6 Oct, 9am–1pm"
+                  onChange={(e) => setApply({ when: e.target.value })}
+                />,
+              )}
+            {only("email", "in-person") && (
+              <div className="f full">
+                <span className="label">{method === "email" ? "What to attach" : "What to bring"}</span>
+                <div className="chip-checks">
+                  {ATTACH_OPTIONS.map((option) => (
+                    <label key={option}>
+                      <input
+                        type="checkbox"
+                        checked={job.apply.attach.includes(option)}
+                        onChange={(e) =>
+                          setApply({
+                            attach: e.target.checked
+                              ? [...job.apply.attach, option]
+                              : job.apply.attach.filter((item) => item !== option),
+                          })
+                        }
+                      />{" "}
+                      {option}
+                    </label>
+                  ))}
+                </div>
+              </div>
             )}
-          {only("email") &&
-            field(
-              "subject",
-              "Email subject line",
-              <input
-                id="q-subject"
-                value={job.apply.subject}
-                placeholder="e.g. I.T SPECIALIST"
-                onChange={(e) => setApply({ subject: e.target.value })}
-              />,
-            )}
-          {only("link") &&
-            field(
-              "target",
-              "Application link *",
-              <input
-                id="q-target"
-                type="url"
-                value={job.apply.url}
-                placeholder="https://"
-                onChange={(e) => setApply({ url: e.target.value })}
+            {field(
+              method === "other" ? "target" : "notes",
+              method === "other" ? "How to apply *" : "Special instructions (optional)",
+              <textarea
+                id={method === "other" ? "q-target" : "q-notes"}
+                rows={3}
+                value={job.apply.notes}
+                placeholder={
+                  method === "other"
+                    ? "Exactly what the advert says to do"
+                    : "e.g. Quote the job reference. Only shortlisted candidates will be contacted."
+                }
+                onChange={(e) => setApply({ notes: e.target.value })}
               />,
               true,
+              method === "other" ? "q-target" : "q-notes",
             )}
-          {only("whatsapp") &&
-            field(
-              "target",
-              "WhatsApp / phone number *",
-              <input
-                id="q-target"
-                type="tel"
-                value={job.apply.phone}
-                placeholder="07XX XXX XXX"
-                onChange={(e) => setApply({ phone: e.target.value })}
-              />,
-            )}
-          {only("in-person") &&
-            field(
-              "target",
-              "Where to apply *",
-              <input
-                id="q-target"
-                value={job.apply.address}
-                placeholder="Address or building"
-                onChange={(e) => setApply({ address: e.target.value })}
-              />,
-            )}
-          {only("in-person") &&
-            field(
-              "when",
-              "When",
-              <input
-                id="q-when"
-                value={job.apply.when}
-                placeholder="e.g. Monday 6 Oct, 9am–1pm"
-                onChange={(e) => setApply({ when: e.target.value })}
-              />,
-            )}
-          {only("email", "in-person") && (
-            <div className="f full">
-              <span className="label">What to send or bring</span>
-              <div className="chip-checks">
-                {ATTACH_OPTIONS.map((option) => (
-                  <label key={option}>
-                    <input
-                      type="checkbox"
-                      checked={job.apply.attach.includes(option)}
-                      onChange={(e) =>
-                        setApply({
-                          attach: e.target.checked
-                            ? [...job.apply.attach, option]
-                            : job.apply.attach.filter((item) => item !== option),
-                        })
-                      }
-                    />{" "}
-                    {option}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-          {field(
-            method === "other" ? "target" : "notes",
-            method === "other" ? "How to apply *" : "Special instructions",
-            <textarea
-              id={method === "other" ? "q-target" : "q-notes"}
-              rows={2}
-              value={job.apply.notes}
-              placeholder="e.g. State your current and expected salary. Only shortlisted candidates will be contacted."
-              onChange={(e) => setApply({ notes: e.target.value })}
-            />,
-            true,
-            method === "other" ? "q-target" : "q-notes",
-          )}
-          {field(
-            "source",
-            "Where did you find this advert?",
-            <input
-              id="q-source"
-              value={job.source}
-              placeholder="e.g. Company's LinkedIn page"
-              onChange={(e) => set({ source: e.target.value })}
-            />,
-            true,
-          )}
+          </div>
         </div>
       </section>
     </form>

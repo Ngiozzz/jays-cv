@@ -386,7 +386,7 @@ export function InboxBoard({ data, companies, siteUrl, aiPretend, sampleFiles, i
         <summary>
           <Icon name="upload" size={18} />
           <span>Add posters</span>
-          <small>Drop today&apos;s posters, screenshots or photos</small>
+          <small>Drop or paste today&apos;s posters, screenshots, photos or PDFs</small>
         </summary>
         <IntakePanel
           aiPretend={aiPretend}

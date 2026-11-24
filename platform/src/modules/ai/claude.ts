@@ -98,7 +98,12 @@ function answerJson(response: Anthropic.Beta.BetaMessage, task: string): unknown
   }
 }
 
-export type PosterImage = { base64: string; mediaType: "image/jpeg" | "image/png" | "image/webp"; fileName: string };
+// A poster image, or a PDF advert (sent as a document)
+export type PosterImage = {
+  base64: string;
+  mediaType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+  fileName: string;
+};
 
 // The poster, plus the text posted with it and the pages its links lead to (when there are any)
 export async function readJobPoster(
@@ -121,8 +126,16 @@ export async function readJobPoster(
         role: "user",
         content: [
           ...extraTexts(extras).map((text) => ({ type: "text" as const, text })),
-          { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.base64 } },
-          { type: "text", text: posterPrompt(today, extras) },
+          image.mediaType === "application/pdf"
+            ? ({
+                type: "document",
+                source: { type: "base64", media_type: "application/pdf", data: image.base64 },
+              } as const)
+            : ({
+                type: "image",
+                source: { type: "base64", media_type: image.mediaType, data: image.base64 },
+              } as const),
+          { type: "text", text: posterPrompt(today, extras, image.mediaType === "application/pdf") },
         ],
       },
     ],

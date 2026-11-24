@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { findLinks } from "@/modules/ai/links";
 import { AiProgress } from "@/components/ai/AiProgress";
 import { AiReport } from "@/components/admin/jobs/AiReport";
@@ -45,7 +45,8 @@ type Props = {
   setDiscardOpen: (open: boolean) => void;
 };
 
-// The poster on one side, what the AI read on the other, and the decision
+// One job opened from the Bulk post table, as a sheet from the right: the advert stays in view on the
+// left while what the AI read is checked on the right, and the decision is always at the bottom
 export function InboxDetail(props: Props) {
   const { card, job, flags, position } = props;
   const clean = flags.every((flag) => flag.level === "info");
@@ -54,7 +55,7 @@ export function InboxDetail(props: Props) {
       <button
         type="button"
         className="icon-btn"
-        aria-label="Previous poster"
+        aria-label="Previous job"
         disabled={position.index <= 0}
         onClick={() => props.onStep(-1)}
       >
@@ -66,7 +67,7 @@ export function InboxDetail(props: Props) {
       <button
         type="button"
         className="icon-btn"
-        aria-label="Next poster"
+        aria-label="Next job"
         disabled={position.index >= position.total - 1}
         onClick={() => props.onStep(1)}
       >
@@ -74,240 +75,268 @@ export function InboxDetail(props: Props) {
       </button>
     </div>
   );
-  const poster = card.posterUrl ? (
-    <figure className={card.state === "reading" ? "d-poster scanning" : "d-poster"}>
-      <img src={card.posterUrl} alt={`Job poster as received${job?.title ? `: ${job.title}` : ""}`} />
-      <figcaption>
-        {card.source} · {card.posterName} ·{" "}
-        <a href={card.posterUrl} target="_blank" rel="noopener">
-          Open full size
-        </a>
-      </figcaption>
-    </figure>
-  ) : (
-    // A job a job source found on a web page: no poster, the advert's own page instead
-    <figure className={card.state === "reading" ? "d-page scanning" : "d-page"}>
-      <p className="d-page-from">From: {card.source}</p>
-      <p className="d-page-name">{card.posterName}</p>
-      {card.aiCheck && card.aiCheckReason && (
-        <p className={card.aiCheck === "job" ? "d-ai-check ok" : "d-ai-check"}>AI check: {card.aiCheckReason}</p>
-      )}
-      {card.pdfUrl && (
-        <>
-          <iframe className="d-pdf" src={`${card.pdfUrl}#view=FitH`} title="The PDF advert" loading="lazy" />
-          <a className="d-pdf-open" href={card.pdfUrl} target="_blank" rel="noopener noreferrer">
-            Open the PDF full size ↗
-          </a>
-        </>
-      )}
-      {card.pageUrl && (
-        <a className="btn btn-ghost" href={card.pageUrl} target="_blank" rel="noopener noreferrer">
-          Open the original advert ↗
-        </a>
-      )}
-      <figcaption>Check the details against the original before publishing.</figcaption>
-    </figure>
-  );
+  const original = <Original card={card} title={job?.title} />;
 
   if (card.state === "reading") {
     return (
-      <>
-        <div className="d-head">
-          <div>
-            <span className="ipill reading">Reading…</span>
-            <small>The AI is reading this poster. Usually a few seconds.</small>
-            <AiProgress
-              active
-              seconds={10 + 4 * findLinks(card.caption).length}
-              steps={[
-                "Waiting its turn",
-                ...(findLinks(card.caption).length ? ["Opening the company's pages"] : []),
-                "Reading the text",
-                "Filling in the details",
-                "Checking for scam signs",
-              ]}
-            />
-          </div>
-          {nav}
+      <Sheet
+        status={<span className="ipill reading">Reading…</span>}
+        sub="The AI is reading this advert. Usually a few seconds."
+        nav={nav}
+        source={original}
+      >
+        <AiProgress
+          active
+          seconds={10 + 4 * findLinks(card.caption).length}
+          steps={[
+            "Waiting its turn",
+            ...(findLinks(card.caption).length ? ["Opening the company's pages"] : []),
+            "Reading the text",
+            "Filling in the details",
+            "Checking for scam signs",
+          ]}
+        />
+        <div className="d-skel">
+          {Array.from({ length: 7 }, (_, i) => (
+            <span key={i}></span>
+          ))}
         </div>
-        <div className="d-grid">
-          {poster}
-          <div className="d-skel">
-            {Array.from({ length: 7 }, (_, i) => (
-              <span key={i}></span>
-            ))}
-          </div>
-        </div>
-      </>
+      </Sheet>
     );
   }
 
   if (card.state === "approved") {
     return (
-      <>
-        <div className="d-head">
-          <div>
-            <span className="ipill live">Live on the website</span>
-            {card.jobSlug && (
-              <small>
-                <a href={`/jobs/${card.jobSlug}`} target="_blank" rel="noopener">
-                  View job page ↗
-                </a>
-              </small>
-            )}
-          </div>
-          {nav}
+      <Sheet
+        status={<span className="ipill live">Live on the website</span>}
+        sub={card.source}
+        nav={nav}
+        source={original}
+      >
+        <div className="d-gone">
+          <p>
+            <strong>{job?.title}</strong>
+            <br />
+            {job?.company}
+          </p>
+          <p>Edit it any time under Job board. It&apos;s in today&apos;s channel post.</p>
+          {card.jobSlug && (
+            <a className="btn btn-ghost" href={`/jobs/${card.jobSlug}`} target="_blank" rel="noopener">
+              View the job page ↗
+            </a>
+          )}
         </div>
-        <div className="d-grid">
-          {poster}
-          <div className="d-gone">
-            <p>
-              <strong>{job?.title}</strong>
-              <br />
-              {job?.company}
-            </p>
-            <p>Edit it any time under Jobs. It&apos;s in today&apos;s channel post below.</p>
-          </div>
-        </div>
-      </>
+      </Sheet>
     );
   }
 
   if (card.state === "discarded") {
     return (
-      <>
-        <div className="d-head">
-          <div>
-            <span className="ipill gone">Discarded: {DISCARD_LABEL[card.discardReason ?? "other"]}</span>
-          </div>
-          {nav}
+      <Sheet
+        status={<span className="ipill gone">Discarded: {DISCARD_LABEL[card.discardReason ?? "other"]}</span>}
+        sub={card.source}
+        nav={nav}
+        source={original}
+      >
+        <div className="d-gone">
+          <p>This advert was not published. Discarded adverts are kept for a week.</p>
+          <button type="button" className="btn btn-ghost" onClick={props.onRestore} disabled={props.busy}>
+            Restore to inbox
+          </button>
         </div>
-        <div className="d-grid">
-          {poster}
-          <div className="d-gone">
-            <p>This poster was not published. Discarded posters are kept for a week.</p>
-            <button type="button" className="btn btn-ghost" onClick={props.onRestore} disabled={props.busy}>
-              Restore to inbox
-            </button>
-          </div>
-        </div>
-      </>
+      </Sheet>
     );
   }
 
   return (
-    <>
-      <div className="d-head">
-        <div>
-          <span className={clean ? "ipill ready" : "ipill flagged"}>{clean ? "Ready to approve" : "Needs a look"}</span>
-          <small>
-            {card.source}
-            {card.part && ` · Job ${card.part.index} of ${card.part.total} from this poster`}
-          </small>
-        </div>
-        {nav}
-      </div>
+    <Sheet
+      status={
+        <span className={clean ? "ipill ready" : "ipill flagged"}>{clean ? "Ready to approve" : "Needs a look"}</span>
+      }
+      sub={`${card.source}${card.part ? ` · Job ${card.part.index} of ${card.part.total} from this advert` : ""}`}
+      nav={nav}
+      source={
+        <>
+          {original}
+          <CaptionBox key={card.id} card={card} onReread={props.onReread} />
+        </>
+      }
+      actions={
+        props.discardOpen ? (
+          <DiscardChoice
+            flags={flags}
+            onCancel={() => props.setDiscardOpen(false)}
+            onDiscard={props.onDiscard}
+            busy={props.busy}
+          />
+        ) : (
+          <div className="d-actions">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => props.setDiscardOpen(true)}
+              disabled={props.busy}
+            >
+              <Icon name="trash" />
+              Discard <kbd>D</kbd>
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => props.onStep(1)}>
+              Skip for now
+            </button>
+            <button type="button" className="btn btn-primary" onClick={props.onApprove} disabled={props.busy}>
+              <Icon name="check" />
+              {props.busy ? "Publishing…" : "Approve & publish"} <kbd>A</kbd>
+            </button>
+          </div>
+        )
+      }
+    >
       {card.readError && (
         <p className="d-note">
           <Icon name="info" />
           {card.readError}
         </p>
       )}
-      <div className="d-flags">
-        {flags.map((flag) => (
-          <div key={flag.key} className={`d-flag ${flag.level}`}>
-            <span className="d-flag-icon" aria-hidden="true" />
-            <div>
-              <b>{flag.text}</b>
-              <span>{flag.more}</span>
-            </div>
-            {["scam", "duplicate", "expired"].includes(flag.key) && (
-              <div className="d-flag-acts">
-                <button
-                  type="button"
-                  className={flag.key === "scam" ? "btn btn-danger btn-sm" : "btn btn-ghost btn-sm"}
-                  onClick={() => props.onDiscard(flag.key)}
-                  disabled={props.busy}
-                >
-                  Discard {flag.key === "scam" ? "as scam" : flag.key === "duplicate" ? "duplicate" : ""}
-                </button>
+      {flags.length > 0 && (
+        <div className="d-flags">
+          {flags.map((flag) => (
+            <div key={flag.key} className={`d-flag ${flag.level}`}>
+              <span className="d-flag-icon" aria-hidden="true" />
+              <div>
+                <b>{flag.text}</b>
+                <span>{flag.more}</span>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="d-grid">
-        <div className="d-side">
-          <p className="d-step-label">
-            <span className="n">1</span>The poster
-          </p>
-          {poster}
-          <CaptionBox key={card.id} card={card} onReread={props.onReread} />
-          {job && (
-            <div className="d-preview">
-              <p className="preview-label">Live preview</p>
-              <JobCard
-                {...job}
-                deadline={job.openEnded ? null : job.deadline}
-                applyMethod={job.apply.method}
-                today={props.today}
-                logoUrl={
-                  props.logo?.url ??
-                  props.companies.find((c) => companyKey(c.name) === companyKey(job.company))?.logoUrl
-                }
-              />
+              {["scam", "duplicate", "expired"].includes(flag.key) && (
+                <div className="d-flag-acts">
+                  <button
+                    type="button"
+                    className={flag.key === "scam" ? "btn btn-danger btn-sm" : "btn btn-ghost btn-sm"}
+                    onClick={() => props.onDiscard(flag.key)}
+                    disabled={props.busy}
+                  >
+                    Discard {flag.key === "scam" ? "as scam" : flag.key === "duplicate" ? "duplicate" : ""}
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        {job && (
-          <div>
-            {!card.readError && (
-              <AiReport
-                report={readingReport(job, props.unsure)}
-                links={card.links}
-                idOf={(key) => (key === "apply" ? "q-target" : key === "location" ? "q-county" : `q-${key}`)}
-              />
-            )}
-            <QuickForm
-              job={job}
-              unsure={props.unsure}
-              companies={props.companies}
-              logo={props.logo}
-              onChange={props.onChange}
-              onConfirm={props.onConfirm}
-              onLogo={props.onLogo}
-            />
-          </div>
-        )}
-      </div>
-      {props.discardOpen ? (
-        <DiscardChoice
-          flags={flags}
-          onCancel={() => props.setDiscardOpen(false)}
-          onDiscard={props.onDiscard}
-          busy={props.busy}
-        />
-      ) : (
-        <div className="d-actions">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => props.setDiscardOpen(true)}
-            disabled={props.busy}
-          >
-            <Icon name="trash" />
-            Discard <kbd>D</kbd>
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={() => props.onStep(1)}>
-            Skip for now
-          </button>
-          <button type="button" className="btn btn-primary" onClick={props.onApprove} disabled={props.busy}>
-            <Icon name="check" />
-            {props.busy ? "Publishing…" : "Approve & publish"} <kbd>A</kbd>
-          </button>
+          ))}
         </div>
       )}
-    </>
+      {job && (
+        <>
+          {!card.readError && (
+            <AiReport
+              report={readingReport(job, props.unsure)}
+              links={card.links}
+              idOf={(key) => (key === "apply" ? "q-target" : key === "location" ? "q-county" : `q-${key}`)}
+            />
+          )}
+          <QuickForm
+            job={job}
+            unsure={props.unsure}
+            companies={props.companies}
+            logo={props.logo}
+            onChange={props.onChange}
+            onConfirm={props.onConfirm}
+            onLogo={props.onLogo}
+          />
+          <section className="d-step sheet-preview">
+            <h3>
+              <span className="n">6</span>How it will look
+            </h3>
+            <JobCard
+              {...job}
+              deadline={job.openEnded ? null : job.deadline}
+              applyMethod={job.apply.method}
+              today={props.today}
+              logoUrl={
+                props.logo?.url ?? props.companies.find((c) => companyKey(c.name) === companyKey(job.company))?.logoUrl
+              }
+            />
+          </section>
+        </>
+      )}
+    </Sheet>
+  );
+}
+
+// The sheet's frame: a bar along the top, the advert on the left (it stays put while the right side
+// scrolls), the work on the right, and the decision pinned to the bottom
+function Sheet(props: {
+  status: ReactNode;
+  sub: string;
+  nav: ReactNode;
+  source: ReactNode;
+  children: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="sheet">
+      <header className="sheet-bar">
+        <div className="sheet-status">
+          {props.status}
+          <small>{props.sub}</small>
+        </div>
+        {props.nav}
+      </header>
+      <div className="sheet-split">
+        <aside className="sheet-source" aria-label="The advert as received">
+          {props.source}
+        </aside>
+        <div className="sheet-work">{props.children}</div>
+      </div>
+      {props.actions && <footer className="sheet-actions">{props.actions}</footer>}
+    </div>
+  );
+}
+
+// The advert as it came in: a poster image, a PDF, or (from a job source) the web page it's on
+function Original({ card, title }: { card: InboxCard; title?: string }) {
+  const scanning = card.state === "reading" ? " scanning" : "";
+  if (card.posterUrl)
+    return (
+      <figure className={`sheet-poster${scanning}`}>
+        <div className="sheet-poster-frame">
+          <img src={card.posterUrl} alt={`Job poster as received${title ? `: ${title}` : ""}`} />
+        </div>
+        <figcaption>
+          <span>{card.posterName}</span>
+          <a href={card.posterUrl} target="_blank" rel="noopener">
+            Open full size ↗
+          </a>
+        </figcaption>
+      </figure>
+    );
+  return (
+    <figure className={`sheet-poster sheet-doc${scanning}`}>
+      {card.pdfUrl ? (
+        <div className="sheet-poster-frame">
+          <iframe src={`${card.pdfUrl}#view=FitH&toolbar=0`} title="The PDF advert" loading="lazy" />
+        </div>
+      ) : (
+        <div className="sheet-page">
+          <Icon name="globe" />
+          <b>{card.posterName}</b>
+          <span>Found on {card.source}</span>
+        </div>
+      )}
+      {card.aiCheck && card.aiCheckReason && (
+        <p className={card.aiCheck === "job" ? "d-ai-check ok" : "d-ai-check"}>AI check: {card.aiCheckReason}</p>
+      )}
+      <figcaption>
+        <span>{card.pdfUrl ? card.posterName : "Check the details against the original"}</span>
+        {card.pdfUrl && (
+          <a href={card.pdfUrl} target="_blank" rel="noopener noreferrer">
+            Open the PDF ↗
+          </a>
+        )}
+        {card.pageUrl && (
+          <a href={card.pageUrl} target="_blank" rel="noopener noreferrer">
+            Open the original advert ↗
+          </a>
+        )}
+      </figcaption>
+    </figure>
   );
 }
 

@@ -13,6 +13,19 @@ export function posterProblem(file: { type: string; size: number }): string | nu
   return null;
 }
 
+// Bulk post also takes PDF adverts (Jay gets many as PDFs on WhatsApp), read as documents
+export const ADVERT_PDF_TYPE = "application/pdf";
+// Vercel refuses request bodies over 4.5 MB, and each PDF goes up on its own
+export const ADVERT_PDF_MAX_BYTES = 4_000_000;
+
+export function bulkFileProblem(file: { type: string; size: number }): string | null {
+  if (file.type !== ADVERT_PDF_TYPE) return posterProblem(file);
+  if (file.size > ADVERT_PDF_MAX_BYTES)
+    return "That PDF is too large. Please use one under 4 MB, or a screenshot of it.";
+  if (file.size === 0) return "That PDF is empty. Please choose it again.";
+  return null;
+}
+
 export const isPosterType = (type: string): type is PosterType => POSTER_TYPES.includes(type as PosterType);
 
 const EXTENSION: Record<PosterType, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };

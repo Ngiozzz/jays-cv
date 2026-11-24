@@ -130,10 +130,12 @@ export const TAGS_RULE =
 export const SCAM_RULE =
   "Judge whether the advert looks like a scam. Set scamRisk to high when it asks applicants to pay any fee or send money, promises pay far above the role with no experience needed, or hides the employer behind a personal number or free email for a big company; medium when something is unusual but could be genuine; otherwise low. In scamReason, say why in one plain sentence (empty when low).";
 
-export function posterPrompt(today: string, extras: PosterExtras | null = null): string {
+export function posterPrompt(today: string, extras: PosterExtras | null = null, pdf = false): string {
   const hasExtras = Boolean(extras && (extras.caption.trim() || extras.pages.length));
   return [
-    "This image is a job advert (poster) shared with a Kenyan jobs board. Read it and fill in the job details.",
+    pdf
+      ? "This PDF document is a job advert shared with a Kenyan jobs board. Read it and fill in the job details. Put the advert's main text in rawText (up to about 300 words)."
+      : "This image is a job advert (poster) shared with a Kenyan jobs board. Read it and fill in the job details.",
     "If the advert lists more than one job, add one entry to jobs for each job, each with its own title, location, category, details and how to apply; repeat what they share (company, deadline) in each. Otherwise add exactly one entry.",
     ...(hasExtras
       ? [

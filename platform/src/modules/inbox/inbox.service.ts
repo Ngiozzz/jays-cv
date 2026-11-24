@@ -14,7 +14,7 @@ import { createAdvertPdfRecord, createPosterRecord, findJob } from "@/modules/jo
 import { todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { saveJob } from "@/modules/jobs/jobs.service";
 import { EMPTY_JOB, jobDraftSchema, publishProblems, type JobInput } from "@/modules/jobs/jobs.schema";
-import { isPosterType, posterProblem } from "@/modules/jobs/poster";
+import { ADVERT_PDF_TYPE, bulkFileProblem, isPosterType, posterProblem } from "@/modules/jobs/poster";
 import { advertText, captionExtras, type AdvertText, type ReadJob } from "@/modules/jobs/poster.service";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { assertCan } from "@/modules/team/permissions";
@@ -34,16 +34,35 @@ const posterBucketPath = (tenantId: string, randomPart: string, type: string) =>
 // Saves the posters and queues them for reading. Nothing is read or published yet.
 export async function addPosters(member: CurrentMember, files: File[], source: string): Promise<Result> {
   assertCan(member, "postJobs");
-  if (!files.length) return { ok: false, error: "Choose at least one poster image." };
+  if (!files.length) return { ok: false, error: "Choose at least one poster image or PDF." };
   if (files.length > MAX_POSTERS_PER_BATCH)
     return { ok: false, error: `Add up to ${MAX_POSTERS_PER_BATCH} posters at a time.` };
-  const problem = files.map(posterProblem).find(Boolean);
+  const problem = files.map(bulkFileProblem).find(Boolean);
   if (problem) return { ok: false, error: problem };
 
   const tenantId = member.tenant.id;
   for (const file of files) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    // A PDF advert is kept like the PDFs job sources find: shown beside the details, offered with the job
+    if (file.type === ADVERT_PDF_TYPE) {
+      const pdfPath = advertPdfPath(tenantId);
+      await fileStore.put("job-adverts", pdfPath, bytes, ADVERT_PDF_TYPE);
+      await repo.createInboxItem(tenantId, {
+        posterPath: null,
+        posterName: file.name || "advert.pdf",
+        posterType: ADVERT_PDF_TYPE,
+        posterBytes: 0,
+        advertPdfPath: pdfPath,
+        advertPdfBytes: file.size,
+        source,
+        unsure: [],
+        checked: [],
+        addedById: member.id,
+      });
+      continue;
+    }
     const path = posterBucketPath(tenantId, randomBytes(12).toString("hex"), file.type);
-    await fileStore.put("job-posters", path, new Uint8Array(await file.arrayBuffer()), file.type);
+    await fileStore.put("job-posters", path, bytes, file.type);
     await repo.createInboxItem(tenantId, {
       posterPath: path,
       posterName: file.name || "poster",
@@ -71,7 +90,8 @@ export async function readInboxItem(member: CurrentMember, id: string): Promise<
   if (!(await repo.claimForReading(tenantId, id))) return { ok: true };
   const item = await repo.findInboxItem(tenantId, id);
   if (!item) return { ok: false, error: "Poster not found." };
-  if (!item.pageUrl && !isPosterType(item.posterType)) return { ok: false, error: "Poster not found." };
+  if (!item.pageUrl && !isPosterType(item.posterType) && !item.advertPdfPath)
+    return { ok: false, error: "Poster not found." };
   await readClaimedItem(tenantId, item, member.id);
   return { ok: true };
 }
@@ -95,6 +115,16 @@ export async function readClaimedItem(tenantId: string, item: ItemRow, memberId:
       answer = await readJobPage(page, item.source, today);
       // A PDF advert is kept, to show beside the details and offer with the published job
       if (page.kind === "pdf") pdf = await keepAdvertPdf(tenantId, item, Buffer.from(page.base64, "base64"));
+    } else if (!item.posterPath && item.advertPdfPath) {
+      // A PDF advert added on Bulk post: read like a poster, with the text that came with it
+      const pdfBytes = await fileStore.get("job-adverts", item.advertPdfPath);
+      // Already kept; any jobs split off it get their own copy
+      pdf = { path: item.advertPdfPath, bytes: pdfBytes };
+      answer = await readJobPoster(
+        { base64: Buffer.from(pdfBytes).toString("base64"), mediaType: ADVERT_PDF_TYPE, fileName: item.posterName },
+        today,
+        extras,
+      );
     } else {
       if (!item.posterPath || !isPosterType(item.posterType)) throw new Error("The poster image is missing");
       bytes = await fileStore.get("job-posters", item.posterPath);

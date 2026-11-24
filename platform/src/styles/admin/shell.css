@@ -2405,3 +2405,373 @@ td .cell-sub {
   gap: 8px;
   margin: -8px 0 20px;
 }
+
+/* =========================================================
+   Bulk post: one job, as a sheet from the right. The advert stays in view on the left while the
+   form scrolls on the right; the decision is pinned to the bottom.
+   ========================================================= */
+.admin-dialog.inbox-panel {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(1240px, calc(100vw - 40px));
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border-radius: 18px 0 0 18px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.admin-dialog.inbox-panel[open] {
+  animation: sheet-in 260ms var(--ease);
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(56px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-dialog.inbox-panel[open] {
+    animation: none;
+  }
+}
+.inbox-panel .inbox-panel-body {
+  height: 100%;
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+}
+.inbox-panel .inbox-panel-close {
+  top: 13px;
+  right: 16px;
+}
+.sheet {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+}
+.sheet-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 64px 12px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+.sheet-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.sheet-status small {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sheet-split {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.82fr) minmax(0, 1.18fr);
+  min-height: 0;
+}
+.sheet-source {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 20px 20px 24px 24px;
+  overflow: auto;
+  border-right: 1px solid var(--line);
+  background: var(--alt);
+}
+.sheet-work {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  padding: 20px 28px 40px;
+  overflow: auto;
+}
+.sheet-poster {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.sheet-poster-frame {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.sheet-poster-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 280px);
+  object-fit: contain;
+}
+.sheet-poster-frame iframe {
+  width: 100%;
+  height: calc(100dvh - 250px);
+  min-height: 420px;
+  border: 0;
+  background: #fff;
+}
+.sheet-poster.scanning .sheet-poster-frame {
+  animation: sheet-scan 1.4s ease-in-out infinite alternate;
+}
+@keyframes sheet-scan {
+  to {
+    opacity: 0.6;
+  }
+}
+.sheet-poster figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sheet-poster figcaption span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sheet-poster figcaption a {
+  color: var(--text);
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sheet-page {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding: 28px 22px;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 14px;
+}
+.sheet-page svg {
+  margin-bottom: 6px;
+  color: var(--text-2);
+}
+.sheet-page span {
+  color: var(--muted);
+}
+.sheet-source .caption-field textarea {
+  min-height: 84px;
+}
+.sheet-work .d-steps {
+  display: grid;
+  gap: 20px;
+}
+.sheet-work .d-step {
+  margin: 0;
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.sheet-work .d-step h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  font: 500 17px/24px var(--serif);
+}
+.sheet-work .d-flags,
+.sheet-work .d-note,
+.sheet-work .d-gone {
+  margin: 0;
+}
+.sheet-preview .job-card {
+  max-width: 520px;
+}
+.sheet-actions {
+  padding: 12px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+.sheet-actions .d-actions {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.sheet-actions .d-actions > .btn:first-of-type {
+  margin-right: auto;
+}
+.sheet-actions .reason-pick legend {
+  margin-right: 8px;
+  font-weight: 500;
+}
+@media (max-width: 900px) {
+  .admin-dialog.inbox-panel {
+    width: 100vw;
+    border-radius: 0;
+  }
+  .sheet-split {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+  .sheet-source,
+  .sheet-work {
+    overflow: visible;
+  }
+  .sheet-source {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .sheet-poster-frame img {
+    max-height: 60vh;
+  }
+  .sheet-poster-frame iframe {
+    height: 60vh;
+  }
+}
+
+/* Responsibilities and requirements: one point per row */
+.points ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.points li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: 8px;
+}
+.points li > .points-n,
+.points li > .points-x {
+  margin-top: 6px;
+}
+/* Each point grows with its text instead of hiding the end of a long one */
+.f .points textarea {
+  min-height: 36px;
+  padding: 7px 12px;
+  line-height: 20px;
+  resize: none;
+  field-sizing: content;
+}
+.f .apply-box textarea {
+  min-height: 84px;
+  field-sizing: content;
+}
+.points-n {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--raised);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.points-x {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--muted);
+}
+.points-x:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+.points-x:disabled {
+  visibility: hidden;
+}
+.points-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0 30px;
+  padding: 6px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.points-add:hover {
+  border-color: var(--gold);
+  color: var(--text);
+}
+
+/* How to apply: pick the method, then its fields */
+.apply-methods {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.apply-methods label {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px 6px 10px;
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-align: center;
+  cursor: pointer;
+}
+.apply-methods input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.apply-methods label:hover {
+  color: var(--text);
+}
+.apply-methods label:has(input:checked) {
+  background: var(--gold-soft);
+  box-shadow: inset 0 0 0 1.5px var(--gold);
+  color: var(--text);
+}
+.apply-methods label:has(input:checked) svg {
+  color: var(--gold-ink);
+}
+.apply-methods label:has(input:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.apply-box {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--alt);
+}
+.apply-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+@media (max-width: 640px) {
+  .apply-methods {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

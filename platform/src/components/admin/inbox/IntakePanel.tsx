@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition, type DragEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type DragEvent } from "react";
 import { addPostersAction } from "@/app/(admin)/admin/(signed-in)/inbox/actions";
 import { Icon } from "@/components/icons/Icon";
 import { POSTER_SIZE, shrinkImage } from "@/components/admin/jobs/shrink-image";
+import { ADVERT_PDF_MAX_BYTES, ADVERT_PDF_TYPE } from "@/modules/jobs/poster";
 
 const SOURCES = [
   "Uploaded",
@@ -24,7 +25,7 @@ type Props = {
   onAdded: (count: number) => void;
 };
 
-// "Drop today's posters here": up to 30 images, shrunk in the browser, then queued for reading
+// "Drop today's posters here": up to 30 images (shrunk in the browser) or PDF adverts, queued for reading
 export function IntakePanel({ aiPretend, sampleFiles, tokens, onAdded }: Props) {
   const [source, setSource] = useState("Uploaded");
   const [dragging, setDragging] = useState(false);
@@ -32,17 +33,33 @@ export function IntakePanel({ aiPretend, sampleFiles, tokens, onAdded }: Props) 
   const [uploading, startUpload] = useTransition();
 
   const upload = (files: File[], from: string) => {
-    const images = files.filter((file) => file.type.startsWith("image/")).slice(0, MAX);
-    if (!images.length) {
-      setError("Those files aren't images. Choose JPG or PNG posters.");
+    const chosen = files
+      .filter((file) => file.type.startsWith("image/") || file.type === ADVERT_PDF_TYPE)
+      .slice(0, MAX);
+    if (!chosen.length) {
+      setError("Those files aren't posters. Choose images (JPG, PNG) or PDF adverts.");
+      return;
+    }
+    const tooBig = chosen.find((file) => file.type === ADVERT_PDF_TYPE && file.size > ADVERT_PDF_MAX_BYTES);
+    if (tooBig) {
+      setError(`${tooBig.name} is over 4 MB. Send a smaller PDF, or a screenshot of it.`);
       return;
     }
     setError(null);
     startUpload(async () => {
+      const images = chosen.filter((file) => file.type !== ADVERT_PDF_TYPE);
+      const pdfs = chosen.filter((file) => file.type === ADVERT_PDF_TYPE);
       const small = await Promise.all(images.map((file) => shrinkImage(file, POSTER_SIZE)));
-      for (let start = 0; start < small.length; start += PER_REQUEST) {
+      // Shrunk images go a few at a time; each PDF goes on its own
+      const batches = [
+        ...Array.from({ length: Math.ceil(small.length / PER_REQUEST) }, (_, i) =>
+          small.slice(i * PER_REQUEST, (i + 1) * PER_REQUEST),
+        ),
+        ...pdfs.map((pdf) => [pdf]),
+      ];
+      for (const batch of batches) {
         const data = new FormData();
-        small.slice(start, start + PER_REQUEST).forEach((file) => data.append("posters", file));
+        batch.forEach((file) => data.append("posters", file));
         data.set("source", from);
         const result = await addPostersAction(data);
         if (!result.ok) {
@@ -50,7 +67,7 @@ export function IntakePanel({ aiPretend, sampleFiles, tokens, onAdded }: Props) 
           return;
         }
       }
-      onAdded(small.length);
+      onAdded(chosen.length);
     });
   };
 
@@ -64,6 +81,40 @@ export function IntakePanel({ aiPretend, sampleFiles, tokens, onAdded }: Props) 
       );
       upload(files, "WhatsApp forward");
     });
+
+  // Ctrl+V anywhere on Bulk post adds the copied posters (e.g. "Copy image" in WhatsApp Web), except
+  // while typing in a box or with a job open
+  const latest = useRef({ upload, source, uploading });
+  useEffect(() => {
+    latest.current = { upload, source, uploading };
+  });
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (document.querySelector("dialog[open]")) return;
+      const files = [...(event.clipboardData?.files ?? [])].filter(
+        (file) => file.type.startsWith("image/") || file.type === ADVERT_PDF_TYPE,
+      );
+      if (!files.length || latest.current.uploading) return;
+      event.preventDefault();
+      // A pasted image has no real name: give it one Jay can recognise in the list
+      const named = files.map((file, i) =>
+        file.name && file.name !== "image.png"
+          ? file
+          : new File(
+              [file],
+              `Pasted poster ${new Date().toLocaleTimeString("en-GB")}${files.length > 1 ? ` (${i + 1})` : ""}.png`,
+              {
+                type: file.type,
+              },
+            ),
+      );
+      latest.current.upload(named, latest.current.source);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, []);
 
   const onDrop = (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
@@ -84,7 +135,7 @@ export function IntakePanel({ aiPretend, sampleFiles, tokens, onAdded }: Props) 
       >
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           multiple
           aria-label="Add posters"
           disabled={uploading}
@@ -94,8 +145,11 @@ export function IntakePanel({ aiPretend, sampleFiles, tokens, onAdded }: Props) 
           }}
         />
         <Icon name="upload" />
-        <strong>{uploading ? "Adding posters…" : "Drop today's posters here"}</strong>
-        <small>Flyers, screenshots from LinkedIn or Facebook, phone photos. Up to {MAX} at once.</small>
+        <strong>{uploading ? "Adding posters…" : "Drop today's posters or PDF adverts here"}</strong>
+        <small>
+          Flyers, screenshots, phone photos, or PDF adverts from WhatsApp (up to 4 MB each). Up to {MAX} at once. Or
+          copy a poster and press <kbd>Ctrl</kbd>+<kbd>V</kbd> anywhere on this page.
+        </small>
       </label>
       <div className="intake-side">
         <label className="intake-source">
