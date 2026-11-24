@@ -42,7 +42,6 @@ function membershipTerms(invite: AcceptedInvite, accountName: string | null) {
     phone: invite.phone,
     canWrite: invite.canWrite,
     canPostJobs: invite.canPostJobs,
-    payPercent: invite.payPercent,
   };
 }
 
@@ -100,7 +99,6 @@ export function createInvite(
     phone: string | null;
     canWrite: boolean;
     canPostJobs: boolean;
-    payPercent: number;
     invitedById: string;
     expiresAt: Date;
   },
@@ -118,7 +116,6 @@ export function updateMembership(
   data: {
     canWrite?: boolean;
     canPostJobs?: boolean;
-    payPercent?: number;
     status?: "ACTIVE" | "PAUSED" | "REMOVED";
     displayName?: string;
     firstName?: string;

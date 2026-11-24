@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ContentToasts } from "@/components/admin/content/useSave";
 import { NotAllowed } from "@/components/admin/NotAllowed";
@@ -74,9 +73,6 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
 
   return (
     <ContentToasts>
-      <p className="crumb-back">
-        <Link href="/admin/orders">← All orders</Link>
-      </p>
       <div className="order-layout">
         <div className="order-main">
           <OrderHead order={order} now={now} />
@@ -257,11 +253,11 @@ function OrderHead({ order, now }: { order: TeamOrder; now: Date }) {
   const index = STEP_INDEX[order.status];
   const done = order.status === "DELIVERED";
   return (
-    <section className="panel panel-body order-head">
-      <div className="order-head-top">
+    <section className="panel order-head">
+      <div className="panel-head order-head-top">
         <div>
           <p className="order-meta">
-            {order.ref} · placed {ago(order.createdAt.toISOString(), now)}
+            <span className="ref">{order.ref}</span> · placed {ago(order.createdAt.toISOString(), now)}
           </p>
           <h2>
             {order.itemName}
@@ -273,48 +269,54 @@ function OrderHead({ order, now }: { order: TeamOrder; now: Date }) {
           <span className={`due ${order.due.tone}`}>{order.due.text}</span>
         </div>
       </div>
-      <ol className="stepper">
+      {/* The stage track, big: done stages dark, the current one gold */}
+      <ol className="steps">
         {STEPS.map(([key, label], i) => {
           const skipped = key === "REVISIONS" && order.revisions === 0;
-          const state = i < index || done ? (skipped ? "skipped" : "done") : i === index ? "current" : "";
+          const state = i < index || done ? (skipped ? "skipped" : "done") : i === index ? "now" : "";
           return (
-            <li key={key} className={state || undefined}>
-              <span>{state === "done" ? <Icon name="check" /> : i + 1}</span>
+            <li key={key} className={state || undefined} aria-current={state === "now" ? "step" : undefined}>
               {label}
-              {key === "REVISIONS" && (
-                <small>
-                  {order.revisions ? `${order.revisions} round${order.revisions > 1 ? "s" : ""}` : "if needed"}
-                </small>
-              )}
+              <small>
+                {key === "REVISIONS"
+                  ? order.revisions
+                    ? `${order.revisions} round${order.revisions > 1 ? "s" : ""}`
+                    : "If needed"
+                  : key === "WRITING" && order.writer
+                    ? order.writer.name.split(/\s+/)[0]
+                    : "\u00a0"}
+              </small>
             </li>
           );
         })}
       </ol>
-      {order.status === "REVISIONS" && order.lastChange && (
-        <blockquote className="change-request">
-          <strong>Changes requested ({order.lastChange.by}):</strong> &ldquo;{order.lastChange.text}&rdquo;
-          {order.lastChange.withFile && (
-            <small>
-              <Icon name="upload" /> The client attached a file: see Files → From the client.
-            </small>
-          )}
-          <small>{order.roundsLabel}</small>
-        </blockquote>
-      )}
-      <div className="next-step">
-        <span className="next-label">What happens next</span>
-        <p>
-          <strong>{order.next.who}:</strong> {order.next.what}
-        </p>
-        <p className="next-how">
-          <Icon
-            name={order.next.automatic === "yes" ? "refresh" : order.next.automatic === "partly" ? "sparkle" : "info"}
-          />
-          {order.next.how}
-        </p>
-      </div>
-      <div className="order-actions">
-        <HeadActions order={order} />
+      <div className="order-head-body">
+        {order.status === "REVISIONS" && order.lastChange && (
+          <blockquote className="change-request">
+            <strong>Changes requested ({order.lastChange.by}):</strong> &ldquo;{order.lastChange.text}&rdquo;
+            {order.lastChange.withFile && (
+              <small>
+                <Icon name="upload" /> The client attached a file: see Files, from the client.
+              </small>
+            )}
+            <small>{order.roundsLabel}</small>
+          </blockquote>
+        )}
+        <div className="next-step">
+          <span className="next-label">What happens next</span>
+          <p>
+            <strong>{order.next.who}:</strong> {order.next.what}
+          </p>
+          <p className="next-how">
+            <Icon
+              name={order.next.automatic === "yes" ? "refresh" : order.next.automatic === "partly" ? "sparkle" : "info"}
+            />
+            {order.next.how}
+          </p>
+        </div>
+        <div className="order-actions">
+          <HeadActions order={order} />
+        </div>
       </div>
     </section>
   );
@@ -460,7 +462,7 @@ function WriterBox({ order, now }: { order: TeamOrder; now: Date }) {
           <p className="open-order">
             <Icon name="alert" />
             <span>
-              <strong>⚠ Not accepted · waiting {ago(order.waitingSince, now).replace(" ago", "")}</strong>
+              <strong>Not accepted · waiting {ago(order.waitingSince, now).replace(" ago", "")}</strong>
               <small>
                 The client has paid. Any writer can accept; the first to accept takes it, and their name and the time
                 are recorded.

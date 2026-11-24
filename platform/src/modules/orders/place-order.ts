@@ -6,17 +6,17 @@ import { z } from "zod";
 // Step 1, "What do you need?": each choice suggests a package (by its place in the price list)
 export const NEEDS = [
   { key: "cv", title: "A professional CV", note: "A new CV, or a rewrite of your current one", packageIndex: 0 },
-  { key: "cv-letter", title: "CV + cover letter", note: "Everything you need to start applying", packageIndex: 1 },
+  { key: "cv-letter", title: "CV and cover letter", note: "Everything you need to start applying", packageIndex: 1 },
   {
     key: "makeover",
-    title: "Full career makeover",
-    note: "CV, cover letter, LinkedIn & a coaching call",
+    title: "A full career makeover",
+    note: "CV, cover letter, LinkedIn and a coaching call",
     packageIndex: 2,
   },
   {
     key: "single",
     title: "Just one service",
-    note: "Cover letter, LinkedIn, coaching, interview prep…",
+    note: "Cover letter, LinkedIn, coaching, interview practice and more",
     packageIndex: null,
   },
 ] as const;

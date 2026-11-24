@@ -28,7 +28,7 @@ async function Shell({ children }: { children: ReactNode }) {
 
 function visibleNav(member: CurrentMember): FrameNavItem[] {
   return ADMIN_NAV.filter((item) => !item.permission || can(member, item.permission)).map(
-    ({ href, label, icon, phase }) => ({ href, label, icon, phase }),
+    ({ href, label, icon, group, phase }) => ({ href, label, icon, group, phase }),
   );
 }
 

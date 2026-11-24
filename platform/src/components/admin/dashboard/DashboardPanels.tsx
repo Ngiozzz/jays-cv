@@ -1,343 +1,239 @@
 import Link from "next/link";
-import { Icon } from "@/components/icons/Icon";
 import { JobLogo } from "@/components/jobs/JobLogo";
-import { JobStatusPill } from "@/components/admin/jobs/JobStatusPill";
-import { formatNumber } from "@/lib/money";
+import { formatKes, formatNumber } from "@/lib/money";
 import type { DashboardData } from "@/modules/dashboard/dashboard.service";
-import { deadlineLabel } from "@/modules/jobs/jobs.rules";
-import type { ListOrder } from "@/modules/orders/orders-list";
-import { STATUS_TEXT } from "@/modules/orders/orders.rules";
-import { OpenTokenRequest, RequestTokensButton } from "./TokenRequest";
+import { deadlineLabel, jobRunway, todayInNairobi } from "@/modules/jobs/jobs.rules";
 
 type Jobs = NonNullable<DashboardData["jobs"]>;
 type Business = NonNullable<DashboardData["business"]>;
+type Sources = NonNullable<DashboardData["sources"]>;
 
-const orderLine = (order: ListOrder) => `${order.packageName ?? order.itemName} · ${STATUS_TEXT[order.status].team}`;
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
-// ---------- Orders ----------
+// ---------- The month (owner only) ----------
 
-// A writer's list of paid orders waiting for someone to take them
-export function OpenOrdersPanel({ open }: { open: { order: ListOrder; waiting: string }[] }) {
+export function MonthStats({
+  business,
+  delivered,
+  inProgress,
+}: {
+  business: Business;
+  delivered: number;
+  inProgress: number;
+}) {
   return (
-    <section className="panel open-panel">
-      <div className="panel-head">
-        <div>
-          <h2>Orders you can accept</h2>
-          <p className="panel-sub">Paid and waiting. The first writer to accept gets the order.</p>
-        </div>
+    <section aria-labelledby="month-title">
+      <div className="owner-note">
+        <h2 id="month-title">This month</h2>
+        <span>Only you see these</span>
       </div>
-      <div className="panel-body">
-        <ul className="mini-list">
-          {open.length ? (
-            open.map(({ order, waiting }) => (
-              <li key={order.id} className="is-open">
-                <div className="mini-main">
-                  <Link href={`/admin/orders/${order.ref}`}>
-                    {order.ref} · {order.packageName ?? order.itemName}
-                  </Link>
-                  <small>Waiting {waiting}</small>
-                </div>
-                <Link className="btn btn-primary btn-sm" href={`/admin/orders/${order.ref}`}>
-                  Open &amp; accept
-                </Link>
-              </li>
-            ))
-          ) : (
-            <li className="empty-note">Nothing waiting right now. New paid orders show up here.</li>
-          )}
-        </ul>
+      <div className="stats">
+        <Link className="stat" href="/admin/finance">
+          <span className="stat-l">Takings</span>
+          <Money value={business.takings} />
+          <span className="stat-c">{plural(business.paidCount, "order")} paid</span>
+        </Link>
+        <Link className="stat" href="/admin/orders?tab=delivered">
+          <span className="stat-l">CVs delivered</span>
+          <span className="stat-v key">{delivered}</span>
+          <span className="stat-c">{inProgress} being written now</span>
+        </Link>
+        <Link className="stat" href="/admin/finance">
+          <span className="stat-l">Average order</span>
+          <Money value={business.average} />
+          <span className="stat-c">Across {plural(business.paidCount, "paid order")}</span>
+        </Link>
+        <Link className="stat" href="/admin/ai">
+          <span className="stat-l">AI tokens left</span>
+          <span className={business.tokens.low ? "stat-v late" : "stat-v"}>
+            {formatNumber(business.tokens.remaining)}
+          </span>
+          <span className="stat-c">
+            {business.postersLeft !== null
+              ? `About ${formatNumber(business.postersLeft)} posters`
+              : `${business.tokens.percentLeft}% left`}
+          </span>
+        </Link>
       </div>
     </section>
   );
 }
 
-export function AttentionPanel({ orders }: { orders: { order: ListOrder; open: boolean; waiting: string }[] }) {
+// "KES 17,800" with the currency set small, so the number reads first
+function Money({ value }: { value: number }) {
   return (
-    <section className="panel">
-      <div className="panel-head">
-        <h2>Orders needing attention</h2>
-        <Link href="/admin/orders?quick=action">All orders →</Link>
-      </div>
-      <div className="panel-body">
-        <ul className="mini-list">
-          {orders.length ? (
-            orders.map(({ order, open, waiting }) => (
-              <li key={order.id} className={open ? "is-open" : undefined}>
-                <div className="mini-main">
-                  <Link href={`/admin/orders/${order.ref}`}>
-                    {order.ref} · {order.clientName}
-                  </Link>
-                  <small>{orderLine(order)}</small>
-                </div>
-                {open ? (
-                  <span className="flag critical">⚠ Not accepted · {waiting}</span>
-                ) : (
-                  <span className={`due ${order.due.tone}`}>{order.due.text.replace(/ ·.*/, "")}</span>
-                )}
-              </li>
-            ))
-          ) : (
-            <li className="empty-note">All caught up. No orders need action.</li>
-          )}
-        </ul>
-      </div>
-    </section>
+    <span className="stat-v" aria-label={formatKes(value)}>
+      <small>KES</small>
+      {value.toLocaleString("en-KE")}
+    </span>
   );
 }
 
 // ---------- Jobs ----------
 
-export function JobStats({ jobs }: { jobs: Jobs }) {
-  return (
-    <div className="stat-grid">
-      <Link className="stat-card" href="/admin/jobs?status=published" style={{ textDecoration: "none" }}>
-        <span className="icon-box">
-          <Icon name="globe" />
-        </span>
-        <div>
-          <strong>{jobs.live}</strong>
-          <span>Live on the website</span>
-        </div>
-      </Link>
-      <div className="stat-card warn">
-        <span className="icon-box">
-          <Icon name="clock" />
-        </span>
-        <div>
-          <strong>{jobs.closingSoon}</strong>
-          <span>Closing in 7 days</span>
-        </div>
-      </div>
-      <Link className="stat-card muted" href="/admin/jobs?status=draft" style={{ textDecoration: "none" }}>
-        <span className="icon-box">
-          <Icon name="edit" />
-        </span>
-        <div>
-          <strong>{jobs.drafts}</strong>
-          <span>Drafts</span>
-        </div>
-      </Link>
-      <Link className="stat-card red" href="/admin/jobs?status=expired" style={{ textDecoration: "none" }}>
-        <span className="icon-box">
-          <Icon name="eye-off" />
-        </span>
-        <div>
-          <strong>{jobs.expired}</strong>
-          <span>Expired (auto-hidden)</span>
-        </div>
-      </Link>
-    </div>
-  );
-}
-
-export function QuickPost() {
-  return (
-    <div className="quick-post">
-      <span className="icon-box" style={{ background: "rgba(230,200,119,.15)", color: "var(--gold)", margin: 0 }}>
-        <Icon name="image" />
-      </span>
-      <div>
-        <h3>Got a new job poster?</h3>
-        <p>
-          Drop today&apos;s posters in Bulk post jobs. AI reads them, flags scams and duplicates, and you approve each
-          one in seconds.
-        </p>
-      </div>
-      <Link className="btn btn-light" href="/admin/inbox">
-        Open Bulk post jobs
-      </Link>
-    </div>
-  );
-}
-
-type JobItem = Jobs["recent"][number];
-
-function JobLine({ job, children }: { job: JobItem; children: React.ReactNode }) {
-  return (
-    <li>
-      <JobLogo company={job.company || job.title} logoUrl={job.logoUrl} />
-      <div className="mini-main">
-        <Link href={`/admin/jobs/${job.id}`}>{job.title}</Link>
-        <small>{[job.company, job.location].filter(Boolean).join(" · ")}</small>
-      </div>
-      {children}
-    </li>
-  );
-}
-
 export function RecentJobs({ jobs }: { jobs: Jobs }) {
+  const today = todayInNairobi();
   return (
     <section className="panel">
       <div className="panel-head">
-        <h2>Recently posted</h2>
-        <Link href="/admin/jobs">All jobs →</Link>
+        <h2>Recently posted jobs</h2>
+        <Link href="/admin/jobs">All jobs</Link>
       </div>
-      <div className="panel-body">
-        <ul className="mini-list">
-          {jobs.recent.length ? (
-            jobs.recent.map((job) => (
-              <JobLine key={job.id} job={job}>
-                <JobStatusPill status={job.shownAs} />
-              </JobLine>
-            ))
-          ) : (
-            <li className="empty-note">No jobs yet.</li>
-          )}
-        </ul>
-      </div>
+      <ul className="rows">
+        {jobs.recent.map((job) => {
+          const deadline = deadlineLabel(job.deadline, today);
+          const runway = jobRunway(job.deadline, job.postedDay, today);
+          return (
+            <li key={job.id}>
+              <JobLogo company={job.company || job.title} logoUrl={job.logoUrl} />
+              <div className="grow">
+                <Link className="row-t" href={`/admin/jobs/${job.id}`}>
+                  {job.title}
+                </Link>
+                <span className="row-s">{[job.company, job.location].filter(Boolean).join(" · ")}</span>
+              </div>
+              <div className="row-r">
+                <span className={deadline.tone === "urgent" ? "soon" : undefined}>
+                  {job.shownAs === "draft" ? "Draft" : deadline.text}
+                </span>
+                {job.shownAs === "published" && (
+                  <span
+                    className={runway.open ? "runway open" : runway.soon ? "runway soon" : "runway"}
+                    aria-hidden="true"
+                  >
+                    {!runway.open && <span style={{ width: `${runway.usedPct}%` }} />}
+                  </span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+        {jobs.recent.length === 0 && <li className="empty-note">No jobs yet.</li>}
+      </ul>
     </section>
   );
 }
 
-export function ClosingSoon({ jobs, today }: { jobs: Jobs; today: string }) {
+export function JobsBoardCard({ jobs, waiting }: { jobs: Jobs; waiting: number }) {
+  const rows: [string, number, string][] = [
+    ["Live on the website", jobs.live, "/admin/jobs?status=published"],
+    ["Closing in 7 days", jobs.closingSoon, "/admin/jobs?status=published"],
+    ["Waiting in Bulk post", waiting, "/admin/inbox"],
+    ["Drafts", jobs.drafts, "/admin/jobs?status=draft"],
+    ["Expired, hidden from the website", jobs.expired, "/admin/jobs?status=expired"],
+  ];
   return (
     <section className="panel">
       <div className="panel-head">
-        <h2>Closing soon</h2>
-        <Link href="/admin/jobs?status=published">View →</Link>
+        <h2>Jobs board</h2>
+        <Link href="/admin/inbox">Bulk post</Link>
       </div>
-      <div className="panel-body">
-        <ul className="mini-list">
-          {jobs.closingList.length ? (
-            jobs.closingList.map((job) => {
-              const deadline = deadlineLabel(job.deadline, today);
-              return (
-                <JobLine key={job.id} job={job}>
-                  <span className={`deadline ${deadline.tone}`}>{deadline.text}</span>
-                </JobLine>
-              );
-            })
-          ) : (
-            <li className="empty-note">No published jobs close in the next 7 days.</li>
-          )}
-        </ul>
-      </div>
+      <ul className="rows tally">
+        {rows.map(([label, value, href]) => (
+          <li key={label}>
+            <Link href={href}>
+              <span>{label}</span>
+              <b className={value > 0 && label.startsWith("Waiting") ? "gold" : undefined}>{value}</b>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
 
 // ---------- AI tokens (owner only) ----------
 
-export function AiUsagePanel({ business }: { business: Business }) {
+export function AiTokensCard({ business }: { business: Business }) {
   const { tokens, usage } = business;
-  const used = usage.reduce((sum, u) => sum + u.tokens, 0);
   return (
     <section className="panel" id="ai-usage">
       <div className="panel-head">
-        <h2>
-          <Icon name="sparkle" className="h-icon" />
-          AI tokens
-        </h2>
-        {!business.tokenRequest && <RequestTokensButton />}
+        <h2>AI tokens</h2>
+        <Link href="/admin/ai">
+          {formatNumber(tokens.remaining)} of {formatNumber(tokens.granted)} left
+        </Link>
       </div>
       <div className="panel-body">
-        <div className="ai-total">
-          <div>
-            <strong>{formatNumber(tokens.remaining)}</strong>
-            <span>tokens left</span>
-          </div>
-          {business.postersLeft !== null && (
-            <div>
-              <strong>≈ {formatNumber(business.postersLeft)}</strong>
-              <span>posters&apos; worth</span>
-            </div>
-          )}
-        </div>
-        <div className={tokens.low ? "budget low" : "budget"}>
-          <div className="budget-bar">
-            <span style={{ width: `${tokens.percentLeft}%` }}></span>
-          </div>
-          <small>
-            {tokens.percentLeft}% left of {formatNumber(tokens.granted)} tokens · {formatNumber(used)} used this month
-          </small>
+        <div className={tokens.low ? "meter low" : "meter"}>
+          <span style={{ width: `${tokens.percentLeft}%` }} />
         </div>
         {tokens.low && (
-          <p className="ai-low">
-            <Icon name="alert" />
-            <span>
-              {tokens.remaining > 0 ? "Running low." : "Out of tokens: AI buttons are paused."}{" "}
-              {business.tokenRequest ? "Your request for more is on its way." : "Use Request tokens to ask for more."}
-            </span>
+          <p className="meter-note late">
+            {tokens.remaining > 0 ? "Running low." : "Out of tokens: AI buttons are paused."}{" "}
+            {business.tokenRequest ? (
+              "Your request for more is on its way."
+            ) : (
+              <Link href="/admin/ai">Ask for more</Link>
+            )}
           </p>
         )}
-        {business.tokenRequest && (
-          <OpenTokenRequest
-            id={business.tokenRequest.id}
-            tokens={business.tokenRequest.tokens}
-            note={business.tokenRequest.note}
-            createdAt={business.tokenRequest.createdAt}
-          />
-        )}
-        {usage.length > 0 ? (
-          <table className="ai-table">
-            <thead>
-              <tr>
-                <th>Used for (this month)</th>
-                <th>Times</th>
-                <th>Tokens</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usage.map((u) => (
-                <tr key={u.feature}>
-                  <td>{u.feature}</td>
-                  <td>{formatNumber(u.runs)}</td>
-                  <td>{formatNumber(u.tokens)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="hint-sm">No AI used yet this month.</p>
-        )}
       </div>
+      {usage.length > 0 ? (
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Used for this month</th>
+              <th className="n">Times</th>
+              <th className="n">Tokens</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usage.slice(0, 4).map((u) => (
+              <tr key={u.feature}>
+                <td>{u.feature}</td>
+                <td className="n">{formatNumber(u.runs)}</td>
+                <td className="n">{formatNumber(u.tokens)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="panel-body hint-sm">No AI used yet this month.</p>
+      )}
     </section>
   );
 }
 
-type Sources = NonNullable<DashboardData["sources"]>;
+// ---------- Job sources ----------
 
 // Jobs the job sources found, waiting in Bulk post, and any source that needs the owner's help
 export function SourcesNotice({ sources, manage }: { sources: Sources; manage: boolean }) {
   const waiting = sources.toCheck + sources.toRead;
   const trouble = sources.stopped.length + sources.problems.length;
   if (!sources.sources || (!waiting && !trouble)) return null;
-  const jobs = (n: number) => `${n} job${n === 1 ? "" : "s"}`;
+  const jobs = (n: number) => plural(n, "job");
   return (
-    <section className="sources-notice">
-      <span className="icon-box">
-        <Icon name="globe" />
-      </span>
-      <div>
+    <div className="attention calm">
+      <span className="dot" aria-hidden="true" />
+      <p className="attention-text">
         {waiting > 0 && (
-          <h3>
-            {jobs(waiting)} from your job sources {waiting === 1 ? "is" : "are"} waiting in Bulk post
-          </h3>
+          <b>
+            {jobs(waiting)} from your job sources {waiting === 1 ? "is" : "are"} waiting in Bulk post.{" "}
+          </b>
         )}
-        <p>
-          {[
-            sources.foundToday ? `${jobs(sources.foundToday)} found today.` : "",
-            sources.toRead ? `${jobs(sources.toRead)} still being read by the AI.` : "",
-            sources.stopped.length ? `Stopped: ${sources.stopped.join(", ")}.` : "",
-            sources.problems.length ? `Problem on the last check: ${sources.problems.join(", ")}.` : "",
-            manage && !sources.morning ? "The morning check is off: switch it on in Job sources." : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        </p>
-      </div>
-      <div className="sources-notice-actions">
-        {waiting > 0 && (
-          <Link className="btn btn-primary btn-sm" href="/admin/inbox">
-            Open Bulk post
-          </Link>
-        )}
+        {[
+          sources.foundToday ? `${jobs(sources.foundToday)} found today.` : "",
+          sources.toRead ? `${jobs(sources.toRead)} still being read by the AI.` : "",
+          sources.stopped.length ? `Stopped: ${sources.stopped.join(", ")}.` : "",
+          sources.problems.length ? `Problem on the last check: ${sources.problems.join(", ")}.` : "",
+          manage && !sources.morning ? "The morning check is off: switch it on in Job sources." : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      </p>
+      <div className="attention-acts">
         {manage && (
           <Link className="btn btn-ghost btn-sm" href={trouble ? "/admin/job-sources" : "/admin/job-sources/found"}>
             {trouble ? "Job sources" : "Jobs found"}
           </Link>
         )}
+        {waiting > 0 && (
+          <Link className="btn btn-primary btn-sm" href="/admin/inbox">
+            Open Bulk post
+          </Link>
+        )}
       </div>
-    </section>
+    </div>
   );
 }

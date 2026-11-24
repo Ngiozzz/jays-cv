@@ -682,12 +682,11 @@ function InboxRow(props: {
             (warnings.length ? (
               warnings.map((flag) => (
                 <span key={flag.key + flag.text} className={`iflag ${flag.level}`} title={flag.more}>
-                  {flag.level === "critical" ? "⚠ " : "! "}
                   {flag.text}
                 </span>
               ))
             ) : (
-              <span className="iflag ok">✓ Ready</span>
+              <span className="iflag ok">Ready</span>
             ))}
           {card.state === "approved" &&
             (card.jobSlug ? (
@@ -697,10 +696,10 @@ function InboxRow(props: {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                ✓ Live ↗
+                Live ↗
               </a>
             ) : (
-              <span className="iflag live">✓ Live</span>
+              <span className="iflag live">Live</span>
             ))}
           {card.state === "discarded" && (
             <span className="iflag gone">{DISCARD_LABEL[card.discardReason ?? "other"]}</span>

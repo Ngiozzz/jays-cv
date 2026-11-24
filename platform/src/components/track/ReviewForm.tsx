@@ -2,7 +2,6 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { leaveReviewAction } from "@/app/(public)/[tenant]/track/feedback-actions";
-import { Icon } from "@/components/icons/Icon";
 import type { ClientResult } from "@/modules/orders/client-feedback.service";
 
 type Failed = Extract<ClientResult, { ok: false }>;
@@ -37,9 +36,9 @@ export function ReviewForm({ orderRef, name }: { orderRef: string; name: string 
   const shown = hover || rating;
 
   return (
-    <section className="track-card review-box">
-      <h3>How did we do?</h3>
-      <p>Your review helps other job seekers, and tells us what to keep doing.</p>
+    <section className="card t-card review-box">
+      <h2>How did we do?</h2>
+      <p className="hint">Your review helps other job seekers, and tells us what to keep doing.</p>
       <form className="client-review-form" onSubmit={submit} noValidate>
         <fieldset className="star-pick" onMouseLeave={() => setHover(0)}>
           <legend className="sr-only">Your rating</legend>
@@ -69,7 +68,7 @@ export function ReviewForm({ orderRef, name }: { orderRef: string; name: string 
             name="text"
             rows={3}
             maxLength={600}
-            placeholder="e.g. They rewrote my CV in 2 days and I got 3 interview calls."
+            placeholder="What changed for you?"
             aria-invalid={Boolean(failed?.fieldErrors?.text)}
             required
           />
@@ -83,9 +82,9 @@ export function ReviewForm({ orderRef, name }: { orderRef: string; name: string 
           </div>
           <div className="od-field">
             <label htmlFor="rv-role">
-              Your job title <small>(optional)</small>
+              Your job title <small>optional</small>
             </label>
-            <input id="rv-role" name="role" maxLength={60} placeholder="e.g. Accountant" />
+            <input id="rv-role" name="role" maxLength={60} placeholder="For example Accountant" />
             {fieldError("role")}
           </div>
         </div>
@@ -98,8 +97,7 @@ export function ReviewForm({ orderRef, name }: { orderRef: string; name: string 
           </p>
         )}
         <button type="submit" className="btn btn-primary" disabled={pending}>
-          <Icon name="send" />
-          {pending ? "Sending…" : "Send review"}
+          {pending ? "Sending" : "Send review"}
         </button>
       </form>
     </section>

@@ -75,7 +75,7 @@ export function clientEventText(event: ClientEvent): string | null {
     case "completed":
       return "Approved the draft. Order completed";
     case "reviewed":
-      return "Left a review. Thank you!";
+      return "Left a review. Thank you.";
     case "autoCompleted":
       return "No reply for a few days, so your order was completed automatically";
     case "reminded":

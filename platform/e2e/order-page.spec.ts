@@ -31,7 +31,7 @@ test("an order goes from payment to complete, with each person doing only their 
   await owner.getByLabel("M-Pesa code (or cash / bank reference)").fill(code);
   await owner.getByRole("button", { name: "Record payment" }).click();
   await expect(toast(owner)).toContainText("Payment recorded");
-  await expect(owner.locator(".order-head .ostatus")).toHaveText("⚠ Not accepted");
+  await expect(owner.locator(".order-head .ostatus")).toHaveText("Not accepted");
   await owner.goto(`/admin/orders/${other.ref}`);
   await owner.getByText("Client paid but it's not showing?").click();
   await owner.getByLabel("M-Pesa code (or cash / bank reference)").fill(code);

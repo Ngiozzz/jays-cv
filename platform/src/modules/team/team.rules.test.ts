@@ -27,7 +27,6 @@ describe("inviteSchema", () => {
         email: " Grace.W@Gmail.com ",
         phone: "0712 345 678",
         canWrite: "on",
-        payPercent: "40",
       }),
     );
     expect(parsed).toEqual({
@@ -36,23 +35,22 @@ describe("inviteSchema", () => {
       phone: "0712345678",
       canWrite: true,
       canPostJobs: false,
-      payPercent: 40,
     });
   });
 
   it("explains what's wrong", () => {
-    const result = inviteSchema.safeParse(form({ name: "G", email: "not-email", phone: "12345", payPercent: "140" }));
+    const result = inviteSchema.safeParse(form({ name: "G", email: "not-email", phone: "12345" }));
     const messages = result.success ? [] : result.error.issues.map((issue) => issue.path[0]);
-    expect(messages).toEqual(expect.arrayContaining(["name", "email", "phone", "payPercent"]));
+    expect(messages).toEqual(expect.arrayContaining(["name", "email", "phone"]));
   });
 
   it("allows no phone number", () => {
-    const brian = { name: "Brian", email: "b@x.com", phone: "", canWrite: "on", payPercent: "35" };
+    const brian = { name: "Brian", email: "b@x.com", phone: "", canWrite: "on" };
     expect(inviteSchema.safeParse(form(brian)).success).toBe(true);
   });
 
   it("needs at least one thing they can do", () => {
-    const base = { name: "Brian", email: "b@x.com", phone: "", payPercent: "35" };
+    const base = { name: "Brian", email: "b@x.com", phone: "" };
     const nothing = inviteSchema.safeParse(form(base));
     expect(nothing.success ? [] : nothing.error.issues.map((issue) => [issue.path[0], issue.message])).toEqual([
       ["canWrite", "Tick at least one: Write CVs or Post jobs"],
@@ -62,9 +60,11 @@ describe("inviteSchema", () => {
 });
 
 describe("memberTermsSchema", () => {
-  it("only allows whole percentages from 0 to 100", () => {
-    expect(memberTermsSchema.safeParse({ canWrite: true, canPostJobs: false, payPercent: 35.5 }).success).toBe(false);
-    expect(memberTermsSchema.safeParse({ canWrite: true, canPostJobs: false, payPercent: 100 }).success).toBe(true);
+  it("holds only what they may do: writers are salaried, so there's no pay to set", () => {
+    expect(memberTermsSchema.parse({ canWrite: true, canPostJobs: false, payPercent: 40 })).toEqual({
+      canWrite: true,
+      canPostJobs: false,
+    });
   });
 });
 

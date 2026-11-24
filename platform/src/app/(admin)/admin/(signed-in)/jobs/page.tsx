@@ -5,7 +5,7 @@ import { JobStatusPill } from "@/components/admin/jobs/JobStatusPill";
 import { NotAllowed } from "@/components/admin/NotAllowed";
 import { Icon } from "@/components/icons/Icon";
 import { JobLogo } from "@/components/jobs/JobLogo";
-import { deadlineLabel, postedLabel, todayInNairobi } from "@/modules/jobs/jobs.rules";
+import { deadlineLabel, jobRunway, postedLabel, todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { countByStatus, listJobs, type JobRow } from "@/modules/jobs/jobs.service";
 import { requireMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
@@ -112,6 +112,8 @@ export default async function JobsPage({ searchParams }: PageProps<"/admin/jobs"
 
 function JobTableRow({ job, today }: { job: JobRow; today: string }) {
   const deadline = deadlineLabel(job.deadline, today);
+  // The job's runway: how much of the time between posting and the deadline has gone
+  const runway = job.shownAs === "published" ? jobRunway(job.deadline, job.postedDay, today) : null;
   return (
     <tr>
       <td>
@@ -123,14 +125,19 @@ function JobTableRow({ job, today }: { job: JobRow; today: string }) {
           </div>
         </div>
       </td>
-      <td className="cell-muted col-cat">{job.category || "—"}</td>
+      <td className="cell-muted col-cat">{job.category || "None"}</td>
       <td>
         <span className={`deadline ${deadline.tone}`}>{deadline.text}</span>
+        {runway && (
+          <span className={runway.open ? "runway open" : runway.soon ? "runway soon" : "runway"} aria-hidden="true">
+            {!runway.open && <span style={{ width: `${runway.usedPct}%` }} />}
+          </span>
+        )}
       </td>
       <td>
         <JobStatusPill status={job.shownAs} />
       </td>
-      <td className="cell-muted">{job.shownAs === "draft" ? "—" : postedLabel(job.postedDay, today)}</td>
+      <td className="cell-muted">{job.shownAs === "draft" ? "Not yet" : postedLabel(job.postedDay, today)}</td>
       <td>
         <JobRowActions jobId={job.id} title={job.title} shownAs={job.shownAs} />
       </td>

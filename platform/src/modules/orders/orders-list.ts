@@ -33,7 +33,7 @@ export type ListOrder = {
 export const TABS = [
   { key: "all", label: "All" },
   { key: "new", label: "Awaiting payment" },
-  { key: "open", label: "⚠ Not accepted" },
+  { key: "open", label: "Not accepted" },
   { key: "writing", label: "Writing" },
   { key: "draft", label: "Draft sent" },
   { key: "revisions", label: "Revisions" },

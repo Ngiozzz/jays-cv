@@ -12,36 +12,40 @@ test("signed-out visitors are sent to the sign-in page", async ({ page }) => {
 test("the owner sees the dashboard, every menu item and the AI token balance", async ({ page, context }) => {
   await signInAs(context, "OWNER", "Jay Test");
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: /, Jay 👋$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /, Jay$/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Writer pay owed/ })).toHaveAttribute("href", "/admin/finance");
-  await expect(page.getByRole("heading", { name: "Team CV progress" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Takings/ })).toHaveAttribute("href", "/admin/finance");
+  // Writers are salaried: no pay per CV on the dashboard
+  await expect(page.getByText(/Writer pay/)).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Order board" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "AI tokens" })).toBeVisible();
   const menu = page.getByRole("complementary", { name: "Admin menu" });
   await expect(menu.getByText("Team")).toBeVisible();
   await expect(menu.getByText("Finance")).toBeVisible();
+  await expect(menu.getByRole("link", { name: "AI" })).toHaveAttribute("href", "/admin/ai");
 });
 
 test("a writer never sees money, the team or finance", async ({ page, context }) => {
   await signInAs(context, "WRITER", "Grace Test");
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: /, Grace 👋$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /, Grace$/ })).toBeVisible();
   await expect(page.getByText("AI tokens")).toHaveCount(0);
   await expect(page.getByText("This month")).toHaveCount(0);
   // Amounts look like "KES 1,500" (a plain "KES" would match words like "takes")
   await expect(page.getByText(/KES\s?[\d,]+/)).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Orders you can accept" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Your CVs, Grace" })).toBeVisible();
+  // The order board: paid orders they can accept, and their own
+  await expect(page.getByRole("heading", { name: "Order board" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Paid, not accepted/ })).toBeVisible();
   const menu = page.getByRole("complementary", { name: "Admin menu" });
   await expect(menu.getByText("Team")).toHaveCount(0);
   await expect(menu.getByText("Finance")).toHaveCount(0);
-  await expect(page.getByText("See prices, takings and payouts")).toHaveCount(0);
+  await expect(menu.getByText("AI", { exact: true })).toHaveCount(0);
 });
 
 test("pausing a member blocks them on their next request", async ({ page, context }) => {
   const { userId } = await signInAs(context, "WRITER", "Brian Test");
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: /, Brian 👋$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /, Brian$/ })).toBeVisible();
   await setMemberStatus(userId, "PAUSED");
   await page.reload();
   await expect(page).toHaveURL(/error=no_access/);
@@ -54,13 +58,13 @@ test("in development, the test buttons sign in as the test owner or the test wri
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
   await page.getByRole("button", { name: "Proceed as Jay (owner)" }).click();
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole("heading", { name: /, Jay 👋$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /, Jay$/ })).toBeVisible();
 
   await context.clearCookies();
   await page.goto("/admin/login");
   await page.getByRole("button", { name: "Proceed as Mary (writer)" }).click();
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole("heading", { name: /, Mary 👋$/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /, Mary$/ })).toBeVisible();
   // A writer never sees the owner's money or team
   await expect(page.getByText("This month")).toHaveCount(0);
   await expect(page.getByRole("complementary", { name: "Admin menu" }).getByText("Finance")).toHaveCount(0);

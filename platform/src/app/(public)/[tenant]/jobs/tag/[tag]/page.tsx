@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { JobCard } from "@/components/jobs/JobCard";
+import { JobRow } from "@/components/jobs/JobRow";
 import { CtaBand } from "@/components/site/CtaBand";
 import { PageHero } from "@/components/site/PageHero";
 import { allTagSlugs, jobsWithTag, tagName } from "@/modules/jobs/job-tags";
@@ -57,15 +57,9 @@ export default async function TagPage({ params }: PageProps<"/[tenant]/jobs/tag/
       <section className="section">
         <div className="container">
           {tagged.length ? (
-            <div className="job-grid">
+            <div className="job-list">
               {tagged.map((job) => (
-                <JobCard
-                  key={job.slug}
-                  {...job}
-                  href={`/jobs/${job.slug}`}
-                  applyMethod={job.apply.method}
-                  today={today}
-                />
+                <JobRow key={job.slug} {...job} href={`/jobs/${job.slug}`} today={today} />
               ))}
             </div>
           ) : null}

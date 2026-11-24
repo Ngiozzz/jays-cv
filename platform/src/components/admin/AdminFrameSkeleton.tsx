@@ -6,18 +6,17 @@ export function AdminFrameSkeleton() {
     <div className="admin-shell" role="status" aria-busy="true">
       <span className="sr-only">Loading the admin…</span>
       <aside className="admin-side" aria-hidden="true">
-        <span className="admin-logo">
+        <span className="admin-brand">
           <span className="logo-mark">J</span>
-          <span className="logo-text">
-            Jay<strong>CVS</strong>
+          <span className="admin-word">
+            Jay<span>CVS</span>
           </span>
-          <span className="admin-badge">Admin</span>
         </span>
         <div className="skel-nav">
           {[70, 55, 62, 48, 66, 52, 58, 44].map((width, i) => (
             <span key={i} className="skel-nav-item">
-              <i className="skel skel-dark skel-icon" />
-              <i className="skel skel-dark" style={{ width: `${width}%` }} />
+              <i className="skel skel-icon" />
+              <i className="skel" style={{ width: `${width}%` }} />
             </span>
           ))}
         </div>
@@ -28,9 +27,6 @@ export function AdminFrameSkeleton() {
           <div className="skel-titles">
             <i className="skel" style={{ width: 90, height: 10 }} />
             <i className="skel" style={{ width: 150, height: 20 }} />
-          </div>
-          <div className="admin-top-actions">
-            <i className="skel skel-avatar" />
           </div>
         </header>
         <main className="admin-content">

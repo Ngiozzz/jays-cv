@@ -36,7 +36,7 @@ export type RuleOrder = {
 export const STATUS_TEXT: Record<OrderStatus, { team: string; client: string; tone: string }> = {
   NEW: { team: "Awaiting payment", client: "Waiting for payment", tone: "st-new" },
   ABANDONED: { team: "Abandoned (unpaid)", client: "Waiting for payment", tone: "st-abandoned" },
-  PAID: { team: "⚠ Not accepted", client: "Payment confirmed", tone: "st-open" },
+  PAID: { team: "Not accepted", client: "Payment confirmed", tone: "st-open" },
   WRITING: { team: "Writing", client: "Your writer is working on it", tone: "st-writing" },
   DRAFT_SENT: { team: "Draft with client", client: "Your draft is ready", tone: "st-draft" },
   REVISIONS: { team: "Revisions", client: "Making your changes", tone: "st-revisions" },

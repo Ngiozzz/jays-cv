@@ -18,14 +18,14 @@ export function GoogleSignInButton({ available }: { available: boolean }) {
 
   return (
     <button
-      className="btn btn-primary btn-lg btn-block"
+      className="btn btn-ghost btn-lg btn-block"
       type="button"
       onClick={signIn}
       disabled={busy || !available}
       title={available ? undefined : "Google sign-in switches on once its keys are added"}
     >
       <GoogleMark />
-      {busy ? "Opening Google…" : "Continue with Google"}
+      {busy ? "Opening Google" : "Continue with Google"}
     </button>
   );
 }

@@ -43,11 +43,11 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/[t
   return (
     <>
       <PageHero
-        crumbs={[{ label: "Order" }]}
+        crumbs={[{ label: "Pricing", href: "/pricing" }, { label: "Order" }]}
         title="Order your CV"
-        lead="Three quick steps: choose a service, pick a package and upload your CV. You'll get a private link to pay and follow your order."
+        lead="Three quick steps. Pay by M-Pesa once your order is placed."
       />
-      <div className="container journey-wrap">
+      <div className="container order-wrap">
         {/* The card reads ?pkg= or ?service= from the address to start on the right choice;
             ?job= (from a job page's "Get my CV tailored") starts a tailored CV for that job, and
             ?check= (from "Check it yourself" feedback) fills in their details and CV too */}

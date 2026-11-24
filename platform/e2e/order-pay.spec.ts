@@ -40,12 +40,12 @@ test("a client pays with the M-Pesa prompt: a wrong number is refused, a cancel 
   // Try again, and this time the PIN is entered
   await box.getByRole("button", { name: "Try again" }).click();
   await box.getByRole("button", { name: "Pay KES 3,500" }).click();
-  await box.getByRole("button", { name: "✓ Entered PIN" }).click();
+  await box.getByRole("button", { name: "Entered PIN" }).click();
   await expect(box.getByText("Payment received")).toBeVisible();
   await expect(box).toContainText(/M-Pesa code PRT[A-Z0-9]{7}/);
 
   // The page moves on by itself, and the update is in the order's history
-  await expect(page.getByRole("heading", { name: "Payment received: thank you!" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Payment received, thank you" })).toBeVisible();
   await expect(page.locator(".pay-box")).toHaveCount(0);
   await expect(page.getByText(/Payment received \(M-Pesa code PRT/)).toBeVisible();
 });
@@ -55,7 +55,7 @@ test("Paybill: the account number shows only when the client asks for it", async
   cleanups.push(order.remove);
   await page.goto(`/t/${order.token}`);
   const box = page.locator(".pay-box");
-  await box.getByRole("button", { name: "🏦 Pay via Paybill" }).click();
+  await box.getByRole("button", { name: "Pay Bill" }).click();
   const number = order.ref.split("-").pop()!;
   await expect(box).toContainText("4027127");
   // (The order number is on the page anyway; the account slot itself stays hidden until asked)

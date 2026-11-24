@@ -104,9 +104,9 @@ function ReviewCard({ review }: { review: AdminReview }) {
           {stars(review.rating)}
         </span>
         {review.consent ? (
-          <span className="mini-pill ok">✓ May publish</span>
+          <span className="mini-pill ok">May publish</span>
         ) : (
-          <span className="mini-pill no">✗ Private: no permission to publish</span>
+          <span className="mini-pill no">Private: no permission to publish</span>
         )}
       </div>
       {editing ? (

@@ -15,7 +15,11 @@ describe("tag addresses and tidying", () => {
   });
 
   it("trims, drops repeats and blanks, and keeps at most 8", () => {
-    expect(cleanTags([" CPA ", "cpa", "#Nairobi", "", "  ", "Entry   level"])).toEqual(["CPA", "Nairobi", "Entry level"]);
+    expect(cleanTags([" CPA ", "cpa", "#Nairobi", "", "  ", "Entry   level"])).toEqual([
+      "CPA",
+      "Nairobi",
+      "Entry level",
+    ]);
     expect(cleanTags(Array.from({ length: 12 }, (_, i) => `Tag ${i}`))).toHaveLength(8);
   });
 
@@ -38,7 +42,15 @@ describe("tag pages", () => {
   });
 
   it("knows every tag in use, once", () => {
-    expect(allTagSlugs(jobs).sort()).toEqual(["accounting", "audit", "cpa", "driver", "entry-level", "mombasa", "nairobi"]);
+    expect(allTagSlugs(jobs).sort()).toEqual([
+      "accounting",
+      "audit",
+      "cpa",
+      "driver",
+      "entry-level",
+      "mombasa",
+      "nairobi",
+    ]);
   });
 
   it("counts the tags two jobs share", () => {

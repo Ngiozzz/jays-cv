@@ -48,7 +48,7 @@ test("a job seeker checks their CV against a job, then orders it tailored with e
     buffer: Buffer.from("not really word"),
   });
   await page.getByLabel(/M-Pesa number/).fill(PHONE);
-  await page.getByRole("button", { name: /Pay KES .* & check my CV/ }).click();
+  await page.getByRole("button", { name: /Pay KES .* and check my CV/ }).click();
   await expect(page.locator(".field-error")).toContainText("Save it as PDF");
 
   await page.locator('input[name="cv"]').setInputFiles({
@@ -56,9 +56,9 @@ test("a job seeker checks their CV against a job, then orders it tailored with e
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n%%EOF"),
   });
-  await page.getByRole("button", { name: /Pay KES .* & check my CV/ }).click();
+  await page.getByRole("button", { name: /Pay KES .* and check my CV/ }).click();
   await expect(page.getByText("Check your phone")).toBeVisible();
-  await page.getByRole("button", { name: "✓ Entered PIN" }).click();
+  await page.getByRole("button", { name: "Entered PIN" }).click();
 
   // Paid → the AI reads it → the feedback page, which only this browser can open
   await expect(page).toHaveURL(/\/check\/[\w-]+$/, { timeout: 60_000 });
@@ -89,7 +89,7 @@ test("a job seeker checks their CV against a job, then orders it tailored with e
   await expect(page.getByLabel(/Email/)).toHaveValue("faith.njeri@example.com");
   await expect(page.getByText("Your CV from the check: my-cv.pdf")).toBeVisible();
   await page.getByRole("button", { name: /place my order/ }).click();
-  await expect(page.getByRole("heading", { name: /Order .* created, Faith!/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Order [A-Z]+-\d+ placed$/ })).toBeVisible();
 
   // The CV moved to the order: the order has it, the check no longer does
   const order = await db.order.findFirst({

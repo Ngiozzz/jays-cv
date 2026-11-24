@@ -56,12 +56,10 @@ export function DraftReview({ orderRef, changes, whatsapp, businessName }: Props
             onClick={() => confirm.current?.showModal()}
             disabled={pending}
           >
-            <Icon name="check" />
-            I&apos;m happy with it
+            Yes, I&apos;m happy
           </button>
           {changes.canAsk && (
             <button type="button" className="btn btn-ghost" onClick={() => setAsking(true)} disabled={pending}>
-              <Icon name="edit" />
               Ask for changes
             </button>
           )}
@@ -85,13 +83,15 @@ export function DraftReview({ orderRef, changes, whatsapp, businessName }: Props
       {asking && (
         <form className="changes-form" onSubmit={sendChanges} noValidate>
           <div className="od-field">
-            <label htmlFor="chg-text">What would you like changed?</label>
+            <label className="label" htmlFor="chg-text">
+              What would you like changed?
+            </label>
             <textarea
               id="chg-text"
               name="text"
               rows={4}
               maxLength={1000}
-              placeholder="e.g. Put my KCB job first and remove my primary school."
+              placeholder="For example: put my KCB job first and remove my primary school"
               aria-invalid={Boolean(failed?.fieldErrors?.text)}
               required
             />
@@ -106,8 +106,8 @@ export function DraftReview({ orderRef, changes, whatsapp, businessName }: Props
             />
             <Icon name="upload" />
             <span>
-              <strong>{fileName || "Attach a file (optional)"}</strong>
-              <small>e.g. your copy with the changes marked. PDF, Word or photo, up to 10 MB.</small>
+              <strong>{fileName || "Attach a file, optional"}</strong>
+              <small>Like your copy with the changes marked. PDF, Word or photo, up to 10 MB</small>
             </span>
           </label>
           {fieldError("file")}
@@ -119,8 +119,7 @@ export function DraftReview({ orderRef, changes, whatsapp, businessName }: Props
           )}
           <div className="draft-answer-btns">
             <button type="submit" className="btn btn-primary" disabled={pending}>
-              <Icon name="send" />
-              {pending ? "Sending…" : "Send to my writer"}
+              {pending ? "Sending" : "Send to my writer"}
             </button>
             <button
               type="button"
@@ -145,7 +144,10 @@ export function DraftReview({ orderRef, changes, whatsapp, businessName }: Props
 
       <dialog ref={confirm} className="track-dialog" aria-labelledby="finish-title">
         <h2 id="finish-title">Finish your order?</h2>
-        <p>Once you confirm, your order is complete and you can&apos;t ask for more changes.</p>
+        <p>
+          Once you confirm, your order is complete and you can&apos;t ask for more changes. You still get 30 days of
+          free minor updates.
+        </p>
         {failed && (
           <p className="od-error" role="alert">
             {failed.error}
@@ -164,10 +166,10 @@ export function DraftReview({ orderRef, changes, whatsapp, businessName }: Props
               );
             }}
           >
-            {pending ? "Finishing…" : "Yes, I'm happy"}
+            {pending ? "Finishing" : "Yes, finish it"}
           </button>
           <button type="button" className="btn btn-ghost" onClick={() => confirm.current?.close()} disabled={pending}>
-            Go back
+            Not yet
           </button>
         </div>
       </dialog>

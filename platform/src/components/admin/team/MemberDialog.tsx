@@ -11,7 +11,7 @@ type Props =
   | { mode: "invite"; member?: undefined; onClose: () => void }
   | { mode: "edit"; member: TeamMemberRow; onClose: () => void };
 
-// One dialog for both "Invite a writer" and "Edit": what they can do and what they're paid
+// One dialog for both "Invite a writer" and "Edit": what they can do
 export function MemberDialog({ mode, member, onClose }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,7 +56,7 @@ export function MemberDialog({ mode, member, onClose }: Props) {
           <p>
             {mode === "invite"
               ? "They join by signing in with Google, using the email you enter here."
-              : "Change what they can do and what they're paid. It applies from now on."}
+              : "Change what they can do. It applies from now on."}
           </p>
           {mode === "invite" && (
             <div className="fgrid">
@@ -104,20 +104,6 @@ export function MemberDialog({ mode, member, onClose }: Props) {
             </p>
             {error("canWrite")}
           </fieldset>
-          <div className={errors.payPercent ? "f invalid" : "f"}>
-            <label htmlFor="mi-rate">Pay per CV (% of the order price)</label>
-            <input
-              id="mi-rate"
-              name="payPercent"
-              type="number"
-              min={0}
-              max={100}
-              step={5}
-              defaultValue={mode === "edit" ? member.payPercent : 40}
-            />
-            <small>Only you see this. E.g. 40% of a KES 3,000 order = KES 1,200.</small>
-            {error("payPercent")}
-          </div>
           {errors.form && (
             <p className="field-error" role="alert">
               {errors.form}

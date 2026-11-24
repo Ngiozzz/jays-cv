@@ -147,7 +147,7 @@ export function InboxDetail(props: Props) {
       <>
         <div className="d-head">
           <div>
-            <span className="ipill live">✓ Live on the website</span>
+            <span className="ipill live">Live on the website</span>
             {card.jobSlug && (
               <small>
                 <a href={`/jobs/${card.jobSlug}`} target="_blank" rel="noopener">
@@ -199,9 +199,7 @@ export function InboxDetail(props: Props) {
     <>
       <div className="d-head">
         <div>
-          <span className={clean ? "ipill ready" : "ipill flagged"}>
-            {clean ? "✓ Ready to approve" : "⚠ Needs a look"}
-          </span>
+          <span className={clean ? "ipill ready" : "ipill flagged"}>{clean ? "Ready to approve" : "Needs a look"}</span>
           <small>
             {card.source}
             {card.part && ` · Job ${card.part.index} of ${card.part.total} from this poster`}
@@ -218,9 +216,7 @@ export function InboxDetail(props: Props) {
       <div className="d-flags">
         {flags.map((flag) => (
           <div key={flag.key} className={`d-flag ${flag.level}`}>
-            <span className="d-flag-icon" aria-hidden="true">
-              {flag.level === "info" ? "⏱" : "⚠"}
-            </span>
+            <span className="d-flag-icon" aria-hidden="true" />
             <div>
               <b>{flag.text}</b>
               <span>{flag.more}</span>

@@ -59,14 +59,14 @@
   font-weight: 500;
 }
 
-.panel {
+.card.panel {
   padding: 32px;
 }
-.panel h2 {
+.card.panel h2 {
   font: 500 24px/32px var(--serif);
   letter-spacing: -0.01em;
 }
-.panel .hint {
+.card.panel .hint {
   margin-top: 6px;
   color: var(--text-2);
 }

@@ -187,8 +187,7 @@ function AddSample() {
       </summary>
       <form className="panel-body" noValidate onSubmit={submit}>
         <p className="hint-sm">
-          ⚠️ Always blur names, phone numbers and ID numbers before uploading, and only use CVs the client agreed to
-          share.
+          Always blur names, phone numbers and ID numbers before uploading, and only use CVs the client agreed to share.
         </p>
         <div className="fgrid">
           <div className={cls("role")}>

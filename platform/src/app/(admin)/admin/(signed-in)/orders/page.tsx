@@ -87,7 +87,6 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
           );
         })}
       </div>
-      <p className="quick-hint">Tip: click a card to filter the list. Click it again to clear.</p>
 
       <section className="panel">
         <div className="table-tools">
@@ -279,7 +278,7 @@ function OrderRow({ order, now }: { order: ListOrder; now: Date }) {
         {order.writerName ??
           (open ? (
             <em className="not-accepted">
-              ⚠ Not accepted
+              Not accepted
               <small>waiting {order.paidAt ? span(now.getTime() - order.paidAt.getTime()) : ""}</small>
             </em>
           ) : (

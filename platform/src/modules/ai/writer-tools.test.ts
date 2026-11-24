@@ -34,7 +34,9 @@ describe("the instructions", () => {
   });
 
   it("add the job when the CV is tailored to one", () => {
-    expect(analysisPrompt({ ...brief, job: "Accountant at KPMG" })).toContain("tailored to this job:\nAccountant at KPMG");
+    expect(analysisPrompt({ ...brief, job: "Accountant at KPMG" })).toContain(
+      "tailored to this job:\nAccountant at KPMG",
+    );
     expect(analysisPrompt(brief)).not.toContain("tailored to this job");
   });
 

@@ -11,7 +11,7 @@ import {
   type CvDocument,
 } from "@/modules/ai/claude";
 import { AI_PAUSED_MESSAGE, aiStopped } from "@/modules/ai/tokens";
-import { getTokenBalance } from "@/modules/ai/tokens.service";
+import { getTokenBalance, memberAiBlock } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { TOOL_LABEL, type OrderBrief, type WriterTool } from "@/modules/ai/writer-tools";
 import type { CurrentMember } from "@/modules/team/current-member";
@@ -103,6 +103,8 @@ export async function runWriterTool(
   const stopped = aiStopped(await getTokenBalance(tenantId));
   if (stopped === "paused") return { ok: false, error: AI_PAUSED_MESSAGE };
   if (stopped) return { ok: false, error: "The AI tokens have run out. Ask your developer for more." };
+  const blocked = await memberAiBlock(member);
+  if (blocked) return { ok: false, error: blocked };
 
   // What to read: a file the writer chose, or the client's CV (analysis, summary) / our latest draft (final check)
   let document: CvDocument | string;

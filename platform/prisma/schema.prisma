@@ -94,6 +94,8 @@ model BusinessSettings {
   // What a client pays for "Check it yourself": AI feedback on their CV for one job (KES)
   cvCheckPrice          Int       @default(10)
   aiWarnPct             Int       @default(20)
+  // When someone's own monthly AI allowance is used up, they carry on from the shared pool
+  aiPoolFallback        Boolean   @default(true)
   // Set by the platform owner from the Command Center: no AI runs while it is on
   aiPaused              Boolean   @default(false)
   // Sites the job sources may never read, on top of the built-in list (modules/job-sources/sites.ts)
@@ -205,8 +207,12 @@ model Membership {
   phone       String?
   canWrite    Boolean      @default(true)
   canPostJobs Boolean      @default(false)
-  // Writer's share of each order they deliver, in whole percent
+  // No longer used: writers are on a monthly salary. Kept so past records stay readable; drop later.
   payPercent  Int          @default(0)
+  // AI: whether they may use it at all, and their own monthly share of the business's tokens
+  // (null: no limit of their own, they use the shared pool)
+  aiEnabled   Boolean      @default(true)
+  aiAllowance Int?
   joinedAt    DateTime     @default(now())
   lastSeenAt  DateTime?
 
@@ -245,6 +251,7 @@ model Invite {
   role        Role         @default(WRITER)
   canWrite    Boolean      @default(true)
   canPostJobs Boolean      @default(false)
+  // No longer used (writers are salaried); kept for old invites
   payPercent  Int          @default(0)
   status      InviteStatus @default(PENDING)
   invitedById String?
@@ -578,6 +585,8 @@ model Payment {
   @@index([tenantId, match])
 }
 
+// No longer used: writers are on a monthly salary, paid outside the app. Kept so the payouts recorded
+// before that stay in the database; drop in a later migration once they're not needed.
 model WriterPayout {
   id        String     @id @default(cuid())
   tenantId  String

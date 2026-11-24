@@ -4,6 +4,7 @@ import "@/styles/site/jobs.css";
 import "@/styles/site/check.css";
 import "@/styles/site/pages.css";
 import "@/styles/site/content.css";
+import "@/styles/site/order.css";
 import { IconSprite } from "@/components/icons/IconSprite";
 import { AnnouncementBar } from "@/components/site/AnnouncementBar";
 import { PageEffects } from "@/components/site/PageEffects";

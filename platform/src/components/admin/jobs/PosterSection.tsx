@@ -251,8 +251,8 @@ export function PosterSection({ existingUrl, error, aiPretend, onRead, onClear }
                 </ul>
                 {sent === "done" ? (
                   <p className="poster-jobs-done">
-                    ✓ The other {others} {others > 1 ? "are" : "is"} waiting in{" "}
-                    <Link href="/admin/inbox">Bulk post</Link>, already read. Publish this one here.
+                    The other {others} {others > 1 ? "are" : "is"} waiting in <Link href="/admin/inbox">Bulk post</Link>
+                    , already read. Publish this one here.
                   </p>
                 ) : (
                   <button type="button" className="btn btn-ghost btn-sm" onClick={sendOthers} disabled={sent !== "no"}>

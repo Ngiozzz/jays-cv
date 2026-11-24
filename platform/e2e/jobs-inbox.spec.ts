@@ -39,7 +39,7 @@ test("posters are read, flagged, approved or discarded, and today's channel post
   await page.keyboard.press("Escape");
   await tab("Ready to publish").click();
   await page.getByRole("button", { name: /Accounts Assistant/ }).click();
-  await expect(page.getByText("✓ Ready to approve")).toBeVisible();
+  await expect(page.getByText("Ready to approve")).toBeVisible();
   await page.getByRole("button", { name: /Approve & publish/ }).click();
   await expect(page.getByRole("status").filter({ hasText: "Published: Accounts Assistant" })).toBeVisible();
 

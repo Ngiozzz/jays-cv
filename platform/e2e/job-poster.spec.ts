@@ -26,7 +26,7 @@ test("a poster is read into the form, highlighted, and saved with the job", asyn
   await expect(page.getByLabel("Job title")).not.toHaveClass(/ai-filled/);
 
   await page.getByRole("button", { name: "Publish job" }).click();
-  await expect(page.getByRole("heading", { name: "Job published 🎉" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Job published" })).toBeVisible();
 
   // The saved poster shows on the job's page and loads
   // The stored poster (not the preview made in the browser before saving)

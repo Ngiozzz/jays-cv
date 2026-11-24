@@ -56,3 +56,74 @@ export async function sumUsageByFeature(tenantId: string, since: Date) {
     .map((group) => ({ feature: group.feature ?? "Other", runs: group._count, tokens: -(group._sum.delta ?? 0) }))
     .sort((a, b) => b.tokens - a.tokens);
 }
+
+// One person's AI use since a date, in tokens
+export async function sumMemberUsageSince(tenantId: string, memberId: string, since: Date): Promise<number> {
+  const result = await tenantDb(tenantId).tokenLedgerEntry.aggregate({
+    where: { kind: "USAGE", memberId, createdAt: { gte: since } },
+    _sum: { delta: true },
+  });
+  return -(result._sum.delta ?? 0);
+}
+
+// Every AI run since a date, for the daily chart and each person's share (a month is a few hundred rows)
+export function findUsageSince(tenantId: string, since: Date) {
+  return tenantDb(tenantId).tokenLedgerEntry.findMany({
+    where: { kind: "USAGE", createdAt: { gte: since } },
+    select: { delta: true, createdAt: true, memberId: true },
+  });
+}
+
+export function findLatestRuns(tenantId: string, take: number) {
+  return tenantDb(tenantId).tokenLedgerEntry.findMany({
+    where: { kind: "USAGE" },
+    orderBy: { createdAt: "desc" },
+    take,
+    select: {
+      id: true,
+      delta: true,
+      feature: true,
+      createdAt: true,
+      member: { select: { displayName: true } },
+      order: { select: { number: true } },
+    },
+  });
+}
+
+// Tokens given to the business (monthly grants, top-ups asked for, corrections), newest first
+export function findTokensAdded(tenantId: string, take: number) {
+  return tenantDb(tenantId).tokenLedgerEntry.findMany({
+    where: { kind: { not: "USAGE" } },
+    orderBy: { createdAt: "desc" },
+    take,
+    select: { id: true, kind: true, delta: true, note: true, createdAt: true },
+  });
+}
+
+// The team as the AI page lists them
+export function findTeamAi(tenantId: string) {
+  return tenantDb(tenantId).membership.findMany({
+    where: { status: { not: "REMOVED" } },
+    orderBy: [{ role: "asc" }, { joinedAt: "asc" }],
+    select: { id: true, displayName: true, role: true, status: true, aiEnabled: true, aiAllowance: true },
+  });
+}
+
+export function findMemberAi(tenantId: string, id: string) {
+  return tenantDb(tenantId).membership.findUnique({
+    where: { id },
+    select: { id: true, role: true, status: true, aiEnabled: true, aiAllowance: true },
+  });
+}
+
+export function updateMemberAi(
+  tenantId: string,
+  id: string,
+  data: { aiEnabled?: boolean; aiAllowance?: number | null },
+) {
+  return tenantDb(tenantId).membership.update({ where: { id }, data });
+}
+
+export function updatePoolFallback(tenantId: string, on: boolean) {
+  return tenantDb(tenantId).businessSettings.updateMany({ data: { aiPoolFallback: on } });
+}

@@ -29,7 +29,7 @@ test("post a job: missing details are flagged, then it publishes and can be mana
   await page.getByRole("button", { name: "Publish job" }).click();
 
   // Published: the WhatsApp channel post is ready to copy
-  await expect(page.getByRole("heading", { name: "Job published 🎉" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Job published" })).toBeVisible();
   await expect(page.getByLabel("WhatsApp channel post")).toHaveValue(/SAVANNA FOODS|Savanna Foods/);
   await expect(page.getByLabel("WhatsApp channel post")).toHaveValue(/jobs@savanna\.example/);
 

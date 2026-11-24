@@ -162,7 +162,7 @@ export async function approveDraftByClient(tenant: CurrentTenant, ref: string): 
     const { count } = await tx.order.updateMany({ where: { id: order.id, status: "DRAFT_SENT" }, data: step.change });
     return count === 1 && !!(await clientEvent(tx, tenant.id, order.id, "completed"));
   });
-  return saved ? { ok: true, message: "Your order is complete. Thank you!" } : refuse(CHANGED);
+  return saved ? { ok: true, message: "Your order is complete. Thank you." } : refuse(CHANGED);
 }
 
 // ---------- The review ----------
@@ -200,12 +200,12 @@ export async function leaveReview(tenant: CurrentTenant, ref: string, raw: unkno
   } catch (error) {
     // One review per order
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")
-      return refuse("You've already sent a review for this order. Thank you!");
+      return refuse("You've already sent a review for this order. Thank you.");
     throw error;
   }
   // The AI screens it for the owner once the client has their answer, so they don't wait for it
   after(() => screenNewReview(tenant.id, order.id, reviewId, review));
-  return { ok: true, message: "Thank you for your review!" };
+  return { ok: true, message: "Thank you for your review." };
 }
 
 // "✓ Looks genuine" or "⚠ Check this: …" beside the waiting review in Website content → Reviews.

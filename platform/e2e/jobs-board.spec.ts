@@ -19,7 +19,7 @@ async function publishJob(page: Page) {
   await page.getByLabel("Open until filled").check();
   await page.getByLabel("Send applications to").fill("jobs@savanna.example");
   await page.getByRole("button", { name: "Publish job" }).click();
-  await expect(page.getByRole("heading", { name: "Job published 🎉" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Job published" })).toBeVisible();
 }
 
 test("a published job appears on the website, and leaves it when unpublished", async ({ page, context }) => {

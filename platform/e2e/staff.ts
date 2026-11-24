@@ -81,7 +81,6 @@ export const testEmail = (name: string) => `${name.toLowerCase().replace(/[^a-z0
 // A writer who never signs in, with delivered orders already paid for: enough for the Finance screen
 export async function addTestWriterWithOrders(
   name: string,
-  payPercent: number,
   orders: { itemName: string; amount: number; clientName: string; receipt: string }[],
 ) {
   const tenant = await db.tenant.findUniqueOrThrow({ where: { slug: process.env.DEFAULT_TENANT_SLUG ?? "jaycvs" } });
@@ -89,7 +88,7 @@ export async function addTestWriterWithOrders(
   const user = await db.user.create({ data: { id, name, email: `${id}@${TEST_DOMAIN}`, emailVerified: true } });
   createdUserIds.push(user.id);
   const writer = await db.membership.create({
-    data: { tenantId: tenant.id, userId: user.id, role: "WRITER", displayName: name, payPercent },
+    data: { tenantId: tenant.id, userId: user.id, role: "WRITER", displayName: name },
   });
   const now = new Date();
   for (const order of orders) {

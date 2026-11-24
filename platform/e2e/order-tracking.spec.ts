@@ -26,7 +26,7 @@ test("a client finds their order from the homepage with its number and phone", a
   await page.getByLabel("Phone number you ordered with").fill(order.phone);
   await page.getByRole("button", { name: "Find my order" }).click();
   await expect(page).toHaveURL(new RegExp(`/track/${order.ref}$`));
-  await expect(page.getByRole("heading", { name: "Hi Wanjiku 👋" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hi Wanjiku" })).toBeVisible();
   await expect(page.getByText("Your draft is ready").first()).toBeVisible();
   await expect(page.locator(".timeline-mini")).toContainText("Payment received (M-Pesa code E2E4H7XQ2P)");
   // Staff-only notes never reach the client
@@ -45,7 +45,7 @@ test("the tracking page needs proof, and the private link is that proof", async 
 
   await page.goto(`/t/${order.token}`);
   await expect(page).toHaveURL(new RegExp(`/track/${order.ref}$`));
-  await expect(page.getByRole("heading", { name: "Hi Wanjiku 👋" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Hi Wanjiku" })).toBeVisible();
 });
 
 test("too many wrong phone numbers lock the order for a while", async ({ page }) => {

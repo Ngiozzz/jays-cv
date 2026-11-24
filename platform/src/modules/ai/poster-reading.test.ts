@@ -112,6 +112,8 @@ describe("parsePosterReading", () => {
 });
 
 describe("parsePosterAnswer", () => {
+  // scamRisk and scamReason are pulled out so `job` holds only the per-job fields.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isJobAdvert, rawText, scamRisk, scamReason, ...job } = PRETEND_READING;
 
   it("gives each job on the poster its own reading, with the advert's shared answers", () => {

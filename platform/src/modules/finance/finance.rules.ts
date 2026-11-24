@@ -25,19 +25,14 @@ export function periodStart(period: Period, now: Date = new Date()): Date | null
   return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1) - NAIROBI_OFFSET_MS);
 }
 
-// A writer's share of an order they delivered; the owner writing their own CVs keeps it all
-export function writerShare(orderAmount: number, payPercent: number, writerIsOwner: boolean): number {
-  if (writerIsOwner) return 0;
-  return Math.round((orderAmount * payPercent) / 100);
-}
-
 export function percentOf(part: number, whole: number): number {
   return whole ? Math.round((part / whole) * 100) : 0;
 }
 
 export type PaidLine = { amount: number; fee: number; itemName: string };
 
-export function summarise(payments: PaidLine[], writerPay: number) {
+// Writers are on a monthly salary, so nothing per CV comes off: the owner keeps takings less fees
+export function summarise(payments: PaidLine[]) {
   const takings = payments.reduce((sum, p) => sum + p.amount, 0);
   const fees = payments.reduce((sum, p) => sum + p.fee, 0);
   const byItem = new Map<string, { amount: number; count: number }>();
@@ -48,17 +43,13 @@ export function summarise(payments: PaidLine[], writerPay: number) {
   return {
     takings,
     fees,
-    writerPay,
-    keep: takings - fees - writerPay,
+    keep: takings - fees,
+    // The average paid order, in whole shillings
+    average: payments.length ? Math.round(takings / payments.length) : 0,
     byPackage: [...byItem.entries()]
       .map(([name, entry]) => ({ name, ...entry }))
       .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name)),
   };
-}
-
-// Owed overall = earned on every delivered CV minus every payout recorded; never below zero
-export function owedAmount(earned: number, paidOut: number): number {
-  return Math.max(0, earned - paidOut);
 }
 
 export const CHANNEL_LABEL = {

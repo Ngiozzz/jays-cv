@@ -24,7 +24,6 @@ export type TeamMemberRow = {
   status: "ACTIVE" | "PAUSED";
   canWrite: boolean;
   canPostJobs: boolean;
-  payPercent: number;
   joinedAt: string;
   lastSeenAt: string | null;
   changeable: boolean;
@@ -39,7 +38,6 @@ export type TeamInviteRow = {
   phone: string | null;
   canWrite: boolean;
   canPostJobs: boolean;
-  payPercent: number;
   invitedAt: string;
   expired: boolean;
   message: string;
@@ -61,7 +59,6 @@ export async function loadTeam(member: CurrentMember) {
     status: m.status === "PAUSED" ? "PAUSED" : "ACTIVE",
     canWrite: m.canWrite,
     canPostJobs: m.canPostJobs,
-    payPercent: m.payPercent,
     joinedAt: m.joinedAt.toISOString(),
     lastSeenAt: m.lastSeenAt?.toISOString() ?? null,
     changeable: canChangeMember(member, m),
@@ -74,7 +71,6 @@ export async function loadTeam(member: CurrentMember) {
     phone: invite.phone,
     canWrite: invite.canWrite,
     canPostJobs: invite.canPostJobs,
-    payPercent: invite.payPercent,
     invitedAt: invite.createdAt.toISOString(),
     expired: invite.expiresAt <= now,
     message: inviteMessage(invite, signInUrl(), member.tenant.name),
@@ -117,7 +113,6 @@ export async function inviteMember(
       phone: invite.phone,
       canWrite: invite.canWrite,
       canPostJobs: invite.canPostJobs,
-      payPercent: invite.payPercent,
       invitedAt: invite.createdAt.toISOString(),
       expired: false,
       message: inviteMessage(invite, signInUrl(), member.tenant.name),
@@ -140,7 +135,7 @@ export async function updateMemberTerms(
   const target = await changeable(member, membershipId);
   if (!target) return { ok: false, fieldErrors: { form: "This person can't be changed here." } };
   const parsed = memberTermsSchema.safeParse(raw);
-  if (!parsed.success) return { ok: false, fieldErrors: { payPercent: parsed.error.issues[0].message } };
+  if (!parsed.success) return { ok: false, fieldErrors: { form: parsed.error.issues[0].message } };
   await repo.updateMembership(member.tenant.id, target.id, parsed.data);
   return { ok: true };
 }

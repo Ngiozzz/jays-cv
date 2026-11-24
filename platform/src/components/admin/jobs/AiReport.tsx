@@ -50,7 +50,7 @@ export function AiReport({ report, links = [], idOf }: Props) {
             {links.map((link) => (
               <li key={link.url} className={link.ok ? "ok" : "failed"}>
                 <span className="ai-report-link">
-                  {link.ok ? "✓ Read" : "✗ Couldn't open"}{" "}
+                  {link.ok ? "Read" : "Couldn't open"}{" "}
                   <a href={link.finalUrl ?? link.url} target="_blank" rel="noopener noreferrer">
                     {siteOf(link.finalUrl ?? link.url)}
                   </a>
@@ -69,9 +69,7 @@ export function AiReport({ report, links = [], idOf }: Props) {
 
       {report.unsure.length > 0 && (
         <div className="ai-report-group unsure">
-          <h4>
-            <span aria-hidden="true">⚠</span> Not sure: check these against the poster ({report.unsure.length})
-          </h4>
+          <h4>Not sure: check these against the poster ({report.unsure.length})</h4>
           <ul className="ai-report-chips">
             {report.unsure.map((item) => (
               <li key={item.key}>{chip(item)}</li>
@@ -99,9 +97,7 @@ export function AiReport({ report, links = [], idOf }: Props) {
 
       {report.filled.length > 0 && (
         <div className="ai-report-group filled">
-          <h4>
-            <span aria-hidden="true">✓</span> Filled in ({report.filled.length})
-          </h4>
+          <h4>Filled in ({report.filled.length})</h4>
           <ul className="ai-report-chips">
             {report.filled.map((item) => (
               <li key={item.key}>{chip(item)}</li>

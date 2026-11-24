@@ -9,11 +9,12 @@ describe("adminTrail", () => {
     expect(trail("/admin/team")).toEqual(["Dashboard", "Team"]);
   });
 
-  it("puts Post a job and Bulk post jobs under the Job Board", () => {
-    expect(trail("/admin/jobs")).toEqual(["Dashboard", "Job Board"]);
-    expect(trail("/admin/jobs/new")).toEqual(["Dashboard", "Job Board", "Post a job"]);
-    expect(trail("/admin/inbox")).toEqual(["Dashboard", "Job Board", "Bulk post jobs"]);
-    expect(trail("/admin/jobs/cm123")).toEqual(["Dashboard", "Job Board", "Edit job"]);
+  it("puts Post a job and Bulk post jobs under the Job board", () => {
+    expect(trail("/admin/jobs")).toEqual(["Dashboard", "Job board"]);
+    expect(trail("/admin/jobs/new")).toEqual(["Dashboard", "Job board", "Post a job"]);
+    expect(trail("/admin/inbox")).toEqual(["Dashboard", "Job board", "Bulk post jobs"]);
+    expect(trail("/admin/jobs/cm123")).toEqual(["Dashboard", "Job board", "Edit job"]);
+    expect(trail("/admin/job-sources/found")).toEqual(["Dashboard", "Job sources", "Jobs found"]);
   });
 
   it("names the order and the Website content tab", () => {

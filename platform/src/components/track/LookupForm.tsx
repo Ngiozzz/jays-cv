@@ -31,38 +31,46 @@ export function LookupForm({ prefix }: { prefix: string }) {
           {failed?.error ?? notice}
         </p>
       )}
-      <div className="field">
-        <label htmlFor="lk-order">Order number</label>
-        <input
-          id="lk-order"
-          name="order"
-          value={order}
-          onChange={(event) => setOrder(event.target.value)}
-          placeholder={`e.g. ${prefix}-1046`}
-          autoComplete="off"
-          aria-invalid={Boolean(failed?.fieldErrors?.order)}
-          required
-        />
+      <div className="lk-field">
+        <label className="label" htmlFor="lk-order">
+          Order number
+        </label>
+        <span className="field">
+          <input
+            id="lk-order"
+            name="order"
+            value={order}
+            onChange={(event) => setOrder(event.target.value)}
+            placeholder={`For example ${prefix}-1046`}
+            autoComplete="off"
+            aria-invalid={Boolean(failed?.fieldErrors?.order)}
+            required
+          />
+        </span>
         {failed?.fieldErrors?.order && <small className="field-error">{failed.fieldErrors.order}</small>}
       </div>
-      <div className="field">
-        <label htmlFor="lk-phone">Phone number you ordered with</label>
-        <input
-          id="lk-phone"
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-          placeholder="e.g. 0712 345 678"
-          aria-invalid={Boolean(failed?.fieldErrors?.phone)}
-          required
-        />
+      <div className="lk-field">
+        <label className="label" htmlFor="lk-phone">
+          Phone number you ordered with
+        </label>
+        <span className="field">
+          <input
+            id="lk-phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="07XX XXX XXX"
+            aria-invalid={Boolean(failed?.fieldErrors?.phone)}
+            required
+          />
+        </span>
         {failed?.fieldErrors?.phone && <small className="field-error">{failed.fieldErrors.phone}</small>}
       </div>
-      <button className="btn btn-primary btn-lg" type="submit" disabled={pending}>
-        {pending ? "Checking…" : "Find my order"}
+      <button className="btn btn-primary" type="submit" disabled={pending}>
+        {pending ? "Checking" : "Find my order"}
       </button>
     </form>
   );

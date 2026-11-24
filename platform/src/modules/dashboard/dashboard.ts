@@ -7,7 +7,7 @@ import { DAY, span } from "@/modules/orders/orders.rules";
 // The Dashboard's pictures of the work. Pure: the orders and jobs come in already filtered by
 // what this viewer may see, and the time is passed in.
 
-// ---------- CV progress ----------
+// ---------- CV progress (kept for the writer's own list) ----------
 
 // One gold hue, light → dark = further along (validated for the preview's chart)
 export const STAGES = [
@@ -73,6 +73,73 @@ export function ordersNeedingAttention(orders: ListOrder[], now: Date, limit = 5
     .sort((a, b) => Number(isOpenOrder(b)) - Number(isOpenOrder(a)) || byDeadline(a, b))
     .slice(0, limit);
 }
+
+// ---------- Order board ----------
+
+// The Dashboard's order board: every order as a sheet in the column for where it is now
+export const BOARD_COLUMNS = [
+  { key: "new", label: "Awaiting payment" },
+  { key: "open", label: "Paid, not accepted" },
+  { key: "writing", label: "Writing" },
+  { key: "draft", label: "Draft with client" },
+  { key: "revisions", label: "Revisions" },
+  { key: "delivered", label: "Delivered" },
+] as const;
+export type BoardColumnKey = (typeof BOARD_COLUMNS)[number]["key"];
+
+// Where an order sits on the stage track (paid, writing, draft, revisions, delivered): -1 before payment
+export const BOARD_STAGE: Record<BoardColumnKey, number> = {
+  new: -1,
+  open: 0,
+  writing: 1,
+  draft: 2,
+  revisions: 3,
+  delivered: 4,
+};
+
+export function boardColumnOf(order: ListOrder): BoardColumnKey | null {
+  switch (order.status) {
+    case "NEW":
+      return "new";
+    case "PAID":
+      return order.writerId ? "writing" : "open";
+    case "WRITING":
+      return "writing";
+    case "DRAFT_SENT":
+      return "draft";
+    case "REVISIONS":
+      return "revisions";
+    case "DELIVERED":
+      return "delivered";
+    default:
+      return null;
+  }
+}
+
+// Each column's orders, most urgent first (delivered: newest first, the last 7 days only). Only the
+// first few are drawn; the rest fold into "and N more", linked to the Orders list.
+export function orderBoard(orders: ListOrder[], now: Date, show = 3) {
+  return BOARD_COLUMNS.map((column) => {
+    let inColumn = orders.filter((order) => boardColumnOf(order) === column.key);
+    if (column.key === "delivered")
+      inColumn = inColumn
+        .filter((order) => order.deliveredAt && now.getTime() - order.deliveredAt.getTime() <= 7 * DAY)
+        .sort((a, b) => (b.deliveredAt?.getTime() ?? 0) - (a.deliveredAt?.getTime() ?? 0));
+    else if (column.key === "open") inColumn.sort((a, b) => (a.paidAt?.getTime() ?? 0) - (b.paidAt?.getTime() ?? 0));
+    else if (column.key === "new") inColumn.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    else inColumn.sort(byDeadline);
+    return {
+      ...column,
+      count: inColumn.length,
+      orders: inColumn.slice(0, show),
+      more: Math.max(0, inColumn.length - show),
+    };
+  });
+}
+
+// CVs delivered since a moment (the start of the month)
+export const deliveredSince = (orders: ListOrder[], start: Date) =>
+  orders.filter((order) => order.status === "DELIVERED" && order.deliveredAt && order.deliveredAt >= start).length;
 
 // ---------- Jobs ----------
 

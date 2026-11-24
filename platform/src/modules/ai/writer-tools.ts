@@ -243,7 +243,11 @@ export const PRETEND_FINAL_CHECK: FinalCheck = {
   readyToSend: false,
   verdict: "Nearly there: fix two date problems and one spelling mistake before sending.",
   issues: [
-    { kind: "Dates", where: "Finance Officer, 2022 – Present", fix: "Starts before the previous job ends (Mar 2022). Check the months." },
+    {
+      kind: "Dates",
+      where: "Finance Officer, 2022 – Present",
+      fix: "Starts before the previous job ends (Mar 2022). Check the months.",
+    },
     { kind: "Spelling", where: "Profile: 'recievables'", fix: "Change to 'receivables'." },
     { kind: "Contact details", where: "Header", fix: "Add the client's email address." },
   ],

@@ -1,15 +1,11 @@
 import { z } from "zod";
 import { normalizeEmail } from "./invites";
 
-// What a writer may do and how they're paid: set when inviting, changed later with "Edit"
+// What a writer may do: set when inviting, changed later with "Edit". (Writers are on a monthly
+// salary, paid outside the app, so there's no pay here.)
 export const memberTermsSchema = z.object({
   canWrite: z.boolean(),
   canPostJobs: z.boolean(),
-  payPercent: z.coerce
-    .number()
-    .int("Use a whole number")
-    .min(0, "Pay can't be below 0%")
-    .max(100, "Pay can't be above 100%"),
 });
 
 export const inviteSchema = memberTermsSchema
@@ -46,7 +42,6 @@ export function inviteFormToInput(form: FormData): unknown {
     phone: compactPhone(form.get("phone")),
     canWrite: checked(form, "canWrite"),
     canPostJobs: checked(form, "canPostJobs"),
-    payPercent: form.get("payPercent") ?? 0,
   };
 }
 
@@ -54,6 +49,5 @@ export function termsFormToInput(form: FormData): unknown {
   return {
     canWrite: checked(form, "canWrite"),
     canPostJobs: checked(form, "canPostJobs"),
-    payPercent: form.get("payPercent") ?? 0,
   };
 }

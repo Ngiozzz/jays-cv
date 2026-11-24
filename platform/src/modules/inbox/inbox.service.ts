@@ -6,7 +6,7 @@ import { htmlToText, type LinkResult } from "@/modules/ai/links";
 import type { JobPage } from "@/modules/ai/page-reading";
 import { READING_FIELDS, readingToJobInput } from "@/modules/ai/poster-reading";
 import { AI_PAUSED_MESSAGE, aiStopped } from "@/modules/ai/tokens";
-import { getTokenBalance } from "@/modules/ai/tokens.service";
+import { getTokenBalance, memberAiBlock } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { sureDuplicate } from "@/modules/job-sources/duplicates";
 import { getJobBoard } from "@/modules/jobs/jobs.public";
@@ -65,6 +65,8 @@ export async function readInboxItem(member: CurrentMember, id: string): Promise<
   const stopped = aiStopped(await getTokenBalance(tenantId));
   if (stopped === "paused") return { ok: false, error: AI_PAUSED_MESSAGE };
   if (stopped) return { ok: false, error: "Your AI tokens have run out. Ask your developer for more." };
+  const blocked = await memberAiBlock(member);
+  if (blocked) return { ok: false, error: blocked };
   // Another browser may already be reading this one
   if (!(await repo.claimForReading(tenantId, id))) return { ok: true };
   const item = await repo.findInboxItem(tenantId, id);

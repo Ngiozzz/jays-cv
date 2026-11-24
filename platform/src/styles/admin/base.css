@@ -1,0 +1,88 @@
+/* =========================================================
+   Admin base: loaded after the public site.css and before admin.css.
+   The admin's components were written against the old website stylesheet: its token names and
+   its element defaults (heading and paragraph margins). They're kept here, mapped onto the new
+   palette, so every screen keeps its layout while taking on the new look.
+   ========================================================= */
+
+:root {
+  /* Old token names → the new palette (site.css already defines --gold, --ink, --text, --muted,
+     --line, --bg and --gold-light, so those carry straight over) */
+  --black: #1c1b19;
+  --white: #ffffff;
+  --cream: #fafaf9;
+  --primary: var(--ink);
+  --primary-dark: #000000;
+  --on-primary: var(--on-ink);
+  --gold-text: #7a5e22;
+  --primary-soft: rgba(184, 145, 63, 0.1);
+  --gold-border: rgba(184, 145, 63, 0.35);
+  --accent: var(--gold);
+  --accent-soft: rgba(184, 145, 63, 0.08);
+  --bg-alt: #f4f3f1;
+  --dark: #1c1b19;
+  --on-dark: #e7e5e4;
+  --on-dark-muted: #a8a29e;
+  --font: var(--sans);
+  --font-body: var(--sans);
+  --font-head: var(--serif);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.05);
+  --shadow: 0 8px 24px rgba(28, 27, 25, 0.08);
+  --shadow-lg: 0 24px 64px rgba(28, 27, 25, 0.18);
+  --container: 1180px;
+  --header-h: 0px;
+
+  /* Admin only */
+  --side: #f4f3f1;
+  --bad: #b42318;
+  --bad-soft: rgba(180, 35, 24, 0.07);
+  --good-soft: rgba(21, 128, 61, 0.09);
+  --warn: #b45309;
+  --warn-soft: rgba(180, 83, 9, 0.08);
+}
+
+/* Element defaults, at zero specificity so any component rule wins */
+:where(.admin, .signin-page) {
+  font-size: 14px;
+  line-height: 20px;
+}
+:where(.admin, .signin-page) :where(h1, h2, h3, h4) {
+  margin: 0 0 0.6em;
+  font-family: var(--sans);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+:where(.admin, .signin-page) :where(h2) {
+  font-size: 18px;
+  font-weight: 600;
+}
+:where(.admin, .signin-page) :where(h3) {
+  font-size: 15px;
+  font-weight: 600;
+}
+:where(.admin, .signin-page) :where(h4) {
+  font-size: 14px;
+  font-weight: 600;
+}
+:where(.admin, .signin-page) :where(p) {
+  margin: 0 0 1em;
+}
+:where(.admin, .signin-page) :where(p:last-child) {
+  margin-bottom: 0;
+}
+:where(.admin) :where(a:not(.btn)) {
+  color: inherit;
+}
+:where(.admin) :where(strong, b) {
+  font-weight: 600;
+}
+:where(.admin) :where(input, select, textarea) {
+  font-size: 14px;
+}
+:where(.admin svg[aria-hidden="true"]:not([width])) {
+  width: 16px;
+  height: 16px;
+}

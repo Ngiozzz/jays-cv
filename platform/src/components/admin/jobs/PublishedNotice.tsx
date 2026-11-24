@@ -5,7 +5,7 @@ import { CopyButton } from "@/components/CopyButton";
 export function PublishedNotice({ channelPost }: { channelPost: string }) {
   return (
     <section className="panel panel-body published-notice">
-      <h2>Job published 🎉</h2>
+      <h2>Job published</h2>
       <p>Post it to the Jay CVS Job Vacancies channel on WhatsApp:</p>
       <textarea className="wa-text" readOnly rows={10} value={channelPost} aria-label="WhatsApp channel post" />
       <div className="published-actions">

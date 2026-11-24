@@ -35,7 +35,7 @@ function zip(files: Record<string, string>): Uint8Array {
 }
 
 const documentXml =
-  '<w:document><w:body><w:p><w:r><w:t>Jane Wanjiku</w:t></w:r></w:p>' +
+  "<w:document><w:body><w:p><w:r><w:t>Jane Wanjiku</w:t></w:r></w:p>" +
   "<w:p><w:r><w:t>Accountant</w:t></w:r><w:r><w:tab/><w:t>Nairobi &amp; Kisumu</w:t></w:r></w:p>" +
   "<w:p><w:r><w:t>CPA (K) &#8211; 2019</w:t></w:r></w:p></w:body></w:document>";
 

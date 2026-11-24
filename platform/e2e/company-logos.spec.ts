@@ -23,7 +23,7 @@ test("a logo added while posting shows on the website and is remembered for the 
   await page.getByLabel("Logo image").setInputFiles("e2e/fixtures/poster.png");
   await expect(page.getByText("New logo: saved with the job")).toBeVisible();
   await page.getByRole("button", { name: "Publish job" }).click();
-  await expect(page.getByRole("heading", { name: "Job published 🎉" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Job published" })).toBeVisible();
 
   // On the jobs board, the card shows the logo instead of initials
   await page.goto("/jobs");

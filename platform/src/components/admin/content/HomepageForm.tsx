@@ -112,7 +112,7 @@ export function HomepageForm({ homepage }: { homepage: StoredHomepage }) {
         <p className="preview-label">Live preview</p>
         {home.announcementOn && home.announcementText && (
           <div className="announce-bar">
-            <span>📣 {home.announcementText}</span>
+            <span>{home.announcementText}</span>
             {home.announcementLink && <u>Learn more →</u>}
           </div>
         )}

@@ -8,6 +8,7 @@ import {
   sendPromptAction,
   showAccountAction,
 } from "@/app/(public)/[tenant]/track/pay-actions";
+import { Icon } from "@/components/icons/Icon";
 import { PROMPT_SECONDS, type PretendOutcome } from "@/modules/payments/mpesa";
 
 export type PayInfo = {
@@ -50,19 +51,17 @@ const POLL_MS = 3000;
 export function PayBox({ info }: { info: PayInfo }) {
   const [method, setMethod] = useState<"prompt" | "paybill">("prompt");
   return (
-    <div className="ps-box mp-dialog pay-box">
+    <div className="pay-box">
       {info.pretend && <div className="ps-test">TEST MODE · pretend M-Pesa, no real money moves</div>}
       <header className="ps-head">
-        <span className="mp-logo" aria-hidden="true">
-          M-PESA
-        </span>
         <div>
-          <strong>Pay {info.businessName}</strong>
+          <strong>Pay {info.businessName} by M-Pesa</strong>
           <small>Order {info.ref}</small>
         </div>
         <div className="ps-amount">
-          <small>Amount</small>
-          <strong>{kes(info.amountDue)}</strong>
+          <small>KES</small>
+          <b>{info.amountDue.toLocaleString("en-KE")}</b>
+          <span className="sr-only">{kes(info.amountDue)}</span>
         </div>
       </header>
       <div className="ps-tabs" role="group" aria-label="How would you like to pay?">
@@ -72,7 +71,7 @@ export function PayBox({ info }: { info: PayInfo }) {
           aria-pressed={method === "prompt"}
           onClick={() => setMethod("prompt")}
         >
-          📲 Prompt on my phone
+          Prompt on my phone
         </button>
         <button
           type="button"
@@ -80,7 +79,7 @@ export function PayBox({ info }: { info: PayInfo }) {
           aria-pressed={method === "paybill"}
           onClick={() => setMethod("paybill")}
         >
-          🏦 Pay via Paybill
+          Pay Bill
         </button>
       </div>
       <div className="ps-body">
@@ -91,7 +90,10 @@ export function PayBox({ info }: { info: PayInfo }) {
         )}
       </div>
       <footer className="ps-foot">
-        🔒 Paid directly to {info.businessName} by M-Pesa · Paybill <b>{info.paybill}</b> · no middleman
+        <Icon name="lock" />
+        <span>
+          Paid straight to {info.businessName}, Pay Bill <b>{info.paybill}</b>. No middleman.
+        </span>
       </footer>
     </div>
   );
@@ -143,7 +145,9 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
   if (stage.name === "paid")
     return (
       <div className="ps-done" role="status">
-        <span aria-hidden="true">✓</span>
+        <span className="ps-tick" aria-hidden="true">
+          <Icon name="check" />
+        </span>
         <strong>Payment received</strong>
         <p>
           {kes(info.amountDue)} paid by M-Pesa.
@@ -158,12 +162,14 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
       <div className="ps-failed" role="alert">
         <strong>Payment didn&apos;t go through</strong>
         <p>{stage.message}</p>
-        <button type="button" className="ps-pay" onClick={() => setStage({ name: "form" })}>
-          Try again
-        </button>
-        <button type="button" className="ps-link mp-alt" onClick={onPaybill}>
-          Pay via Paybill instead
-        </button>
+        <div className="ps-row">
+          <button type="button" className="btn btn-primary" onClick={() => setStage({ name: "form" })}>
+            Try again
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onPaybill}>
+            Use Pay Bill instead
+          </button>
+        </div>
       </div>
     );
 
@@ -171,30 +177,36 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
     const left = Math.max(0, PROMPT_SECONDS - Math.floor((now - stage.started) / 1000));
     return (
       <div className="ps-wait" role="status">
-        <div className="ps-phone-art" aria-hidden="true">
-          <span>M-PESA</span>
-          <small>
+        <div className="phone-mini" aria-hidden="true">
+          <div className="stk">
             Do you want to pay Ksh{info.amountDue.toLocaleString("en-KE")}.00 to {info.businessName} account no.{" "}
-            {info.ref.replace(/^\D+-?/, "")}? Enter M-PESA PIN
-          </small>
+            {info.ref.replace(/^\D+-?/, "")}?<span className="pin">••••</span>
+          </div>
         </div>
-        <strong>Check your phone</strong>
-        <p>
-          Enter your M-Pesa PIN on the prompt sent to <b>{stage.phone}</b>.
-        </p>
-        <p className="ps-count">
-          {left > 0 ? `Waiting for M-Pesa… 0:${String(left).padStart(2, "0")}` : "Still waiting for M-Pesa…"}
-        </p>
+        <div>
+          <strong>Check your phone</strong>
+          <p>
+            Enter your M-Pesa PIN on the prompt sent to <b>{stage.phone}</b>.
+          </p>
+          <p className="ps-count num">
+            {left > 0 ? `Waiting for M-Pesa, 0:${String(left).padStart(2, "0")}` : "Still waiting for M-Pesa"}
+          </p>
+        </div>
         {info.pretend && (
           <div className="ps-sim">
             <small>Test mode: you play the client&apos;s phone</small>
-            <button type="button" className="ps-pay" disabled={busy} onClick={() => answer(stage.paymentId, "paid")}>
-              ✓ Entered PIN
-            </button>
-            <div className="mp-sim-row">
+            <div className="row">
               <button
                 type="button"
-                className="ps-link"
+                className="btn btn-primary btn-sm"
+                disabled={busy}
+                onClick={() => answer(stage.paymentId, "paid")}
+              >
+                Entered PIN
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
                 disabled={busy}
                 onClick={() => answer(stage.paymentId, "cancelled")}
               >
@@ -202,7 +214,7 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
               </button>
               <button
                 type="button"
-                className="ps-link"
+                className="btn btn-ghost btn-sm"
                 disabled={busy}
                 onClick={() => answer(stage.paymentId, "noFunds")}
               >
@@ -210,7 +222,7 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
               </button>
               <button
                 type="button"
-                className="ps-link"
+                className="btn btn-ghost btn-sm"
                 disabled={busy}
                 onClick={() => answer(stage.paymentId, "timeout")}
               >
@@ -244,10 +256,10 @@ function PromptPay({ info, onPaybill }: { info: PayInfo; onPaybill: () => void }
           {stage.error}
         </p>
       )}
-      <button type="button" className="ps-pay" disabled={busy} onClick={send}>
-        {busy ? "Sending the prompt…" : `Pay ${kes(info.amountDue)}`}
+      <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={send}>
+        {busy ? "Sending the prompt" : `Pay ${kes(info.amountDue)}`}
       </button>
-      <p className="mp-small">Paying for someone else? Change the number to theirs. No prompt? Use Pay via Paybill.</p>
+      <p className="mp-small">Paying for someone else? Change the number to theirs. No prompt? Use Pay Bill.</p>
     </>
   );
 }

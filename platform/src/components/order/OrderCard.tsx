@@ -9,6 +9,7 @@ import { formatKes } from "@/lib/money";
 import { keptUntilText } from "@/modules/cv-check/cv-check";
 import { NEEDS, type NeedKey } from "@/modules/orders/place-order";
 import { PayBox } from "@/components/pay/PayBox";
+import { StageTrack } from "@/components/site/StageTrack";
 import type { PlaceOrderResult } from "@/modules/orders/place-order.service";
 
 export type CardPackage = {
@@ -43,7 +44,7 @@ type Props = {
 };
 type Placed = Extract<PlaceOrderResult, { ok: true }>;
 
-const STEPS = ["Choose a service", "Pick a package", "Your details & CV"];
+const STEPS = ["Choose a service", "Pick a package", "Your details and CV"];
 
 // The website's order card: 1) what do you need, 2) which package, 3) details and CV → the order is
 // created and the client gets their order number and private tracking link.
@@ -65,7 +66,7 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
       : `package:${(wantedPackage ?? packages[1] ?? packages[0])?.id ?? ""}`,
   );
   const [placed, setPlaced] = useState<Placed | null>(null);
-  const top = useRef<HTMLElement>(null);
+  const top = useRef<HTMLDivElement>(null);
 
   const single = need === "single";
   const chooseNeed = (key: NeedKey) => {
@@ -78,9 +79,18 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
   };
   const chosen =
     packages
-      .map((pkg) => ({ key: `package:${pkg.id}`, name: `${pkg.name} package`, price: pkg.price }))
+      .map((pkg) => ({
+        key: `package:${pkg.id}`,
+        name: `${pkg.name} package`,
+        short: pkg.name,
+        detail: pkg.bestFor,
+        draft: pkg.draft,
+        price: pkg.price,
+      }))
       .find((p) => p.key === item) ??
-    services.map((s) => ({ key: `service:${s.id}`, name: s.name, price: s.price })).find((s) => s.key === item);
+    services
+      .map((s) => ({ key: `service:${s.id}`, name: s.name, short: s.name, detail: s.note, draft: "", price: s.price }))
+      .find((s) => s.key === item);
   const needsJob = services.some((service) => `service:${service.id}` === item && service.needsJobAdvert);
 
   const go = (next: number) => {
@@ -89,134 +99,189 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
   };
 
   return (
-    <section className="order-card" aria-label="Order in 3 steps" ref={top}>
-      <nav className="order-steps" aria-label="Order steps">
-        <ol>
-          {STEPS.map((label, i) => (
-            <li key={label} className={i + 1 === step ? "current" : i + 1 < step ? "done" : undefined}>
-              <button
-                type="button"
-                onClick={() => !placed && go(i + 1)}
-                aria-current={i + 1 === step ? "step" : undefined}
-                disabled={Boolean(placed)}
-              >
-                <span className="j-num">{i + 1}</span>
-                <span className="j-text">
-                  <small>Step {i + 1}</small>
-                  {label}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
-      </nav>
-      <div className="order-body">
-        {step === 1 && (
-          <div className="order-panel active" role="group" aria-labelledby="order-t1">
-            <h2 className="order-title" id="order-t1">
-              What do you need?
-            </h2>
-            <p className="order-sub">Pick the closest match. We&apos;ll suggest the right package next.</p>
-            <div className="opt-grid">
-              {NEEDS.filter((n) => (n.packageIndex === null ? services.length > 0 : packages[n.packageIndex])).map(
-                (n) => (
-                  <label key={n.key} className="opt">
-                    <input type="radio" name="need" checked={need === n.key} onChange={() => chooseNeed(n.key)} />
-                    <span className="opt-body">
-                      <strong>{n.title}</strong>
-                      <small>{n.note}</small>
-                    </span>
-                  </label>
-                ),
-              )}
-            </div>
-            <div className="order-nav">
-              <span></span>
-              <button type="button" className="btn btn-primary" onClick={() => go(2)}>
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="order-panel active" role="group" aria-labelledby="order-t2">
-            <h2 className="order-title" id="order-t2">
-              {single ? "Pick a service" : "Pick a package"}
-            </h2>
-            <p className="order-sub">
-              One-off price, paid by M-Pesa. <Link href="/pricing#compare">Compare what&apos;s included</Link>.
-            </p>
-            <div className="opt-list">
-              {single
-                ? services.map((service) => (
-                    <label key={service.id} className="opt">
-                      <input
-                        type="radio"
-                        name="item"
-                        checked={item === `service:${service.id}`}
-                        onChange={() => setItem(`service:${service.id}`)}
-                      />
+    <div className="order-grid" ref={top}>
+      <section className="order-card" aria-label="Order in 3 steps">
+        <nav className="order-rail" aria-label="Order steps">
+          <ol>
+            {STEPS.map((label, i) => (
+              <li key={label} className={placed || i + 1 < step ? "done" : i + 1 === step ? "now" : undefined}>
+                <button
+                  type="button"
+                  onClick={() => !placed && go(i + 1)}
+                  aria-current={i + 1 === step ? "step" : undefined}
+                  disabled={Boolean(placed) || i + 1 > step}
+                >
+                  <i aria-hidden="true" />
+                  <span>
+                    {i + 1} · {label}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <div className="order-body card">
+          {step === 1 && (
+            <div className="order-panel active" role="group" aria-labelledby="order-t1">
+              <h2 className="order-title" id="order-t1">
+                What do you need?
+              </h2>
+              <p className="order-sub">Pick the closest match. We&apos;ll suggest the right package next.</p>
+              <div className="opts two">
+                {NEEDS.filter((n) => (n.packageIndex === null ? services.length > 0 : packages[n.packageIndex])).map(
+                  (n) => (
+                    <label key={n.key} className={n.key === "single" ? "opt opt-wide" : "opt"}>
+                      <input type="radio" name="need" checked={need === n.key} onChange={() => chooseNeed(n.key)} />
                       <span className="opt-body">
-                        <strong>{service.name}</strong>
-                        {service.note && <small>{service.note}</small>}
+                        <strong>{n.title}</strong>
+                        <small>{n.note}</small>
                       </span>
-                      <span className="opt-price">{formatKes(service.price)}</span>
                     </label>
-                  ))
-                : packages.map((pkg, i) => {
-                    const suggested = NEEDS.find((n) => n.key === need)?.packageIndex === i;
-                    return (
-                      <label key={pkg.id} className={suggested ? "opt recommended" : "opt"}>
+                  ),
+                )}
+              </div>
+              <div className="order-nav">
+                <span></span>
+                <button type="button" className="btn btn-primary" onClick={() => go(2)}>
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="order-panel active" role="group" aria-labelledby="order-t2">
+              <h2 className="order-title" id="order-t2">
+                {single ? "Pick a service" : "Pick a package"}
+              </h2>
+              <p className="order-sub">
+                One price, paid once by M-Pesa. <Link href="/pricing#compare">Compare what&apos;s included</Link>
+              </p>
+              <div className="opts">
+                {single
+                  ? services.map((service) => (
+                      <label key={service.id} className="opt">
                         <input
                           type="radio"
                           name="item"
-                          checked={item === `package:${pkg.id}`}
-                          onChange={() => setItem(`package:${pkg.id}`)}
+                          checked={item === `service:${service.id}`}
+                          onChange={() => setItem(`service:${service.id}`)}
                         />
                         <span className="opt-body">
-                          <strong>{pkg.name}</strong>
-                          <small>
-                            {pkg.bestFor} · draft in {pkg.draft}
-                          </small>
+                          <strong>{service.name}</strong>
+                          {service.note && <small>{service.note}</small>}
                         </span>
-                        <span className="opt-price">{formatKes(pkg.price)}</span>
+                        <span className="opt-price">{formatKes(service.price)}</span>
                       </label>
-                    );
-                  })}
+                    ))
+                  : packages.map((pkg, i) => {
+                      const suggested = NEEDS.find((n) => n.key === need)?.packageIndex === i;
+                      return (
+                        <label key={pkg.id} className="opt">
+                          <input
+                            type="radio"
+                            name="item"
+                            checked={item === `package:${pkg.id}`}
+                            onChange={() => setItem(`package:${pkg.id}`)}
+                          />
+                          <span className="opt-body">
+                            <strong>
+                              {pkg.name}
+                              {suggested && <span className="opt-rec">Suggested for you</span>}
+                            </strong>
+                            <small>
+                              {pkg.bestFor} · first draft within {pkg.draft}
+                            </small>
+                          </span>
+                          <span className="opt-price">{formatKes(pkg.price)}</span>
+                        </label>
+                      );
+                    })}
+              </div>
+              <div className="order-nav">
+                <button type="button" className="btn btn-ghost" onClick={() => go(1)}>
+                  Back
+                </button>
+                <button type="button" className="btn btn-primary" onClick={() => go(3)} disabled={!chosen}>
+                  Continue
+                </button>
+              </div>
             </div>
-            <div className="order-nav">
-              <button type="button" className="btn btn-ghost" onClick={() => go(1)}>
-                Back
-              </button>
-              <button type="button" className="btn btn-primary" onClick={() => go(3)} disabled={!chosen}>
-                Continue
-              </button>
-            </div>
-          </div>
-        )}
+          )}
 
-        {step === 3 &&
-          (placed ? (
-            <Done placed={placed} businessName={businessName} waNumber={waNumber} />
-          ) : (
-            <DetailsStep
-              item={item}
-              need={need}
-              chosen={chosen}
-              tailoring={needsJob}
-              job={needsJob ? job : null}
-              fromCheck={needsJob && job ? (fromCheck ?? null) : null}
-              whatsappHref={whatsappHref}
-              onBack={() => go(2)}
-              onPlaced={(result) => {
-                setPlaced(result);
-                top.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            />
-          ))}
+          {step === 3 &&
+            (placed ? (
+              <Done placed={placed} businessName={businessName} waNumber={waNumber} />
+            ) : (
+              <DetailsStep
+                item={item}
+                need={need}
+                chosen={chosen}
+                tailoring={needsJob}
+                job={needsJob ? job : null}
+                fromCheck={needsJob && job ? (fromCheck ?? null) : null}
+                whatsappHref={whatsappHref}
+                onBack={() => go(2)}
+                onPlaced={(result) => {
+                  setPlaced(result);
+                  top.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
+            ))}
+        </div>
+      </section>
+      <OrderSlip chosen={chosen} job={needsJob ? job : null} placed={placed} whatsappHref={whatsappHref} />
+    </div>
+  );
+}
+
+// The order slip beside the card: fills in as the client chooses, and shows the order number once placed
+function OrderSlip({
+  chosen,
+  job,
+  placed,
+  whatsappHref,
+}: {
+  chosen: { short: string; detail: string; draft: string; price: number } | undefined;
+  job: CardJob | null;
+  placed: Placed | null;
+  whatsappHref: string;
+}) {
+  return (
+    <aside className="order-slip" aria-label="Your order">
+      <div className="slip-paper">
+        <div className="slip-top">
+          <span>Your order</span>
+          <span className="mono">{placed?.ref ?? "New"}</span>
+        </div>
+        <div className="slip-item">{chosen?.short ?? "Choose a service"}</div>
+        <div className="slip-for">{job ? `${job.title} at ${job.company}` : chosen?.detail}</div>
+        <dl>
+          {chosen?.draft && (
+            <div>
+              <dt>First draft</dt>
+              <dd>Within {chosen.draft}</dd>
+            </div>
+          )}
+          <div>
+            <dt>Pay by</dt>
+            <dd>M-Pesa</dd>
+          </div>
+        </dl>
+        <div className="slip-total">
+          <span>Total</span>
+          <b>{chosen ? formatKes(chosen.price) : ""}</b>
+        </div>
+        <StageTrack of={5} at={placed ? 0 : -1} />
+        <p className="slip-stage">{placed ? "Waiting for payment" : "Not placed yet"}</p>
       </div>
-    </section>
+      <p className="slip-help">
+        Not sure what to pick?{" "}
+        <a href={whatsappHref} target="_blank" rel="noopener">
+          Ask us
+        </a>
+      </p>
+    </aside>
   );
 }
 
@@ -265,29 +330,21 @@ function DetailsStep(props: {
   return (
     <div className="order-panel active" role="group" aria-labelledby="order-t3">
       <h2 className="order-title" id="order-t3">
-        Your details &amp; CV
+        Your details and CV
       </h2>
       <p className="order-sub">
-        We&apos;ll create your order and a private link where you can pay, follow progress and download your drafts.
+        We&apos;ll create your order and a private link where you can pay, follow progress, download drafts and ask for
+        changes.
       </p>
-      <div className="order-summary">
-        <div>
-          <span>Your order</span>
-          <strong>{props.chosen?.name}</strong>
-        </div>
-        <div className="order-amount">
-          <span>Amount</span>
-          <strong>{props.chosen ? formatKes(props.chosen.price) : ""}</strong>
-        </div>
-      </div>
       {props.job && (
         <div className="od-job">
-          <Icon name="briefcase" />
+          <span className="od-job-tile" aria-hidden="true">
+            {initials(props.job.company)}
+          </span>
           <span>
             <small>Tailored to this job</small>
-            <strong>
-              {props.job.title} at {props.job.company}
-            </strong>
+            <strong>{props.job.title}</strong>
+            {props.job.company}
           </span>
           <Link href={`/jobs/${props.job.slug}`}>View the job</Link>
         </div>
@@ -302,7 +359,7 @@ function DetailsStep(props: {
               id="od-name"
               name="name"
               autoComplete="name"
-              placeholder="e.g. Faith Njeri"
+              placeholder="For example Faith Njeri"
               maxLength={80}
               defaultValue={props.fromCheck?.name}
               required
@@ -327,7 +384,7 @@ function DetailsStep(props: {
           </div>
           <div className="od-field">
             <label htmlFor="od-email">
-              Email <small>(optional)</small>
+              Email <small>optional</small>
             </label>
             <input
               id="od-email"
@@ -341,12 +398,12 @@ function DetailsStep(props: {
           </div>
           <div className="od-field">
             <label htmlFor="od-role">
-              Job you&apos;re targeting <small>(optional)</small>
+              Job you&apos;re aiming for <small>optional</small>
             </label>
             <input
               id="od-role"
               name="targetRole"
-              placeholder="e.g. Procurement Officer"
+              placeholder="For example Procurement Officer"
               maxLength={100}
               defaultValue={props.job?.title}
             />
@@ -354,14 +411,14 @@ function DetailsStep(props: {
           </div>
           <div className="od-field od-wide">
             <label htmlFor="od-notes">
-              Anything we should know? <small>(optional)</small>
+              Anything we should know? <small>optional</small>
             </label>
             <textarea
               id="od-notes"
               name="notes"
               rows={3}
               maxLength={1000}
-              placeholder="e.g. I'm moving from teaching into HR; I have a job advert I'm applying for"
+              placeholder="For example: I'm moving from teaching into HR"
             />
             {fieldError("notes")}
           </div>
@@ -377,7 +434,7 @@ function DetailsStep(props: {
                 name="jobAdvert"
                 rows={4}
                 maxLength={5000}
-                placeholder="Paste the job advert here, or a link to it (e.g. https://careers.company.co.ke/jobs/123)"
+                placeholder="Paste the job advert here, or a link to it (for example https://careers.company.co.ke/jobs/123)"
               />
               {fieldError("jobAdvert")}
             </div>
@@ -391,7 +448,7 @@ function DetailsStep(props: {
               <Icon name="image" />
               <span>
                 <strong>{advertName || "Or upload a photo of the advert"}</strong>
-                <small>A screenshot or PDF of the job poster · optional if you pasted it above</small>
+                <small>A screenshot or PDF of the poster, optional if you pasted it above</small>
               </span>
             </label>
             {fieldError("advert")}
@@ -436,7 +493,7 @@ function DetailsStep(props: {
         {!props.tailoring && (
           <label className="od-check">
             <input type="checkbox" name="noCv" checked={noCv} onChange={(event) => setNoCv(event.target.checked)} /> I
-            don&apos;t have a CV yet. Send me a short questionnaire instead.
+            don&apos;t have a CV yet. Send me a short questionnaire instead
           </label>
         )}
         <label className="od-check">
@@ -452,17 +509,15 @@ function DetailsStep(props: {
             Back
           </button>
           <button type="submit" className="btn btn-primary" disabled={pending}>
-            <Icon name="upload" />
-            {pending ? "Creating your order…" : noCv ? "Place my order" : "Upload CV & place my order"}
+            {pending ? "Placing your order…" : noCv ? "Place my order" : "Upload CV and place my order"}
           </button>
         </div>
       </form>
       <p className="order-note">
-        Your CV is only seen by your writer and the owner. Questions first?{" "}
+        Only your writer and the owner see your CV. Questions first?{" "}
         <a href={props.whatsappHref} target="_blank" rel="noopener">
-          Chat with us on WhatsApp
+          Ask on WhatsApp
         </a>
-        .
       </p>
     </div>
   );
@@ -470,6 +525,7 @@ function DetailsStep(props: {
 
 function Done({ placed, businessName, waNumber }: { placed: Placed; businessName: string; waNumber: string }) {
   const [copied, setCopied] = useState("Copy");
+  const what = `${placed.itemName}${placed.forJob ? ` for ${placed.forJob}` : ""}`;
   const trackPath = `/track/${placed.ref}`;
   // The client sends this to the business, so the link stays in their own WhatsApp chat
   const saveText = `Hi ${businessName}, I've placed order ${placed.ref} (${placed.itemName}). My private tracking link: ${placed.trackingUrl}`;
@@ -480,13 +536,10 @@ function Done({ placed, businessName, waNumber }: { placed: Placed; businessName
           <Icon name="check" />
         </span>
         <div>
-          <h2 className="order-title">
-            Order {placed.ref} created, {placed.firstName}!
-          </h2>
+          <h2 className="order-title">Order {placed.ref} placed</h2>
           <p className="order-sub">
-            {placed.itemName}
-            {placed.forJob && ` for ${placed.forJob}`}
-            {placed.cvName ? ` · CV received (${placed.cvName})` : " · we'll send you a short questionnaire"}
+            Thanks {placed.firstName}. {what}
+            {placed.cvName ? `, CV received (${placed.cvName})` : ", and we'll send you a short questionnaire"}.
           </p>
         </div>
       </div>
@@ -500,9 +553,9 @@ function Done({ placed, businessName, waNumber }: { placed: Placed; businessName
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(placed.trackingUrl);
-                setCopied("Copied!");
+                setCopied("Copied");
               } catch {
-                setCopied("Select & copy");
+                setCopied("Select and copy");
               }
             }}
           >
@@ -512,25 +565,25 @@ function Done({ placed, businessName, waNumber }: { placed: Placed; businessName
         </div>
         <small>
           <Icon name="lock" />
-          Only you have this link. Don&apos;t share it in groups or channels.
+          Only you have this link. Don&apos;t share it in groups or channels
         </small>
       </div>
       <div className="od-actions">
         <a
-          className="btn btn-wa btn-lg"
+          className="btn btn-ghost"
           href={`https://wa.me/${waNumber}?text=${encodeURIComponent(saveText)}`}
           target="_blank"
           rel="noopener"
         >
           <Icon name="whatsapp" />
-          Save link to my WhatsApp
+          Save the link to my WhatsApp
         </a>
-        <Link className="btn btn-ghost btn-lg" href={trackPath}>
+        <Link className="btn btn-ghost" href={trackPath}>
           Open my tracking page
         </Link>
       </div>
       <div className="od-pay">
-        <strong>Next: pay to start your order</strong>
+        <h3>Next: pay to start your order</h3>
         <PayBox
           info={{
             ref: placed.ref,
@@ -547,4 +600,16 @@ function Done({ placed, businessName, waNumber }: { placed: Placed; businessName
       </div>
     </div>
   );
+}
+
+// Two letters for the company tile, e.g. "Kenya Power" gives "KP"
+function initials(company: string) {
+  return company
+    .replace(/[^A-Za-z ]/g, "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
 }

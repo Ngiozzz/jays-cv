@@ -6,7 +6,7 @@ import { readLinks } from "@/modules/ai/link-reader";
 import { findLinks, type LinkResult } from "@/modules/ai/links";
 import { readingToJobInput, type ScamRisk } from "@/modules/ai/poster-reading";
 import { AI_PAUSED_MESSAGE, aiStopped } from "@/modules/ai/tokens";
-import { getTokenBalance } from "@/modules/ai/tokens.service";
+import { getTokenBalance, memberAiBlock } from "@/modules/ai/tokens.service";
 import { recordUsage } from "@/modules/ai/tokens.repo";
 import { scamFlag, type Flag } from "@/modules/inbox/inbox.flags";
 import type { CurrentMember } from "@/modules/team/current-member";
@@ -56,6 +56,8 @@ export async function readPoster(member: CurrentMember, file: File, caption: str
   if (stopped) {
     return { ok: false, error: "Your AI tokens have run out. Ask your developer for more, or type the details in." };
   }
+  const blocked = await memberAiBlock(member);
+  if (blocked) return { ok: false, error: `${blocked} You can type the details in.` };
 
   try {
     const image = {

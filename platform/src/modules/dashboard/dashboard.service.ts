@@ -13,7 +13,7 @@ import { listOrders } from "@/modules/orders/orders.service";
 import type { CurrentMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
 import { loadTeam } from "@/modules/team/team.service";
-import { jobSummary, myCvs, openOrders, ordersNeedingAttention, progressRows, type Person } from "./dashboard";
+import { deliveredSince, jobSummary, openOrders, orderBoard } from "./dashboard";
 
 // Admin → Dashboard. Each part is loaded only for people allowed to see it (the services check
 // again): orders for writers, jobs for job posters, money, team and AI tokens for the owner.
@@ -28,14 +28,12 @@ async function ownerSummary(member: CurrentMember, now: Date) {
     findOpenRequest(member.tenant.id),
   ]);
   const writers = team.members.filter((m) => m.role !== "OWNER");
-  const owed = finance.writers.filter((w) => w.owed > 0);
   const posterReading = usage.find((u) => u.feature === "Poster reading");
   return {
     takings: finance.takings,
     paidCount: finance.payments.filter((p) => p.order).length,
+    average: finance.average,
     keep: finance.keep,
-    owedTotal: owed.reduce((sum, w) => sum + w.owed, 0),
-    owedWriters: owed.length,
     activeWriters: writers.filter((m) => m.status === "ACTIVE").length,
     pausedWriters: writers.filter((m) => m.status === "PAUSED").length,
     invitedWriters: team.invites.filter((i) => !i.owner && !i.expired).length,
@@ -60,19 +58,21 @@ async function ownerSummary(member: CurrentMember, now: Date) {
 }
 
 async function orderSummary(member: CurrentMember, now: Date) {
-  const { orders, writers } = await listOrders(member, now);
-  const owner = can(member, "workOnAnyOrder");
-  const people: Person[] = owner
-    ? writers
-        .map((w) => ({ id: w.id, name: w.displayName }))
-        // The owner's own row only when they're writing CVs themself
-        .filter((p) => p.id !== member.id || orders.some((o) => o.writerId === member.id))
-    : [{ id: member.id, name: member.name }];
+  const { orders } = await listOrders(member, now);
   return {
-    progress: progressRows(orders, people, now),
-    mine: myCvs(orders, member.id),
     open: openOrders(orders),
-    attention: ordersNeedingAttention(orders, now),
+    board: orderBoard(orders, now),
+    // Everything the viewer can see that's being worked on right now
+    inProgress: orders.filter((order) => ["WRITING", "DRAFT_SENT", "REVISIONS"].includes(order.status)).length,
+    deliveredThisMonth: deliveredSince(orders, periodStart("month", now)!),
+    // First names of the writers with a CV on their desk, for the board's heading
+    writersWriting: [
+      ...new Set(
+        orders
+          .filter((order) => order.writerName && ["WRITING", "REVISIONS"].includes(order.status))
+          .map((order) => order.writerName!.split(" ")[0]),
+      ),
+    ],
   };
 }
 

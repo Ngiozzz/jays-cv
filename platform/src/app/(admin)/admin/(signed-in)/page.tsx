@@ -1,129 +1,126 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BusinessCards } from "@/components/admin/dashboard/BusinessCards";
 import {
-  AiUsagePanel,
-  AttentionPanel,
-  ClosingSoon,
-  JobStats,
-  OpenOrdersPanel,
-  QuickPost,
+  AiTokensCard,
+  JobsBoardCard,
+  MonthStats,
   RecentJobs,
   SourcesNotice,
 } from "@/components/admin/dashboard/DashboardPanels";
-import { ProgressPanel, type ProgressCv } from "@/components/admin/dashboard/ProgressPanel";
+import { OrderBoard } from "@/components/admin/dashboard/OrderBoard";
 import { Icon } from "@/components/icons/Icon";
-import { greeting, isOpenOrder, waitingFor } from "@/modules/dashboard/dashboard";
+import { greeting, waitingFor } from "@/modules/dashboard/dashboard";
 import { loadDashboard } from "@/modules/dashboard/dashboard.service";
-import { todayInNairobi } from "@/modules/jobs/jobs.rules";
 import { requireMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-// Owner: the month's money, the team's progress, every order needing attention, jobs and AI tokens.
-// Writer: their own CVs, orders they can accept, and jobs if they post them. Never any money.
+// Owner: the one thing that needs them now, the month's numbers, the order board, jobs and AI tokens.
+// Writer: the order board (orders they can accept, and their own) and jobs if they post them. Never money.
 export default async function DashboardPage() {
   const member = await requireMember();
   const now = new Date();
   const { owner, business, orders, jobs, sources } = await loadDashboard(member, now);
   const firstName = member.name.split(" ")[0];
   const open = orders?.open ?? [];
-
-  const mine: ProgressCv[] = (orders?.mine ?? []).map((order) => ({
-    ref: order.ref,
-    clientName: order.clientName,
-    itemName: order.packageName ?? order.itemName,
-    stage: order.status as ProgressCv["stage"],
-    due: order.due,
-  }));
-  const attention = orders && (
-    <AttentionPanel
-      orders={orders.attention.map((order) => ({ order, open: isOpenOrder(order), waiting: waitingFor(order, now) }))}
-    />
-  );
+  const oldest = open[0];
 
   return (
     <>
-      <div className="welcome">
+      <div className="page-bar dash-head">
         <div>
-          <h2>
-            {greeting(now)}, {firstName} 👋
-          </h2>
-          <p>{owner ? "Here's your business today: money, team and orders." : "Here's your work today."}</p>
+          <h1>
+            {greeting(now)}, {firstName}
+          </h1>
+          <p>
+            {owner
+              ? `Orders, writers and money at ${member.tenant.name} this month.`
+              : orders
+                ? "Orders you can take, and the CVs you're writing."
+                : "Jobs on the website."}
+          </p>
         </div>
-        {can(member, "postJobs") && (
-          <Link className="btn btn-primary" href="/admin/jobs/new">
-            <Icon name="plus" size={18} />
-            Post a job
-          </Link>
-        )}
+        <div className="page-actions">
+          {orders && (
+            <Link className="btn btn-ghost" href="/admin/orders">
+              All orders
+            </Link>
+          )}
+          {can(member, "postJobs") && (
+            <Link className="btn btn-primary" href="/admin/jobs/new">
+              <Icon name="plus" />
+              Post a job
+            </Link>
+          )}
+        </div>
       </div>
 
+      {oldest && (
+        <div className="attention" role="alert">
+          <span className="dot" aria-hidden="true" />
+          <p className="attention-text">
+            <span className="ref">{oldest.ref}</span> · <b>{oldest.clientName}</b> paid for{" "}
+            {oldest.packageName ?? oldest.itemName} but no writer has accepted it. Waiting {waitingFor(oldest, now)}.
+            {open.length > 1 &&
+              ` ${open.length - 1} more paid ${open.length === 2 ? "order is" : "orders are"} waiting too.`}
+          </p>
+          <div className="attention-acts">
+            {open.length > 1 && (
+              <Link className="btn btn-ghost btn-sm" href="/admin/orders?tab=open">
+                See all {open.length}
+              </Link>
+            )}
+            <Link className="btn btn-primary btn-sm" href={`/admin/orders/${oldest.ref}`}>
+              {owner ? "Assign a writer" : "Open and accept"}
+            </Link>
+          </div>
+        </div>
+      )}
+
       {business && business.lowReviews.length > 0 && (
-        <section className="low-reviews" role="alert">
-          <Icon name="alert" />
-          <div>
-            <strong>
+        <div className="attention" role="alert">
+          <span className="dot" aria-hidden="true" />
+          <div className="attention-text">
+            <b>
               {business.lowReviews.length === 1
-                ? "A client is unhappy"
-                : `${business.lowReviews.length} clients are unhappy`}
-            </strong>
+                ? "A client is unhappy."
+                : `${business.lowReviews.length} clients are unhappy.`}
+            </b>{" "}
+            Call them to put it right. This clears once you approve or hide the review.
             <ul>
               {business.lowReviews.map((review) => (
                 <li key={review.id}>
-                  {review.ref && <Link href={`/admin/orders/${review.ref}`}>{review.ref}</Link>} rated {review.rating}★
-                  ({review.name}): &ldquo;{review.text}&rdquo;
+                  {review.ref && <Link href={`/admin/orders/${review.ref}`}>{review.ref}</Link>} {review.name} gave{" "}
+                  {review.rating} of 5: &ldquo;{review.text}&rdquo;
                 </li>
               ))}
             </ul>
-            <p>
-              Call them to put it right. This alert clears once you approve or hide the review in{" "}
-              <Link href="/admin/content?tab=reviews">Website content → Reviews</Link>.
-            </p>
           </div>
-        </section>
-      )}
-      {business && <BusinessCards business={business} notAccepted={open.length} />}
-      {orders && !owner && <OpenOrdersPanel open={open.map((order) => ({ order, waiting: waitingFor(order, now) }))} />}
-      {sources && <SourcesNotice sources={sources} manage={can(member, "manageJobSources")} />}
-      {jobs && <JobStats jobs={jobs} />}
-
-      {orders && (
-        <ProgressPanel
-          owner={owner}
-          me={member.id}
-          rows={orders.progress}
-          mine={mine}
-          // A writer already has "Orders you can accept" just above
-          open={
-            owner && open.length
-              ? {
-                  count: open.length,
-                  oldestRef: open[0].ref,
-                  oldestWaiting: waitingFor(open[0], now),
-                  refs: open.map((order) => `${order.ref} (${waitingFor(order, now)})`).join(", "),
-                }
-              : null
-          }
-        />
-      )}
-
-      {jobs ? (
-        <div className="dash-grid">
-          <div>
-            <QuickPost />
-            <RecentJobs jobs={jobs} />
-          </div>
-          <div style={{ display: "grid", gap: 20, alignContent: "start" }}>
-            <ClosingSoon jobs={jobs} today={todayInNairobi(now)} />
-            {attention}
-            {business && <AiUsagePanel business={business} />}
+          <div className="attention-acts">
+            <Link className="btn btn-ghost btn-sm" href="/admin/content?tab=reviews">
+              Open reviews
+            </Link>
           </div>
         </div>
-      ) : (
-        // No job panels (a writer who doesn't post jobs): the orders list takes the full width
-        attention
+      )}
+
+      {sources && <SourcesNotice sources={sources} manage={can(member, "manageJobSources")} />}
+
+      {business && orders && (
+        <MonthStats business={business} delivered={orders.deliveredThisMonth} inProgress={orders.inProgress} />
+      )}
+
+      {orders && <OrderBoard columns={orders.board} now={now} writing={orders.writersWriting} />}
+
+      {(jobs || business) && (
+        <div className="dash-grid">
+          {jobs ? <RecentJobs jobs={jobs} /> : <div />}
+          <div className="dash-side">
+            {jobs && <JobsBoardCard jobs={jobs} waiting={sources ? sources.toCheck + sources.toRead : 0} />}
+            {business && <AiTokensCard business={business} />}
+          </div>
+        </div>
       )}
 
       {!orders && !jobs && (

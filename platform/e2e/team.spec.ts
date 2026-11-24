@@ -46,10 +46,12 @@ test("the owner edits, pauses, resumes and removes a writer", async ({ page, con
   await page.goto("/admin/team");
   const row = page.getByRole("row", { name: new RegExp(writerName) });
 
+  // Writers are on a monthly salary: Edit changes only what they can do
   await row.getByRole("button", { name: "Edit" }).click();
-  await page.getByLabel("Pay per CV").fill("35");
+  await expect(page.getByLabel(/Pay per CV/)).toHaveCount(0);
+  await page.getByRole("checkbox", { name: /Post jobs/ }).check();
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(row.getByRole("cell", { name: "35%" })).toBeVisible();
+  await expect(row).toContainText("Posts jobs");
 
   await row.getByRole("button", { name: "Pause" }).click();
   await expect(row.getByText("Paused", { exact: true })).toBeVisible();

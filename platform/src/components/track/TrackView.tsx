@@ -39,107 +39,158 @@ const filesGone = (order: TrackedOrder) =>
   order.files.fromUs.length === 0 &&
   order.files.fromClient.length === 0;
 
-function ago(iso: string) {
-  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.floor(minutes / 60);
-  return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
-}
+// "Tue 14:05", in Kenya time
+const stamp = (iso: string) =>
+  new Date(iso).toLocaleString("en-GB", {
+    timeZone: "Africa/Nairobi",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 // The client's view of their order: where it is, what happens next, and every update
 export function TrackView({ order, businessName }: { order: TrackedOrder; businessName: string }) {
   const done = order.status === "DELIVERED";
+  const paid = order.amount - order.amountDue;
   return (
     <>
-      <Breadcrumb left crumbs={[{ label: "Track my order", href: "/track" }, { label: order.ref }]} />
-      <div className="track-head">
-        <p className="track-meta">
-          Order {order.ref} · {order.itemName} · {formatKes(order.amount)}
-        </p>
-        <h1>Hi {order.greeting} 👋</h1>
-        <p className="track-status">
+      <header className="t-head">
+        <Breadcrumb left crumbs={[{ label: "Track my order", href: "/track" }, { label: order.ref }]} />
+        <span className="t-ref">Order {order.ref}</span>
+        <h1>Hi {order.greeting}</h1>
+        <p className="t-sub">
+          {order.itemName} · {formatKes(order.amount)} ·{" "}
           <span className={`ostatus ${order.statusTone}`}>{order.statusText}</span>
         </p>
-      </div>
-
-      <ol className="track-steps">
-        {order.steps.map((label, i) => {
-          const passed = i < order.step || done;
-          return (
-            <li key={label} className={passed ? "done" : i === order.step ? "current" : undefined}>
-              <span>{passed ? <Icon name="check" /> : i + 1}</span>
-              {label}
-            </li>
-          );
-        })}
-      </ol>
-
-      <div className="track-card">
-        <Stage order={order} businessName={businessName} />
-      </div>
-
-      {done && !order.reviewed && <ReviewForm orderRef={order.ref} name={order.reviewName} />}
-
-      {!filesGone(order) && (
-        <section className="track-card track-files">
-          <h3>Your files</h3>
-          <OrderFileGroups
-            groups={[
-              {
-                title: `From ${businessName}`,
-                hint: "Your drafts and final version, with notes from your writer.",
-                files: order.files.fromUs,
-                empty: "Your draft will appear here as soon as it's ready.",
-                canOpen: true,
-              },
-              {
-                title: "From you",
-                hint: "What you sent with your order.",
-                files: order.files.fromClient,
-                empty: "You haven't sent any files.",
-                canOpen: true,
-              },
-            ]}
-          />
-        </section>
-      )}
-
-      <div className="track-grid">
-        <section className="track-card">
-          <h3>Updates</h3>
-          <ul className="timeline-mini">
-            {order.updates.map((update, i) => (
-              <li key={i}>
-                <span className={update.who === "You" ? "dot client" : "dot"}></span>
-                <div>
-                  <p>
-                    <b>{update.who}:</b> {update.text}
-                  </p>
-                  <small>{ago(update.at)}</small>
-                </div>
+        <ol className="stages">
+          {order.steps.map((label, i) => {
+            const passed = i < order.step || done;
+            return (
+              <li
+                key={label}
+                className={passed ? "done" : i === order.step ? "now" : undefined}
+                aria-current={!passed && i === order.step ? "step" : undefined}
+              >
+                <i aria-hidden="true" />
+                <b>{label}</b>
               </li>
-            ))}
-            {order.updates.length === 0 && <li className="empty-note">Your order has been received.</li>}
-          </ul>
-        </section>
-        <section className="track-card help-card">
-          <h3>Need help?</h3>
-          <p>Questions about your order? Message us on WhatsApp.</p>
-          <a
-            className="btn btn-wa btn-block"
-            href={whatsappLink(order.whatsapp, `Hi ${businessName}, I have a question about my order ${order.ref}.`)}
-            target="_blank"
-            rel="noopener"
-          >
-            <Icon name="whatsapp" />
-            WhatsApp us
-          </a>
-          <p className="private-note">
-            <Icon name="lock" />
-            This page is private to you. Don&apos;t share the link publicly.
-          </p>
-        </section>
+            );
+          })}
+        </ol>
+      </header>
+
+      <div className="t-grid">
+        <div className="t-main">
+          <section className="card t-card track-card">
+            <Stage order={order} businessName={businessName} />
+          </section>
+
+          {done && !order.reviewed && <ReviewForm orderRef={order.ref} name={order.reviewName} />}
+
+          {!filesGone(order) && (
+            <section className="card t-card track-files">
+              <h2>Your files</h2>
+              <OrderFileGroups
+                groups={[
+                  {
+                    title: `From ${businessName}`,
+                    hint: "Your drafts and final version, with notes from your writer.",
+                    files: order.files.fromUs,
+                    empty: "Your draft will appear here as soon as it's ready.",
+                    canOpen: true,
+                  },
+                  {
+                    title: "From you",
+                    hint: "What you sent with your order.",
+                    files: order.files.fromClient,
+                    empty: "You haven't sent any files.",
+                    canOpen: true,
+                  },
+                ]}
+              />
+            </section>
+          )}
+
+          <section className="card t-card">
+            <h2>Updates</h2>
+            <ol className="timeline-mini">
+              {[...order.updates].reverse().map((update, i) => (
+                <li key={i} className={update.who === "You" ? "client" : undefined}>
+                  <time dateTime={update.at}>{stamp(update.at)}</time>
+                  <span className="dot" aria-hidden="true"></span>
+                  <p>
+                    {update.who}: {update.text}
+                  </p>
+                </li>
+              ))}
+              {order.updates.length === 0 && <li className="empty-note">Your order has been received.</li>}
+            </ol>
+          </section>
+        </div>
+
+        <aside className="t-side">
+          {order.writer && (
+            <div className="card">
+              <h3>Your writer</h3>
+              <div className="t-writer">
+                <span className="av" aria-hidden="true">
+                  {order.writer[0]}
+                </span>
+                <b>{order.writer}</b>
+              </div>
+            </div>
+          )}
+          <div className="card">
+            <h3>Your order</h3>
+            <dl className="kv">
+              <div>
+                <dt>Order</dt>
+                <dd>{order.itemName}</dd>
+              </div>
+              <div>
+                <dt>{order.amountDue > 0 ? "Still to pay" : "Paid"}</dt>
+                <dd>{formatKes(order.amountDue > 0 ? order.amountDue : paid)}</dd>
+              </div>
+              <div>
+                <dt>Revisions</dt>
+                <dd>{order.rounds}</dd>
+              </div>
+              <div>
+                <dt>After delivery</dt>
+                <dd>30 days of free minor updates</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="card">
+            <h3>Need anything else?</h3>
+            <p>A cover letter for a job you&apos;re applying to, or your CV updated later: order it here.</p>
+            <div className="t-side-links">
+              <Link className="btn btn-ghost btn-sm" href={order.coverLetterHref}>
+                Order a cover letter
+              </Link>
+              <Link className="btn btn-ghost btn-sm" href="/jobs">
+                Find jobs to apply for
+              </Link>
+            </div>
+          </div>
+          <div className="card">
+            <h3>Need help?</h3>
+            <p>Questions about your order? Message us on WhatsApp.</p>
+            <a
+              className="btn btn-ghost btn-sm"
+              href={whatsappLink(order.whatsapp, `Hi ${businessName}, I have a question about my order ${order.ref}.`)}
+              target="_blank"
+              rel="noopener"
+            >
+              <Icon name="whatsapp" />
+              WhatsApp us
+            </a>
+            <p className="private-note">
+              <Icon name="lock" />
+              This page is private to you. Don&apos;t share the link publicly.
+            </p>
+          </div>
+        </aside>
       </div>
     </>
   );
@@ -152,10 +203,7 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
     case "ABANDONED":
       return (
         <div className="stage stage-pay">
-          <h2>
-            <Icon name="phone" />
-            Complete your payment
-          </h2>
+          <h2>Complete your payment</h2>
           <p>Your writer starts as soon as your payment is confirmed.</p>
           {order.amountDue < order.amount && (
             <p className="part-paid">
@@ -179,10 +227,7 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
     case "PAID":
       return (
         <div className="stage">
-          <h2>
-            <Icon name="check" />
-            Payment received: thank you!
-          </h2>
+          <h2>Payment received, thank you</h2>
           <p>
             We&apos;re assigning your writer now. Your draft will be ready by <strong>{when(order.draftDue)}</strong>.
           </p>
@@ -191,10 +236,7 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
     case "WRITING":
       return (
         <div className="stage">
-          <h2>
-            <Icon name="edit" />
-            {writer} is working on your order
-          </h2>
+          <h2>{writer} is working on your order</h2>
           <p>
             Your draft will be ready by <strong>{when(order.draftDue)}</strong>. {writer} may call or WhatsApp you to
             ask about your achievements, so please keep your phone close.
@@ -204,10 +246,7 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
     case "REVISIONS":
       return (
         <div className="stage">
-          <h2>
-            <Icon name="refresh" />
-            We&apos;re making your changes
-          </h2>
+          <h2>We&apos;re making your changes</h2>
           {order.lastChange && <blockquote className="change-request">&ldquo;{order.lastChange}&rdquo;</blockquote>}
           <p>
             Your revised draft will be ready by <strong>{when(order.revisionDue)}</strong>.
@@ -217,10 +256,7 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
     case "DRAFT_SENT":
       return (
         <div className="stage stage-review">
-          <h2>
-            <Icon name="doc" />
-            Your draft is ready
-          </h2>
+          <h2>Your draft is ready</h2>
           {order.files.fromUs[0] && <FileCard file={order.files.fromUs[0]} />}
           <p>Please read it carefully, then tell your writer if you&apos;re happy or what you&apos;d like changed.</p>
           <DraftReview
@@ -238,10 +274,7 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
     default:
       return (
         <div className="stage stage-done">
-          <h2>
-            <Icon name="check" />
-            Your order is complete 🎉
-          </h2>
+          <h2>Your order is complete</h2>
           {order.files.fromUs[0] ? (
             <>
               <FileCard file={order.files.fromUs[0]} />
@@ -283,26 +316,13 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
                 {"★".repeat(order.reviewed.rating)}
                 {"☆".repeat(5 - order.reviewed.rating)}
               </span>
-              Thank you for your review!
+              Thank you for your review.
             </p>
           )}
-          <div className="order-again">
-            <h3>Need anything else?</h3>
-            <p>A cover letter for a job you&apos;re applying to, or your CV updated later: order it here.</p>
-            <div className="draft-answer-btns">
-              <Link className="btn btn-primary" href={order.coverLetterHref}>
-                <Icon name="mail" />
-                Order a cover letter
-              </Link>
-              <Link className="btn btn-ghost" href="/order">
-                <Icon name="refresh" />
-                Order again
-              </Link>
-              <Link className="btn btn-ghost" href="/jobs">
-                <Icon name="briefcase" />
-                Find jobs to apply for
-              </Link>
-            </div>
+          <div className="draft-answer-btns">
+            <Link className="btn btn-primary" href="/order">
+              Order again
+            </Link>
           </div>
         </div>
       );
@@ -313,6 +333,12 @@ function Stage({ order, businessName }: { order: TrackedOrder; businessName: str
 function FileCard({ file }: { file: OrderFileView }) {
   return (
     <div className="draft-preview">
+      <span className="draft-page" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
       <div>
         <strong>{file.name}</strong>
         <small>{file.label} · private to you</small>

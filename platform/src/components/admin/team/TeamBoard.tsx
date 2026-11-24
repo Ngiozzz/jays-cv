@@ -54,7 +54,8 @@ export function TeamBoard({ data }: { data: TeamData }) {
           <div>
             <h2>Your team</h2>
             <p className="panel-sub">
-              Who can sign in, what they can do and what they&apos;re paid. Only you see this page.
+              Who can sign in and what they can do. Writers are on a monthly salary, paid outside the app. Only you see
+              this page.
             </p>
           </div>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setDialog({ mode: "invite" })}>
@@ -68,7 +69,6 @@ export function TeamBoard({ data }: { data: TeamData }) {
                 <th>Member</th>
                 <th>Can</th>
                 <th>Status</th>
-                <th>Pay per CV</th>
                 <th>
                   <span className="sr-only">Actions</span>
                 </th>
@@ -121,9 +121,9 @@ export function TeamBoard({ data }: { data: TeamData }) {
         <section className="panel panel-body">
           <p className="preview-label">Only you can</p>
           <ul className="owner-list">
-            <li>See money: prices, takings, M-Pesa payments, writer pay</li>
+            <li>See money: prices, takings and M-Pesa payments</li>
             <li>See the AI token balance</li>
-            <li>Invite, pause and remove team members, and set their pay</li>
+            <li>Invite, pause and remove team members, and share out the AI tokens</li>
             <li>Change prices and everything on the website</li>
             <li>Reassign orders, extend deadlines and refund clients</li>
           </ul>
@@ -202,7 +202,6 @@ function MemberRow(props: {
           {owner ? "Owner" : paused ? "Paused" : "Active"}
         </span>
       </td>
-      <td>{owner || !member.canWrite ? "—" : `${member.payPercent}%`}</td>
       <td className="team-acts">
         {member.changeable ? (
           <>
@@ -252,7 +251,6 @@ function InviteRow({ invite, busy, onCancel }: { invite: TeamInviteRow; busy: bo
           {invite.expired ? "Invite expired" : invite.owner ? "Owner, invited" : "Invited"}
         </span>
       </td>
-      <td>{invite.canWrite && !invite.owner ? `${invite.payPercent}%` : "—"}</td>
       <td className="team-acts">
         {invite.phone && (
           <a

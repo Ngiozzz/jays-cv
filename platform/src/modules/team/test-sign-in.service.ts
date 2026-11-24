@@ -12,13 +12,13 @@ export type TestPerson = "owner" | "writer";
 const PEOPLE = {
   owner: {
     user: { id: "test-owner", email: "test-owner@dev.jaycvs.local", name: "Jay (test)" },
-    member: { role: "OWNER", canWrite: true, canPostJobs: true, payPercent: 0 },
+    member: { role: "OWNER", canWrite: true, canPostJobs: true },
   },
-  // A writer who also posts jobs, so every writer screen can be seen. Their permissions and pay can
+  // A writer who also posts jobs, so every writer screen can be seen. Their permissions can
   // then be changed in Team like anyone else's, and a new sign-in keeps those changes.
   writer: {
     user: { id: "test-writer", email: "test-writer@dev.jaycvs.local", name: "Mary (test writer)" },
-    member: { role: "WRITER", canWrite: true, canPostJobs: true, payPercent: 40 },
+    member: { role: "WRITER", canWrite: true, canPostJobs: true },
   },
 } as const;
 
