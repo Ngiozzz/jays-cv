@@ -7,6 +7,7 @@ import { bodyText, fetchPolitely, isPdf, MAX_PAGE_BYTES, Unreadable, type Robots
 import { checkSource, MAX_FAILURES, type CheckOutcome } from "./job-sources.service";
 import * as repo from "./job-sources.repo";
 import { bannedSite, BUILT_IN_BANNED_SITES, cleanBannedSites, siteName } from "./sites";
+import { readStateOf } from "./source-inbox";
 import { STARTER_SOURCES, type StarterSource } from "./starter-sources";
 import {
   careersLink,
@@ -33,6 +34,19 @@ export type JobSourceRow = {
   failures: number;
   // Switched off by the website after failing MAX_FAILURES times in a row (not by a person)
   stoppedByFailures: boolean;
+  // Read like email: found jobs since it was last opened (or marked unread by hand)
+  unread: boolean;
+  newCount: number;
+  lastFoundAt: string | null;
+};
+
+// One job a source found, as its opened row lists it
+export type SourceFind = {
+  id: string;
+  title: string;
+  status: "reading" | "waiting" | "published" | "discarded";
+  foundAt: string;
+  jobSlug: string | null;
 };
 
 export type JobSourcesView = {
@@ -46,32 +60,51 @@ export type JobSourcesView = {
   morning: boolean;
 };
 
-export const MAX_SOURCES = 50;
+// Enough for hundreds of employers; the morning run gets through about 130 a morning
+export const MAX_SOURCES = 300;
+// Finds older than this no longer count as new
+const NEW_FINDS_DAYS = 60;
 // Suggestions look at the jobs posted in the last year
 const SUGGEST_FROM_DAYS = 365;
 
 export async function loadJobSources(member: CurrentMember): Promise<JobSourcesView> {
   assertCan(member, "manageJobSources");
   const tenantId = member.tenant.id;
-  const [rows, extraBanned, suggestions, morning] = await Promise.all([
+  const [rows, extraBanned, suggestions, morning, finds] = await Promise.all([
     repo.listSources(tenantId),
     repo.extraBannedSites(tenantId),
     loadSuggestions(tenantId),
     repo.morningRunOn(tenantId),
+    repo.recentFinds(tenantId, new Date(Date.now() - NEW_FINDS_DAYS * 86_400_000)),
   ]);
+  const findsBy = new Map<string, { createdAt: Date }[]>();
+  for (const find of finds) {
+    const list = findsBy.get(find.jobSourceId!) ?? [];
+    list.push(find);
+    findsBy.set(find.jobSourceId!, list);
+  }
   return {
-    sources: rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      url: row.url,
-      site: siteName(row.url) ?? row.url,
-      enabled: row.enabled,
-      lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
-      lastAdded: row.lastAdded,
-      lastError: row.lastError,
-      failures: row.failures,
-      stoppedByFailures: !row.enabled && row.failures >= MAX_FAILURES,
-    })),
+    sources: rows.map((row) => {
+      const own = findsBy.get(row.id) ?? [];
+      const last = own.reduce<Date | null>(
+        (latest, f) => (!latest || f.createdAt > latest ? f.createdAt : latest),
+        null,
+      );
+      return {
+        ...readStateOf(row, own),
+        lastFoundAt: last?.toISOString() ?? null,
+        id: row.id,
+        name: row.name,
+        url: row.url,
+        site: siteName(row.url) ?? row.url,
+        enabled: row.enabled,
+        lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
+        lastAdded: row.lastAdded,
+        lastError: row.lastError,
+        failures: row.failures,
+        stoppedByFailures: !row.enabled && row.failures >= MAX_FAILURES,
+      };
+    }),
     starters: STARTER_SOURCES.map((starter) => ({
       ...starter,
       added: rows.some((row) => row.url === starter.url),
@@ -244,6 +277,56 @@ export async function setJobSourceEnabled(member: CurrentMember, id: string, ena
   const source = await repo.findSource(member.tenant.id, id);
   if (!source) return { ok: false as const, error: "Job source not found." };
   await repo.updateSource(member.tenant.id, id, { enabled, ...(enabled ? { failures: 0, lastError: null } : {}) });
+  return { ok: true as const };
+}
+
+// Opening a source's row: its latest finds, and it counts as read from now
+export async function openJobSource(member: CurrentMember, id: string): Promise<SourceFind[]> {
+  assertCan(member, "manageJobSources");
+  const tenantId = member.tenant.id;
+  const [finds] = await Promise.all([
+    repo.latestFinds(tenantId, id, 8),
+    repo.updateSources(tenantId, [id], { readAt: new Date(), markedUnread: false }),
+  ]);
+  return finds.map((find) => {
+    const reading = find.reading as { title?: unknown } | null;
+    return {
+      id: find.id,
+      title: (typeof reading?.title === "string" && reading.title) || find.posterName,
+      status:
+        find.state === "READING"
+          ? "reading"
+          : find.state === "CHECK"
+            ? "waiting"
+            : find.state === "APPROVED"
+              ? "published"
+              : "discarded",
+      foundAt: find.createdAt.toISOString(),
+      jobSlug: find.job?.slug ?? null,
+    };
+  });
+}
+
+// Several sources at once, like Gmail's toolbar: mark read or unread, switch on or off, remove
+export async function markJobSources(member: CurrentMember, ids: string[], read: boolean) {
+  assertCan(member, "manageJobSources");
+  await repo.updateSources(
+    member.tenant.id,
+    ids,
+    read ? { readAt: new Date(), markedUnread: false } : { markedUnread: true },
+  );
+  return { ok: true as const };
+}
+
+export async function setJobSourcesEnabled(member: CurrentMember, ids: string[], enabled: boolean) {
+  assertCan(member, "manageJobSources");
+  await repo.updateSources(member.tenant.id, ids, { enabled, ...(enabled ? { failures: 0, lastError: null } : {}) });
+  return { ok: true as const };
+}
+
+export async function removeJobSources(member: CurrentMember, ids: string[]) {
+  assertCan(member, "manageJobSources");
+  await repo.deleteSources(member.tenant.id, ids);
   return { ok: true as const };
 }
 

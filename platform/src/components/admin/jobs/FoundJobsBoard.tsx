@@ -45,15 +45,20 @@ export function FoundJobsBoard({
   unchecked,
   siteUrl,
   today,
+  initialSource = "",
 }: {
   jobs: FoundJob[];
   unchecked: number;
   siteUrl: string;
   today: string;
+  // Opened from one source on Job sources: just its jobs, whatever their state
+  initialSource?: string;
 }) {
   const router = useRouter();
   // Opens on the jobs waiting for a decision, when there are any
-  const [filter, setFilter] = useState<Filter>(() => (jobs.some((job) => job.status === "check") ? "check" : "all"));
+  const [filter, setFilter] = useState<Filter>(() =>
+    !initialSource && jobs.some((job) => job.status === "check") ? "check" : "all",
+  );
   const [aiFilter, setAiFilter] = useState<AiFilter>("");
   const [warnFilter, setWarnFilter] = useState<WarnFilter>("");
   const [sort, setSort] = useState<Sort>("newest");
@@ -61,7 +66,7 @@ export function FoundJobsBoard({
   const [openId, setOpenId] = useState<string | null>(null);
   const [deciding, setDeciding] = useState<{ done: number; total: number } | null>(null);
   const [bulkReason, setBulkReason] = useState<string>("not-a-job");
-  const [source, setSource] = useState("");
+  const [source, setSource] = useState(initialSource);
   const [run, setRun] = useState<ReadRun | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [check, setCheck] = useState<{ done: number; total: number } | null>(null);

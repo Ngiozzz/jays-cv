@@ -150,7 +150,8 @@ const lines = (value: FormDataEntryValue | null) =>
 
 const field = (form: FormData, name: string) => String(form.get(name) ?? "");
 
-// The "Post a job" form → the shape the schema checks. Responsibilities and requirements are one per line.
+// The "Post a job" form → the shape the schema checks. Responsibilities and requirements come one value
+// per point (or as one block, one per line).
 export function jobFormToInput(form: FormData): unknown {
   const openEnded = form.get("openEnded") === "on";
   return {
@@ -164,8 +165,8 @@ export function jobFormToInput(form: FormData): unknown {
     workMode: field(form, "workMode") || undefined,
     salary: field(form, "salary"),
     summary: field(form, "summary"),
-    responsibilities: lines(form.get("responsibilities")),
-    requirements: lines(form.get("requirements")),
+    responsibilities: lines(form.getAll("responsibilities").join("\n")),
+    requirements: lines(form.getAll("requirements").join("\n")),
     tags: field(form, "tags").split(","),
     deadline: openEnded ? null : field(form, "deadline") || null,
     openEnded,

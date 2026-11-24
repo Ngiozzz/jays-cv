@@ -10,6 +10,10 @@ import {
   removeJobSource,
   saveBannedSites,
   setJobSourceEnabled,
+  openJobSource,
+  markJobSources,
+  setJobSourcesEnabled,
+  removeJobSources,
 } from "@/modules/job-sources/job-sources.admin";
 import { checkNextFinds } from "@/modules/job-sources/find-check.service";
 import { requirePermission } from "@/modules/team/current-member";
@@ -34,6 +38,29 @@ export async function setJobSourceEnabledAction(id: string, enabled: boolean) {
 export async function removeJobSourceAction(id: string) {
   const member = await requirePermission("manageJobSources");
   return removeJobSource(member, String(id));
+}
+
+// Gmail-style: opening a row marks it read; the toolbar acts on the ticked rows
+const idList = (ids: unknown) => (Array.isArray(ids) ? ids.map(String).slice(0, 500) : []);
+
+export async function openJobSourceAction(id: string) {
+  const member = await requirePermission("manageJobSources");
+  return openJobSource(member, String(id));
+}
+
+export async function markJobSourcesAction(ids: string[], read: boolean) {
+  const member = await requirePermission("manageJobSources");
+  return markJobSources(member, idList(ids), read === true);
+}
+
+export async function setJobSourcesEnabledAction(ids: string[], enabled: boolean) {
+  const member = await requirePermission("manageJobSources");
+  return setJobSourcesEnabled(member, idList(ids), enabled === true);
+}
+
+export async function removeJobSourcesAction(ids: string[]) {
+  const member = await requirePermission("manageJobSources");
+  return removeJobSources(member, idList(ids));
 }
 
 export async function saveBannedSitesAction(text: string) {

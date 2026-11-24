@@ -10,9 +10,23 @@ import { can } from "@/modules/team/permissions";
 
 export const metadata: Metadata = { title: "Jobs found" };
 
-export default async function FoundJobsPage() {
+export default async function FoundJobsPage({ searchParams }: PageProps<"/admin/job-sources/found">) {
   const member = await requireMember();
   if (!can(member, "manageJobSources")) return <NotAllowed what="the jobs found by your sources" />;
-  const [jobs, unchecked] = await Promise.all([loadFoundJobs(member), countUnchecked(member.tenant.id)]);
-  return <FoundJobsBoard jobs={jobs} unchecked={unchecked} siteUrl={env.APP_URL} today={todayInNairobi()} />;
+  const [jobs, unchecked, params] = await Promise.all([
+    loadFoundJobs(member),
+    countUnchecked(member.tenant.id),
+    searchParams,
+  ]);
+  // "See all its jobs" from an opened source on Job sources
+  const source = typeof params.source === "string" ? params.source : "";
+  return (
+    <FoundJobsBoard
+      jobs={jobs}
+      unchecked={unchecked}
+      siteUrl={env.APP_URL}
+      today={todayInNairobi()}
+      initialSource={source}
+    />
+  );
 }

@@ -22,6 +22,40 @@ export function updateSource(tenantId: string, id: string, data: Prisma.JobSourc
   return tenantDb(tenantId).jobSource.update({ where: { id }, data });
 }
 
+// Several sources at once (bulk actions on the Job sources screen)
+export function updateSources(tenantId: string, ids: string[], data: Prisma.JobSourceUncheckedUpdateManyInput) {
+  return tenantDb(tenantId).jobSource.updateMany({ where: { id: { in: ids } }, data });
+}
+
+export function deleteSources(tenantId: string, ids: string[]) {
+  return tenantDb(tenantId).jobSource.deleteMany({ where: { id: { in: ids } } });
+}
+
+// When each source found its jobs lately: just enough to count what's new since it was opened
+export function recentFinds(tenantId: string, since: Date) {
+  return tenantDb(tenantId).inboxItem.findMany({
+    where: { jobSourceId: { not: null }, createdAt: { gte: since } },
+    select: { jobSourceId: true, createdAt: true },
+  });
+}
+
+// One source's latest finds, shown when its row is opened
+export function latestFinds(tenantId: string, jobSourceId: string, take: number) {
+  return tenantDb(tenantId).inboxItem.findMany({
+    where: { jobSourceId },
+    orderBy: { createdAt: "desc" },
+    take,
+    select: {
+      id: true,
+      state: true,
+      posterName: true,
+      reading: true,
+      createdAt: true,
+      job: { select: { slug: true } },
+    },
+  });
+}
+
 // The extra sites this business has banned (on top of the built-in list)
 export async function extraBannedSites(tenantId: string): Promise<string[]> {
   const settings = await tenantDb(tenantId).businessSettings.findFirst({ select: { bannedJobSites: true } });

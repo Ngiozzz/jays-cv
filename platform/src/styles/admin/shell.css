@@ -2775,3 +2775,470 @@ td .cell-sub {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* =========================================================
+   Folding sections (Job sources and anywhere else): the header opens and closes them
+   ========================================================= */
+.fold.panel {
+  margin-bottom: 16px;
+  padding: 0;
+}
+.fold-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fold-panel > .fold-head {
+  padding: 6px 12px 6px 8px;
+}
+.fold-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 10px;
+  text-align: left;
+  color: var(--text);
+}
+.fold-toggle:hover {
+  background: var(--raised);
+}
+.fold-toggle:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+.fold-toggle h2,
+.fold-toggle h3 {
+  margin: 0;
+  font: 500 18px/24px var(--serif);
+}
+.fold-group .fold-toggle h3 {
+  font: 600 13px/20px var(--sans);
+}
+.fold-chev {
+  flex: none;
+  color: var(--muted);
+  transform: rotate(-90deg);
+  transition: transform 160ms var(--ease);
+}
+.fold.is-open > .fold-head .fold-chev {
+  transform: none;
+}
+.fold-icon {
+  flex: none;
+  color: var(--text-2);
+}
+.fold-count {
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.fold-note {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gold-ink);
+}
+.fold-actions {
+  flex: none;
+}
+.fold-panel > .fold-body {
+  display: grid;
+  gap: 14px;
+  padding: 4px 24px 24px;
+}
+.fold-group {
+  border-top: 1px solid var(--line);
+}
+.fold-group > .fold-head {
+  padding: 2px 8px 2px 4px;
+}
+.fold-group > .fold-body {
+  padding: 0 0 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fold-chev {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   Job sources: your sources as an inbox
+   ========================================================= */
+.src-inbox {
+  margin-bottom: 16px;
+  padding: 18px 0 8px;
+}
+.src-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px 12px;
+}
+.src-top .editor-title {
+  margin: 0;
+}
+.src-search {
+  position: relative;
+  flex: 0 1 380px;
+}
+.src-search svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--muted);
+  transform: translateY(-50%);
+}
+.src-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 36px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 14px;
+  outline: 0;
+}
+.src-search input:focus {
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px var(--gold);
+}
+.src-views {
+  display: flex;
+  gap: 4px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.src-views button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.src-views button:hover {
+  color: var(--text);
+}
+.src-views button[aria-pressed="true"] {
+  border-bottom-color: var(--ink);
+  font-weight: 600;
+  color: var(--text);
+}
+.src-views span {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.src-views span.is-new {
+  padding: 0 7px;
+  border-radius: 9px;
+  background: var(--gold);
+  font-weight: 600;
+  color: #fff;
+}
+.src-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 52px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.src-toolbar > input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  accent-color: var(--ink);
+}
+.src-picked {
+  margin-right: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.src-inbox > .notice,
+.src-inbox > .field-error,
+.src-inbox > .ai-progress {
+  margin: 10px 20px;
+}
+.src-empty {
+  padding: 32px 20px;
+  color: var(--muted);
+  text-align: center;
+}
+.src-inbox .fold-group > .fold-head {
+  padding: 2px 12px;
+  background: var(--alt);
+}
+.src-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One source, one line: bold and dotted while it has new finds, like unread mail */
+.src-line {
+  border-top: 1px solid var(--line);
+}
+.src-line:first-child {
+  border-top: 0;
+}
+.src-row {
+  display: grid;
+  grid-template-columns: 16px 8px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+}
+.src-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ink);
+}
+.src-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.src-line.is-unread .src-dot {
+  background: var(--gold);
+}
+.src-line.is-unread {
+  background: var(--card);
+}
+.src-line:not(.is-unread) {
+  background: color-mix(in srgb, var(--alt) 55%, var(--card));
+}
+.src-line.is-picked {
+  background: var(--gold-soft);
+}
+.src-open {
+  display: grid;
+  grid-template-columns: minmax(140px, 240px) minmax(0, 1fr) 104px 32px 112px;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 11px 0;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.src-row:hover {
+  box-shadow:
+    inset 0 -1px 0 var(--line-strong),
+    inset 0 1px 0 var(--line-strong);
+}
+.src-open:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.src-name {
+  overflow: hidden;
+  color: var(--text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.src-line.is-unread .src-name,
+.src-line.is-unread .src-when {
+  font-weight: 700;
+  color: var(--text);
+}
+.src-snippet {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.src-site {
+  color: var(--text-2);
+}
+.src-text {
+  color: var(--muted);
+}
+.src-text.is-error {
+  color: var(--bad);
+}
+.src-flag {
+  display: flex;
+  justify-content: flex-end;
+}
+.src-count {
+  display: flex;
+  justify-content: center;
+}
+.src-new {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.src-when {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.src-more {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.src-more:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+
+/* An opened source */
+.src-line.is-open {
+  background: var(--card);
+  box-shadow: 0 6px 24px rgba(28, 27, 25, 0.08);
+}
+.src-detail {
+  display: grid;
+  gap: 14px;
+  padding: 4px 20px 18px 54px;
+}
+.src-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.src-detail-head a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--gold-ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.src-finds {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--alt);
+}
+.src-finds-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.src-finds ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.src-finds li {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.src-finds li a {
+  overflow: hidden;
+  color: var(--text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.src-finds li a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.src-finds small {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.find-state {
+  justify-self: start;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.find-state.waiting {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.find-state.published {
+  background: rgba(21, 128, 61, 0.1);
+  color: var(--good);
+}
+.src-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.starter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.fold-panel .fold-group {
+  margin: 0 -24px;
+  padding: 0 24px;
+}
+.fold-panel .fold-group > .fold-body .starter-grid {
+  padding: 4px 0 8px 30px;
+}
+@media (max-width: 900px) {
+  .src-open {
+    grid-template-columns: minmax(0, 1fr) 32px auto;
+    gap: 4px 10px;
+  }
+  .src-name {
+    grid-column: 1;
+  }
+  .src-snippet {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
+  }
+  .src-flag {
+    display: none;
+  }
+  .src-detail {
+    padding-left: 20px;
+  }
+  .src-finds li {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .src-finds small {
+    display: none;
+  }
+}
+/* Buttons inside a folded section keep their own width */
+.fold-panel > .fold-body > .btn {
+  justify-self: start;
+}

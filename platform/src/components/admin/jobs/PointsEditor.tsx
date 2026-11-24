@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { splitPoints } from "./points";
 
@@ -11,11 +11,13 @@ type Props = {
   // "Add a responsibility", "Add a requirement"
   addLabel: string;
   placeholder: string;
+  // In a plain form (Post a job): each point is sent under this name
+  name?: string;
 };
 
 // A list of points, one per row (a long point wraps onto more lines): Enter starts the next point, Backspace on an empty one removes it,
 // and pasting a list (bullets, numbers or one per line) splits it into points
-export function PointsEditor({ id, points, onChange, addLabel, placeholder }: Props) {
+export function PointsEditor({ id, points, onChange, addLabel, placeholder, name }: Props) {
   const rows = points.length ? points : [""];
   const inputs = useRef<(HTMLTextAreaElement | null)[]>([]);
   const focus = (index: number) => requestAnimationFrame(() => inputs.current[index]?.focus());
@@ -75,6 +77,7 @@ export function PointsEditor({ id, points, onChange, addLabel, placeholder }: Pr
               }}
               id={index === 0 ? `${id}-0` : undefined}
               rows={1}
+              name={name}
               value={point}
               placeholder={index === 0 ? placeholder : "Next point"}
               aria-label={`Point ${index + 1}`}
@@ -101,4 +104,11 @@ export function PointsEditor({ id, points, onChange, addLabel, placeholder }: Pr
       </button>
     </div>
   );
+}
+
+// The points editor as a field of a plain form: it keeps its own points, starting from the job's
+export function PointsField(props: Omit<Props, "points" | "onChange"> & { initial: string[]; name: string }) {
+  const { initial, ...rest } = props;
+  const [points, setPoints] = useState(initial);
+  return <PointsEditor {...rest} points={points} onChange={setPoints} />;
 }

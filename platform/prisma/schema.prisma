@@ -999,6 +999,9 @@ model JobSource {
   lastError     String?
   // Failed checks in a row; at 3 the source is switched off and the owner is told
   failures      Int           @default(0)
+  // Read like email: when the owner last opened what it found, and "mark as unread" by hand
+  readAt        DateTime?
+  markedUnread  Boolean       @default(false)
   addedById     String?
   addedBy       Membership?   @relation(fields: [addedById], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())

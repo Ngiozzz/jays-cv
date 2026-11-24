@@ -1,6 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/icons/Icon";
+import { PointsField } from "@/components/admin/jobs/PointsEditor";
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { deleteJobAction, saveJobAction } from "@/app/(admin)/admin/(signed-in)/jobs/actions";
 import { JobCard } from "@/components/jobs/JobCard";
@@ -305,7 +306,10 @@ function DetailsSection({ initial }: { initial: JobInput }) {
       <h2>
         <span className="n">3</span>Details
       </h2>
-      <p className="hint">Written text helps people find the job on Google. Put one item per line.</p>
+      <p className="hint">
+        Written text helps people find the job on Google. One point per row: Enter adds the next, and a pasted list
+        splits into points.
+      </p>
       <div className="fgrid">
         <FormField id="f-summary" label="About the role" full>
           <textarea
@@ -316,22 +320,22 @@ function DetailsSection({ initial }: { initial: JobInput }) {
             placeholder="One or two sentences about the job"
           />
         </FormField>
-        <FormField id="f-resp" label="Responsibilities">
-          <textarea
+        <FormField id="f-resp-0" label="Responsibilities" full>
+          <PointsField
             id="f-resp"
             name="responsibilities"
-            rows={6}
-            defaultValue={initial.responsibilities.join("\n")}
-            placeholder="One per line"
+            initial={initial.responsibilities}
+            addLabel="Add a responsibility"
+            placeholder="e.g. Prepare monthly financial reports"
           />
         </FormField>
-        <FormField id="f-req" label="Requirements">
-          <textarea
+        <FormField id="f-req-0" label="Requirements" full>
+          <PointsField
             id="f-req"
             name="requirements"
-            rows={6}
-            defaultValue={initial.requirements.join("\n")}
-            placeholder="One per line"
+            initial={initial.requirements}
+            addLabel="Add a requirement"
+            placeholder="e.g. Degree in Accounting or Finance"
           />
         </FormField>
         <FormField

@@ -2,23 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import {
   addJobSourceAction,
   addStarterSourcesAction,
   addSuggestedSourcesAction,
-  hideSuggestionAction,
   checkJobSourceAction,
-  removeJobSourceAction,
-  setMorningRunAction,
+  hideSuggestionAction,
+  markJobSourcesAction,
+  openJobSourceAction,
+  removeJobSourcesAction,
   saveBannedSitesAction,
-  setJobSourceEnabledAction,
+  setJobSourcesEnabledAction,
+  setMorningRunAction,
 } from "@/app/(admin)/admin/(signed-in)/job-sources/actions";
 import { AiProgress, ProgressBar } from "@/components/ai/AiProgress";
 import { AskForTokens } from "@/components/admin/AskForTokens";
+import { Fold } from "@/components/admin/Fold";
 import { Icon } from "@/components/icons/Icon";
-import type { JobSourceRow, JobSourcesView, QuickAddResult } from "@/modules/job-sources/job-sources.admin";
+import type { JobSourceRow, JobSourcesView, QuickAddResult, SourceFind } from "@/modules/job-sources/job-sources.admin";
 import { checkedLabel, checkSummary } from "@/modules/job-sources/labels";
+import { groupOf, matchesSearch, SOURCE_GROUPS, type SourceGroupKey } from "@/modules/job-sources/source-inbox";
 import { STARTER_GROUPS } from "@/modules/job-sources/starter-sources";
 
 type Props = { data: JobSourcesView; dailyLimit: number; maxFailures: number };
@@ -31,9 +35,15 @@ const CHECK_STEPS = [
   "Picking out the job adverts",
   "Adding new jobs to Bulk post",
 ];
+// Quick jobs (switching on/off, saving) still show a short bar, so a slow connection never looks stuck
+const SAVE_STEPS = ["Saving"];
+// Rows shown per group before "Show more"
+const PAGE = 50;
 
-// Owner screen: the websites read every morning for new jobs, and the sites that may never be read
+// Owner screen: the websites read every morning for new jobs, kept like an email inbox so hundreds
+// of employers stay manageable; every other section folds away
 export function JobSourcesBoard({ data, dailyLimit, maxFailures }: Props) {
+  const openStarters = data.starters.filter((starter) => !starter.added);
   return (
     <>
       <MorningSwitch on={data.morning} dailyLimit={dailyLimit} />
@@ -43,29 +53,105 @@ export function JobSourcesBoard({ data, dailyLimit, maxFailures }: Props) {
           See the jobs found
         </Link>
       </div>
-      <YourSources sources={data.sources} maxFailures={maxFailures} />
-      <StarterList starters={data.starters} />
-      <Suggestions suggestions={data.suggestions} />
-      <AddSource />
-      <BannedSites builtIn={data.builtInBanned} extra={data.extraBanned} />
+      <SourceInbox sources={data.sources} maxFailures={maxFailures} />
+      {openStarters.length > 0 && (
+        <Fold
+          id="src-starters"
+          title="Ready-made list"
+          icon="list"
+          count={openStarters.length}
+          defaultOpen={data.sources.length === 0}
+          className="panel"
+        >
+          <StarterList starters={openStarters} />
+        </Fold>
+      )}
+      {data.suggestions.length > 0 && (
+        <Fold
+          id="src-suggest"
+          title="From the jobs you post"
+          icon="sparkle"
+          count={data.suggestions.length}
+          defaultOpen={false}
+          className="panel"
+        >
+          <Suggestions suggestions={data.suggestions} />
+        </Fold>
+      )}
+      <Fold id="src-add" title="Add one yourself" icon="plus" defaultOpen={data.sources.length === 0} className="panel">
+        <AddSource />
+      </Fold>
+      <Fold
+        id="src-banned"
+        title="Banned sites"
+        icon="lock"
+        count={data.builtInBanned.length + data.extraBanned.length}
+        defaultOpen={false}
+        className="panel"
+      >
+        <BannedSites builtIn={data.builtInBanned} extra={data.extraBanned} />
+      </Fold>
     </>
   );
 }
 
-type CheckAllRun = { done: number; total: number; current: string; added: number; problems: string[] };
+// ---------- Your sources, as an inbox ----------
 
-// The business's sources, with "Check all": each switched-on source is checked in turn (one site at
-// a time, and each check is its own short request, so a long list never runs into a time limit)
-function YourSources({ sources, maxFailures }: { sources: JobSourceRow[]; maxFailures: number }) {
+type View = "all" | "unread" | "attention" | "off";
+type CheckRun = { done: number; total: number; current: string; added: number; problems: string[] };
+
+function SourceInbox({ sources, maxFailures }: { sources: JobSourceRow[]; maxFailures: number }) {
   const router = useRouter();
-  const [run, setRun] = useState<CheckAllRun | null>(null);
+  const [pending, start] = useTransition();
+  const [view, setView] = useState<View>("all");
+  const [search, setSearch] = useState("");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  // The open source, and the group it was in: it stays there while open, like an opened email
+  const [opened, setOpened] = useState<{ id: string; group: SourceGroupKey } | null>(null);
+  const openId = opened?.id ?? null;
+  // Read or unread as just changed here, until the page catches up
+  const [readNow, setReadNow] = useState<Record<string, boolean>>({});
+  const [shown, setShown] = useState<Record<string, number>>({});
+  const [run, setRun] = useState<CheckRun | null>(null);
   const [message, setMessage] = useState<Message>(null);
-  const enabled = sources.filter((source) => source.enabled);
 
-  const checkAll = async () => {
+  const rows = useMemo(
+    () => sources.map((source) => (source.id in readNow ? { ...source, unread: !readNow[source.id] } : source)),
+    [sources, readNow],
+  );
+  const counts = {
+    all: rows.length,
+    unread: rows.filter((row) => row.unread).length,
+    attention: rows.filter((row) => row.enabled && row.lastError).length,
+    off: rows.filter((row) => !row.enabled).length,
+  };
+  const visible = rows.filter(
+    (row) =>
+      matchesSearch(row, search) &&
+      (view === "all" ||
+        (view === "unread" && row.unread) ||
+        (view === "attention" && row.enabled && row.lastError) ||
+        (view === "off" && !row.enabled)),
+  );
+  const pickedRows = rows.filter((row) => picked.has(row.id));
+  const allPicked = visible.length > 0 && visible.every((row) => picked.has(row.id));
+  const somePicked = visible.some((row) => picked.has(row.id));
+  const locked = Boolean(run) || pending;
+
+  const pick = (id: string, on: boolean) =>
+    setPicked((now) => {
+      const next = new Set(now);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const pickAll = (on: boolean) => setPicked(on ? new Set(visible.map((row) => row.id)) : new Set());
+
+  // Checks sources one at a time (each check is its own short request, so a long list never times out)
+  const checkMany = async (list: JobSourceRow[]) => {
     setMessage(null);
-    const state: CheckAllRun = { done: 0, total: enabled.length, current: "", added: 0, problems: [] };
-    for (const source of enabled) {
+    const state: CheckRun = { done: 0, total: list.length, current: "", added: 0, problems: [] };
+    for (const source of list) {
       setRun({ ...state, current: source.name });
       try {
         const result = await checkJobSourceAction(source.id);
@@ -75,7 +161,6 @@ function YourSources({ sources, maxFailures }: { sources: JobSourceRow[]; maxFai
         state.problems.push(`${source.name}: the check didn't finish`);
       }
       state.done += 1;
-      setRun({ ...state, current: source.name });
     }
     setRun(null);
     const jobs = state.added === 1 ? "1 new job" : `${state.added} new jobs`;
@@ -91,20 +176,189 @@ function YourSources({ sources, maxFailures }: { sources: JobSourceRow[]; maxFai
     router.refresh();
   };
 
+  const bulk = (action: () => Promise<unknown>, after?: () => void) =>
+    start(async () => {
+      await action();
+      after?.();
+      setPicked(new Set());
+      router.refresh();
+    });
+  const markRead = (ids: string[], read: boolean) => {
+    setReadNow((now) => ({ ...now, ...Object.fromEntries(ids.map((id) => [id, read])) }));
+    bulk(() => markJobSourcesAction(ids, read));
+  };
+  const remove = (list: JobSourceRow[]) => {
+    const what = list.length === 1 ? `"${list[0].name}"` : `these ${list.length} sources`;
+    if (!window.confirm(`Remove ${what}? Jobs already found stay where they are.`)) return;
+    bulk(() => removeJobSourcesAction(list.map((row) => row.id)));
+  };
+
   return (
-    <section className="panel panel-body sources-panel">
-      <div className="sources-head">
+    <section className="panel src-inbox">
+      <div className="src-top">
         <h2 className="editor-title">
           <Icon name="globe" />
           Your sources
         </h2>
-        {enabled.length > 1 && (
-          <button type="button" className="btn btn-primary btn-sm" onClick={checkAll} disabled={Boolean(run)}>
-            <Icon name="refresh" size={16} />
-            {run ? "Checking…" : `Check all (${enabled.length})`}
+        <label className="src-search">
+          <Icon name="search" size={16} />
+          <span className="sr-only">Search sources</span>
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={`Search ${rows.length} sources by name or website`}
+          />
+        </label>
+      </div>
+
+      <nav className="src-views" aria-label="Show">
+        {(
+          [
+            ["all", "All"],
+            ["unread", "Unread"],
+            ["attention", "Problems"],
+            ["off", "Switched off"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={view === key}
+            onClick={() => {
+              setView(key);
+              setPicked(new Set());
+            }}
+          >
+            {label}
+            <span className={key === "unread" && counts.unread ? "is-new" : undefined}>{counts[key]}</span>
           </button>
+        ))}
+      </nav>
+
+      <div className="src-toolbar" role="toolbar" aria-label="Sources">
+        <input
+          type="checkbox"
+          aria-label={allPicked ? "Select none" : "Select all shown"}
+          checked={allPicked}
+          ref={(el) => {
+            if (el) el.indeterminate = somePicked && !allPicked;
+          }}
+          onChange={(event) => pickAll(event.target.checked)}
+          disabled={!visible.length || locked}
+        />
+        {pickedRows.length ? (
+          <>
+            <span className="src-picked">{pickedRows.length} selected</span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => void checkMany(pickedRows.filter((row) => row.enabled))}
+              disabled={locked || !pickedRows.some((row) => row.enabled)}
+            >
+              <Icon name="refresh" size={16} />
+              Check
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() =>
+                markRead(
+                  pickedRows.map((row) => row.id),
+                  true,
+                )
+              }
+              disabled={locked}
+            >
+              <Icon name="eye" size={16} />
+              Mark as read
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() =>
+                markRead(
+                  pickedRows.map((row) => row.id),
+                  false,
+                )
+              }
+              disabled={locked}
+            >
+              <Icon name="mail" size={16} />
+              Mark as unread
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() =>
+                bulk(() =>
+                  setJobSourcesEnabledAction(
+                    pickedRows.map((row) => row.id),
+                    true,
+                  ),
+                )
+              }
+              disabled={locked}
+            >
+              Switch on
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() =>
+                bulk(() =>
+                  setJobSourcesEnabledAction(
+                    pickedRows.map((row) => row.id),
+                    false,
+                  ),
+                )
+              }
+              disabled={locked}
+            >
+              Switch off
+            </button>
+            <button
+              type="button"
+              className="icon-btn danger"
+              title="Remove"
+              aria-label="Remove the selected sources"
+              onClick={() => remove(pickedRows)}
+              disabled={locked}
+            >
+              <Icon name="trash" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => void checkMany(rows.filter((row) => row.enabled))}
+              disabled={locked || !rows.some((row) => row.enabled)}
+            >
+              <Icon name="refresh" size={16} />
+              {run ? "Checking…" : `Check all (${rows.filter((row) => row.enabled).length})`}
+            </button>
+            {counts.unread > 0 && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() =>
+                  markRead(
+                    rows.filter((row) => row.unread).map((row) => row.id),
+                    true,
+                  )
+                }
+                disabled={locked}
+              >
+                <Icon name="eye" size={16} />
+                Mark all as read
+              </button>
+            )}
+          </>
         )}
       </div>
+
       {run && (
         <ProgressBar
           percent={Math.round((run.done / run.total) * 100)}
@@ -112,25 +366,282 @@ function YourSources({ sources, maxFailures }: { sources: JobSourceRow[]; maxFai
           ariaLabel="Sources checked"
         />
       )}
+      <AiProgress active={pending} seconds={2} steps={SAVE_STEPS} />
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
       <AskForTokens message={message?.text} />
-      {sources.length ? (
-        <ul className="source-list">
-          {sources.map((source) => (
-            <SourceRow key={source.id} source={source} maxFailures={maxFailures} locked={Boolean(run)} />
-          ))}
-        </ul>
+
+      {!rows.length ? (
+        <p className="src-empty">No sources yet. Tick some from the ready-made list below, or add your own.</p>
+      ) : !visible.length ? (
+        <p className="src-empty">No sources match{search ? ` "${search}"` : " this view"}.</p>
       ) : (
-        <p className="hint-sm">No sources yet. Tick some from the ready-made list below, or add your own.</p>
+        SOURCE_GROUPS.map((group) => {
+          const inGroup = visible.filter((row) => (row.id === opened?.id ? opened.group : groupOf(row)) === group.key);
+          if (!inGroup.length) return null;
+          const limit = shown[group.key] ?? PAGE;
+          const newJobs = inGroup.reduce((sum, row) => sum + row.newCount, 0);
+          return (
+            <Fold
+              key={group.key}
+              id={`src-group-${group.key}`}
+              variant="group"
+              title={group.title}
+              count={inGroup.length}
+              note={group.key === "unread" && newJobs ? `${newJobs} new job${newJobs === 1 ? "" : "s"}` : undefined}
+              defaultOpen={group.key !== "rest" || inGroup.length <= 20}
+            >
+              <ul className="src-list">
+                {inGroup.slice(0, limit).map((row) => (
+                  <SourceLine
+                    key={row.id}
+                    source={row}
+                    maxFailures={maxFailures}
+                    picked={picked.has(row.id)}
+                    onPick={(on) => pick(row.id, on)}
+                    open={openId === row.id}
+                    onOpen={() => {
+                      const opening = openId !== row.id;
+                      setOpened(opening ? { id: row.id, group: groupOf(row) } : null);
+                      if (opening && row.unread) setReadNow((now) => ({ ...now, [row.id]: true }));
+                    }}
+                    onMarkUnread={() => {
+                      setOpened(null);
+                      markRead([row.id], false);
+                    }}
+                    onRemove={() => remove([row])}
+                    locked={locked}
+                  />
+                ))}
+              </ul>
+              {inGroup.length > limit && (
+                <button
+                  type="button"
+                  className="src-more"
+                  onClick={() => setShown((now) => ({ ...now, [group.key]: limit + PAGE }))}
+                >
+                  Show {Math.min(PAGE, inGroup.length - limit)} more of {inGroup.length - limit}
+                </button>
+              )}
+            </Fold>
+          );
+        })
       )}
     </section>
   );
 }
 
-// Quick jobs (switching on/off, saving) still show a short bar, so a slow connection never looks stuck
-const SAVE_STEPS = ["Saving"];
+type LineProps = {
+  source: JobSourceRow;
+  maxFailures: number;
+  picked: boolean;
+  onPick: (on: boolean) => void;
+  open: boolean;
+  onOpen: () => void;
+  onMarkUnread: () => void;
+  onRemove: () => void;
+  locked: boolean;
+};
 
-// The morning run: every source checked and its new jobs read before the working day starts
+// One source as one line, like an email in a list: bold while it has new finds; open it to see them
+function SourceLine({ source, maxFailures, picked, onPick, open, onOpen, onMarkUnread, onRemove, locked }: LineProps) {
+  const status = source.enabled
+    ? source.lastError
+      ? { cls: "warn", text: `Problem ${source.failures}/${maxFailures}` }
+      : null
+    : source.stoppedByFailures
+      ? { cls: "bad", text: "Stopped" }
+      : { cls: "off", text: "Off" };
+  const snippet = source.lastError
+    ? `Last check failed: ${source.lastError}`
+    : source.newCount
+      ? `${source.newCount} new job${source.newCount === 1 ? "" : "s"} found`
+      : source.lastFoundAt
+        ? `Last found jobs ${checkedLabel(source.lastFoundAt).toLowerCase()}`
+        : "No jobs found yet";
+
+  return (
+    <li
+      className={["src-line", source.unread ? "is-unread" : "", open ? "is-open" : "", picked ? "is-picked" : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <div className="src-row">
+        <input
+          type="checkbox"
+          checked={picked}
+          onChange={(event) => onPick(event.target.checked)}
+          aria-label={`Select ${source.name}`}
+        />
+        <span className="src-dot" aria-hidden="true" />
+        <button type="button" className="src-open" onClick={onOpen} aria-expanded={open}>
+          <span className="src-name">
+            {source.name}
+            {source.unread && <span className="sr-only"> (unread)</span>}
+          </span>
+          <span className="src-snippet">
+            <span className="src-site">{source.site}</span>
+            <span className={source.lastError ? "src-text is-error" : "src-text"}> — {snippet}</span>
+          </span>
+          {/* Every row keeps the same columns, so the counts and dates line up down the list */}
+          <span className="src-flag">
+            {status && <span className={`source-status ${status.cls}`}>{status.text}</span>}
+          </span>
+          <span className="src-count">{source.newCount > 0 && <span className="src-new">{source.newCount}</span>}</span>
+          <span className="src-when">{checkedLabel(source.lastCheckedAt)}</span>
+        </button>
+      </div>
+      {open && (
+        <SourceDetail
+          source={source}
+          maxFailures={maxFailures}
+          onMarkUnread={onMarkUnread}
+          onRemove={onRemove}
+          locked={locked}
+        />
+      )}
+    </li>
+  );
+}
+
+// An opened source: its latest finds (opening it counts as reading them) and what can be done with it
+function SourceDetail({
+  source,
+  maxFailures,
+  onMarkUnread,
+  onRemove,
+  locked,
+}: {
+  source: JobSourceRow;
+  maxFailures: number;
+  onMarkUnread: () => void;
+  onRemove: () => void;
+  locked: boolean;
+}) {
+  const router = useRouter();
+  const [finds, setFinds] = useState<SourceFind[] | null>(null);
+  const [loading, startLoading] = useTransition();
+  const [pending, start] = useTransition();
+  const [busy, setBusy] = useState<"check" | "toggle" | null>(null);
+  const [message, setMessage] = useState<Message>(null);
+  // Opening the row loads its finds, and the server counts it as read from now
+  useEffect(() => {
+    startLoading(async () => setFinds(await openJobSourceAction(source.id)));
+  }, [source.id]);
+
+  const check = () => {
+    setBusy("check");
+    setMessage(null);
+    start(async () => {
+      const result = await checkJobSourceAction(source.id);
+      setMessage(result.ok ? { tone: "ok", text: checkSummary(result) } : { tone: "error", text: result.error });
+      setFinds(await openJobSourceAction(source.id));
+      setBusy(null);
+      router.refresh();
+    });
+  };
+  const toggle = () => {
+    setBusy("toggle");
+    start(async () => {
+      await setJobSourcesEnabledAction([source.id], !source.enabled);
+      setBusy(null);
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className="src-detail">
+      <div className="src-detail-head">
+        <a href={source.url} target="_blank" rel="noopener noreferrer">
+          {source.url} <Icon name="link" size={14} />
+        </a>
+        <span>
+          Last checked {checkedLabel(source.lastCheckedAt).toLowerCase()}
+          {source.lastCheckedAt && !source.lastError ? ` · ${source.lastAdded} added that time` : ""}
+        </span>
+      </div>
+      {source.lastError && (
+        <p className="source-error">
+          <Icon name="alert" size={16} />
+          {source.stoppedByFailures
+            ? `Stopped after ${maxFailures} failed mornings: ${source.lastError}. Check the address still works, then switch it back on.`
+            : `Last check failed: ${source.lastError}.`}
+        </p>
+      )}
+
+      <div className="src-finds">
+        <p className="src-finds-label">Latest jobs found</p>
+        {loading && !finds ? (
+          <p className="hint-sm">Loading…</p>
+        ) : finds?.length ? (
+          <ul>
+            {finds.map((find) => (
+              <li key={find.id}>
+                <span className={`find-state ${find.status}`}>{FIND_LABEL[find.status]}</span>
+                {find.jobSlug ? (
+                  <a href={`/jobs/${find.jobSlug}`} target="_blank" rel="noopener">
+                    {find.title}
+                  </a>
+                ) : (
+                  <Link href={`/admin/inbox?item=${find.id}`}>{find.title}</Link>
+                )}
+                <small>{checkedLabel(find.foundAt)}</small>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="hint-sm">Nothing found yet. New jobs on its page are added each time it&apos;s checked.</p>
+        )}
+        {Boolean(finds?.length) && (
+          <Link className="text-link" href={`/admin/job-sources/found?source=${encodeURIComponent(source.name)}`}>
+            See all its jobs in Jobs found →
+          </Link>
+        )}
+      </div>
+
+      <div className="src-detail-actions">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={check} disabled={pending || locked}>
+          <Icon name="refresh" size={16} />
+          {busy === "check" ? "Checking…" : "Check now"}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={toggle} disabled={pending || locked}>
+          {busy === "toggle" ? "Saving…" : source.enabled ? "Switch off" : "Switch on"}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onMarkUnread} disabled={pending || locked}>
+          <Icon name="mail" size={16} />
+          Mark as unread
+        </button>
+        <button
+          type="button"
+          className="icon-btn danger"
+          title="Remove"
+          onClick={onRemove}
+          disabled={pending || locked}
+        >
+          <Icon name="trash" />
+        </button>
+      </div>
+      <AiProgress
+        active={busy !== null}
+        seconds={busy === "check" ? 20 : 2}
+        steps={busy === "check" ? CHECK_STEPS : SAVE_STEPS}
+        className="source-progress"
+      />
+      {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
+      <AskForTokens message={message?.text} />
+    </div>
+  );
+}
+
+const FIND_LABEL: Record<SourceFind["status"], string> = {
+  reading: "Reading",
+  waiting: "To check",
+  published: "Published",
+  discarded: "Discarded",
+};
+
+// ---------- The morning run ----------
+
+// Every source checked and its new jobs read before the working day starts
 function MorningSwitch({ on, dailyLimit }: { on: boolean; dailyLimit: number }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -165,6 +676,8 @@ function MorningSwitch({ on, dailyLimit }: { on: boolean; dailyLimit: number }) 
   );
 }
 
+// ---------- Adding sources ----------
+
 function AddSource() {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -190,11 +703,7 @@ function AddSource() {
   };
 
   return (
-    <section className="panel panel-body sources-panel">
-      <h2 className="editor-title">
-        <Icon name="plus" />
-        Add one yourself
-      </h2>
+    <>
       <form className="source-add" noValidate onSubmit={submit}>
         <div className={errors.name ? "f invalid" : "f"}>
           <label htmlFor="src-name">Name</label>
@@ -216,100 +725,7 @@ function AddSource() {
       {errors.form && <p className="field-error">{errors.form}</p>}
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
       <AskForTokens message={message?.text} />
-    </section>
-  );
-}
-
-function SourceRow({ source, maxFailures, locked }: { source: JobSourceRow; maxFailures: number; locked: boolean }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  const [busy, setBusy] = useState<"check" | "toggle" | "remove" | null>(null);
-  const [message, setMessage] = useState<Message>(null);
-
-  const run = (what: "check" | "toggle" | "remove", action: () => Promise<Message>) => {
-    setBusy(what);
-    setMessage(null);
-    start(async () => {
-      setMessage(await action());
-      setBusy(null);
-      router.refresh();
-    });
-  };
-
-  const check = () =>
-    run("check", async () => {
-      const result = await checkJobSourceAction(source.id);
-      return result.ok ? { tone: "ok", text: checkSummary(result) } : { tone: "error", text: result.error };
-    });
-  const toggle = () =>
-    run("toggle", async () => {
-      const result = await setJobSourceEnabledAction(source.id, !source.enabled);
-      return result.ok ? null : { tone: "error", text: result.error };
-    });
-  const remove = () => {
-    if (!window.confirm(`Remove "${source.name}"? Jobs it already found stay where they are.`)) return;
-    run("remove", async () => {
-      const result = await removeJobSourceAction(source.id);
-      return result.ok ? null : { tone: "error", text: result.error };
-    });
-  };
-
-  const status = source.enabled
-    ? source.lastError
-      ? { cls: "warn", text: `Problem (${source.failures} of ${maxFailures})` }
-      : { cls: "ok", text: "Working" }
-    : source.stoppedByFailures
-      ? { cls: "bad", text: "Stopped" }
-      : { cls: "off", text: "Off" };
-
-  return (
-    <li className={source.enabled ? "source-row" : "source-row is-off"}>
-      <div className="source-main">
-        <strong>{source.name}</strong>
-        <a href={source.url} target="_blank" rel="noopener noreferrer">
-          {source.site} <Icon name="link" size={14} />
-        </a>
-      </div>
-      <div className="source-stats">
-        <span>
-          <small>Last checked</small>
-          {checkedLabel(source.lastCheckedAt)}
-        </span>
-        <span>
-          <small>New jobs</small>
-          {source.lastCheckedAt && !source.lastError ? source.lastAdded : "–"}
-        </span>
-        <span className={`source-status ${status.cls}`}>{status.text}</span>
-      </div>
-      <div className="source-actions">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={check} disabled={pending || locked}>
-          <Icon name="refresh" size={16} />
-          {busy === "check" ? "Checking…" : "Check now"}
-        </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={toggle} disabled={pending || locked}>
-          {source.enabled ? "Switch off" : "Switch on"}
-        </button>
-        <button type="button" className="icon-btn danger" title="Remove" onClick={remove} disabled={pending || locked}>
-          <Icon name="trash" />
-        </button>
-      </div>
-      <AiProgress
-        active={busy !== null}
-        seconds={busy === "check" ? 20 : 2}
-        steps={busy === "check" ? CHECK_STEPS : busy === "remove" ? ["Removing"] : SAVE_STEPS}
-        className="source-progress"
-      />
-      {source.lastError && (
-        <p className="source-error">
-          <Icon name="alert" size={16} />
-          {source.stoppedByFailures
-            ? `Stopped after ${maxFailures} failed mornings: ${source.lastError}. Check the address still works, then switch it back on.`
-            : `Last check failed: ${source.lastError}.`}
-        </p>
-      )}
-      {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
-      <AskForTokens message={message?.text} />
-    </li>
+    </>
   );
 }
 
@@ -332,11 +748,7 @@ function BannedSites({ builtIn, extra }: { builtIn: readonly string[]; extra: st
     });
 
   return (
-    <section className="panel panel-body sources-panel">
-      <h2 className="editor-title">
-        <Icon name="lock" />
-        Banned sites
-      </h2>
+    <>
       <p className="hint-sm">
         Job boards don&apos;t allow their jobs to be copied, so these are never read, even through a link.
       </p>
@@ -374,7 +786,7 @@ function BannedSites({ builtIn, extra }: { builtIn: readonly string[]; extra: st
       )}
       <AiProgress active={pending} seconds={2} steps={SAVE_STEPS} />
       {message && <p className="notice">{message}</p>}
-    </section>
+    </>
   );
 }
 
@@ -389,14 +801,12 @@ function quickAddMessage(result: QuickAddResult): Message {
   return { tone: result.failed.length && !result.added.length ? "error" : "ok", text: parts.join(" ") };
 }
 
-// The ready-made list: tick the ones wanted, add them in one go
+// The ready-made list: tick the ones wanted, add them in one go. Each group folds on its own.
 function StarterList({ starters }: { starters: JobSourcesView["starters"] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<Message>(null);
-  const open = starters.filter((starter) => !starter.added);
-  if (!open.length && !message) return null;
 
   const toggle = (id: string) =>
     setPicked((now) => {
@@ -423,40 +833,45 @@ function StarterList({ starters }: { starters: JobSourcesView["starters"] }) {
     });
 
   return (
-    <section className="panel panel-body sources-panel">
-      <h2 className="editor-title">
-        <Icon name="list" />
-        Ready-made list
-      </h2>
-      <p className="hint-sm">Kenyan vacancies pages already checked to work. Tick the ones you want.</p>
-      {open.length > 1 && (
-        <label className="starter-item starter-all">
-          <input
-            type="checkbox"
-            checked={open.every((starter) => picked.has(starter.id))}
-            onChange={(event) =>
-              toggleGroup(
-                open.map((starter) => starter.id),
-                event.target.checked,
-              )
-            }
-          />
-          Select all ({open.length})
-        </label>
-      )}
+    <>
+      <div className="starter-bar">
+        <p className="hint-sm">Kenyan vacancies pages already checked to work. Tick the ones you want.</p>
+        {starters.length > 1 && (
+          <label className="starter-item starter-all">
+            <input
+              type="checkbox"
+              checked={starters.every((starter) => picked.has(starter.id))}
+              onChange={(event) =>
+                toggleGroup(
+                  starters.map((starter) => starter.id),
+                  event.target.checked,
+                )
+              }
+            />
+            Select all ({starters.length})
+          </label>
+        )}
+      </div>
       {STARTER_GROUPS.map((group) => {
-        const items = open.filter((starter) => starter.group === group);
+        const items = starters.filter((starter) => starter.group === group);
         if (!items.length) return null;
         const ids = items.map((item) => item.id);
-        const all = ids.every((id) => picked.has(id));
+        const ticked = ids.filter((id) => picked.has(id)).length;
         return (
-          <fieldset key={group} className="starter-group">
-            <legend>
-              {group}
-              <button type="button" className="link-btn" onClick={() => toggleGroup(ids, !all)}>
-                {all ? "Untick all" : "Tick all"}
+          <Fold
+            key={group}
+            id={`starter-${group}`}
+            variant="group"
+            title={group}
+            count={items.length}
+            note={ticked ? `${ticked} ticked` : undefined}
+            defaultOpen={false}
+            actions={
+              <button type="button" className="link-btn" onClick={() => toggleGroup(ids, ticked !== ids.length)}>
+                {ticked === ids.length ? "Untick all" : "Tick all"}
               </button>
-            </legend>
+            }
+          >
             <div className="starter-grid">
               {items.map((item) => (
                 <label key={item.id} className="starter-item">
@@ -465,19 +880,17 @@ function StarterList({ starters }: { starters: JobSourcesView["starters"] }) {
                 </label>
               ))}
             </div>
-          </fieldset>
+          </Fold>
         );
       })}
-      {open.length > 0 && (
-        <button type="button" className="btn btn-primary" onClick={add} disabled={pending || !picked.size}>
-          <Icon name="plus" size={18} />
-          {pending ? "Adding…" : picked.size ? `Add ${picked.size} selected` : "Tick some to add"}
-        </button>
-      )}
+      <button type="button" className="btn btn-primary" onClick={add} disabled={pending || !picked.size}>
+        <Icon name="plus" size={18} />
+        {pending ? "Adding…" : picked.size ? `Add ${picked.size} selected` : "Tick some to add"}
+      </button>
       <AiProgress active={pending} seconds={Math.max(2, picked.size * 0.4)} steps={["Saving the sources"]} />
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
       <AskForTokens message={message?.text} />
-    </section>
+    </>
   );
 }
 
@@ -488,7 +901,8 @@ function Suggestions({ suggestions }: { suggestions: JobSourcesView["suggestions
   const [adding, setAdding] = useState<string[]>([]);
   const [hiding, setHiding] = useState<string | null>(null);
   const [message, setMessage] = useState<Message>(null);
-  if (!suggestions.length && !message) return null;
+  const [showAll, setShowAll] = useState(false);
+  const list = showAll ? suggestions : suggestions.slice(0, 10);
 
   const add = (sites: string[]) => {
     setAdding(sites);
@@ -509,38 +923,37 @@ function Suggestions({ suggestions }: { suggestions: JobSourcesView["suggestions
     });
 
   return (
-    <section className="panel panel-body sources-panel">
-      <h2 className="editor-title">
-        <Icon name="sparkle" />
-        From the jobs you post
-      </h2>
+    <>
       <p className="hint-sm">
         Employers whose jobs are on your board. Click Add and their careers page is found on their website for you.
       </p>
-      {suggestions.length > 0 && (
-        <ul className="suggest-list">
-          {suggestions.map((suggestion) => (
-            <li key={suggestion.site}>
-              <span className="suggest-main">
-                <strong>{suggestion.company}</strong>
-                <small>
-                  {suggestion.site} · {suggestion.jobs} job{suggestion.jobs === 1 ? "" : "s"} posted
-                </small>
-              </span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => add([suggestion.site])}
-                disabled={pending}
-              >
-                {adding.length === 1 && adding[0] === suggestion.site ? "Looking…" : "Add"}
-              </button>
-              <button type="button" className="link-btn" onClick={() => hide(suggestion.site)} disabled={pending}>
-                Hide
-              </button>
-            </li>
-          ))}
-        </ul>
+      <ul className="suggest-list">
+        {list.map((suggestion) => (
+          <li key={suggestion.site}>
+            <span className="suggest-main">
+              <strong>{suggestion.company}</strong>
+              <small>
+                {suggestion.site} · {suggestion.jobs} job{suggestion.jobs === 1 ? "" : "s"} posted
+              </small>
+            </span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => add([suggestion.site])}
+              disabled={pending}
+            >
+              {adding.length === 1 && adding[0] === suggestion.site ? "Looking…" : "Add"}
+            </button>
+            <button type="button" className="link-btn" onClick={() => hide(suggestion.site)} disabled={pending}>
+              Hide
+            </button>
+          </li>
+        ))}
+      </ul>
+      {suggestions.length > list.length && (
+        <button type="button" className="src-more" onClick={() => setShowAll(true)}>
+          Show all {suggestions.length}
+        </button>
       )}
       <AiProgress active={hiding !== null} seconds={2} steps={["Hiding"]} />
       <AiProgress
@@ -561,6 +974,6 @@ function Suggestions({ suggestions }: { suggestions: JobSourcesView["suggestions
       )}
       {message && <p className={message.tone === "ok" ? "notice" : "field-error"}>{message.text}</p>}
       <AskForTokens message={message?.text} />
-    </section>
+    </>
   );
 }
