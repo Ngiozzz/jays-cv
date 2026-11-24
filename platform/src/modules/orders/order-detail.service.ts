@@ -87,6 +87,7 @@ export async function loadOrderForTeam(member: CurrentMember, ref: string, now: 
         href: `${siteUrl(tenant)}/jobs/${order.job.slug}`,
       },
       jobAdvert: order.jobAdvert,
+      linkedinUrl: order.linkedinUrl,
       noCv: order.noCv,
     },
     revisions: order.revisions.length,

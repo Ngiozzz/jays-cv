@@ -1,31 +1,59 @@
 import { describe, expect, it } from "vitest";
-import { aiStopped, memberAiStop, parseAllowance, tokenBalance, tokenPace, usageByDay } from "./tokens";
+import { aiStopped, memberAiStop, monthlyGrant, parseAllowance, tokenBalance, tokenPace, usageByDay } from "./tokens";
+
+// A month that started with only its own tokens
+const fresh = (monthly: number) => ({ carriedOver: 0, monthly, added: 0 });
 
 describe("tokenBalance", () => {
   it("works out what is left", () => {
-    expect(tokenBalance(600_000, 1_000_000, 20)).toEqual({
+    expect(tokenBalance(600_000, fresh(1_000_000), 20)).toEqual({
       remaining: 600_000,
       granted: 1_000_000,
       percentLeft: 60,
       low: false,
       paused: false,
+      carriedOver: 0,
+      monthly: 1_000_000,
+      added: 0,
+    });
+  });
+
+  it("adds tokens carried over from last month and top-ups to this month's", () => {
+    const balance = tokenBalance(6_000_000, { carriedOver: 1_200_000, monthly: 5_000_000, added: 800_000 }, 20);
+    expect(balance).toMatchObject({ granted: 7_000_000, carriedOver: 1_200_000, percentLeft: 86 });
+  });
+
+  it("carries nothing over from a month that was overdrawn", () => {
+    expect(tokenBalance(4_900_000, { carriedOver: -100_000, monthly: 5_000_000, added: 0 }, 20)).toMatchObject({
+      granted: 5_000_000,
+      carriedOver: 0,
     });
   });
 
   it("warns at or below the owner's warning level", () => {
-    expect(tokenBalance(200_000, 1_000_000, 20).low).toBe(true);
-    expect(tokenBalance(0, 0, 20)).toMatchObject({ percentLeft: 0, low: true });
+    expect(tokenBalance(200_000, fresh(1_000_000), 20).low).toBe(true);
+    expect(tokenBalance(0, fresh(0), 20)).toMatchObject({ percentLeft: 0, low: true });
+  });
+});
+
+describe("monthlyGrant", () => {
+  it("names one entry per business and Nairobi month", () => {
+    // Midnight on 1 December in Nairobi is 21:00 UTC on 30 November
+    expect(monthlyGrant("t1", new Date("2026-11-30T21:00:00Z"))).toEqual({
+      id: "monthly-t1-2026-12",
+      note: "Monthly tokens for December 2026",
+    });
   });
 });
 
 describe("aiStopped", () => {
   it("stops the AI when paused, even with tokens left", () => {
-    expect(aiStopped(tokenBalance(600_000, 1_000_000, 20, true))).toBe("paused");
+    expect(aiStopped(tokenBalance(600_000, fresh(1_000_000), 20, true))).toBe("paused");
   });
 
   it("stops the AI when the tokens run out", () => {
-    expect(aiStopped(tokenBalance(0, 1_000_000, 20))).toBe("empty");
-    expect(aiStopped(tokenBalance(1, 1_000_000, 20))).toBeNull();
+    expect(aiStopped(tokenBalance(0, fresh(1_000_000), 20))).toBe("empty");
+    expect(aiStopped(tokenBalance(1, fresh(1_000_000), 20))).toBeNull();
   });
 });
 

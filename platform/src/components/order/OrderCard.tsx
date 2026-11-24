@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { placeOrderAction } from "@/app/(public)/[tenant]/order/actions";
 import { Icon } from "@/components/icons/Icon";
 import { formatKes } from "@/lib/money";
 import { keptUntilText } from "@/modules/cv-check/cv-check";
-import { NEEDS, type NeedKey } from "@/modules/orders/place-order";
+import { includesLinkedin, NEEDS, type NeedKey } from "@/modules/orders/place-order";
 import { PayBox } from "@/components/pay/PayBox";
 import { StageTrack } from "@/components/site/StageTrack";
 import type { PlaceOrderResult } from "@/modules/orders/place-order.service";
@@ -56,7 +56,10 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
   const wantedService = (job && tailoring) || services.find((service) => service.id === params.get("service"));
   const needFor = (index: number) => NEEDS.find((need) => need.packageIndex === index)?.key ?? "cv";
 
-  const [step, setStep] = useState(job && tailoring ? 3 : wantedPackage || wantedService ? 2 : 1);
+  // "?service=…&go=details" (e.g. "Revamp my LinkedIn" on the Services page): the service is already
+  // chosen, so open on the details step, at the CV upload
+  const jumpToCv = Boolean(wantedService) && params.get("go") === "details";
+  const [step, setStep] = useState(job && tailoring ? 3 : jumpToCv ? 3 : wantedPackage || wantedService ? 2 : 1);
   const [need, setNeed] = useState<NeedKey>(
     wantedService ? "single" : wantedPackage ? needFor(packages.indexOf(wantedPackage)) : "cv-letter",
   );
@@ -155,7 +158,7 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
                 {single ? "Pick a service" : "Pick a package"}
               </h2>
               <p className="order-sub">
-                One price, paid once by M-Pesa. <Link href="/pricing#compare">Compare what&apos;s included</Link>
+                One price, paid once by M-Pesa. <Link href="/pricing#plans">Compare what&apos;s included</Link>
               </p>
               <div className="opts">
                 {single
@@ -218,6 +221,8 @@ export function OrderCard({ packages, services, whatsappHref, businessName, waNu
                 need={need}
                 chosen={chosen}
                 tailoring={needsJob}
+                linkedin={includesLinkedin(chosen?.name ?? "")}
+                jumpToCv={jumpToCv}
                 job={needsJob ? job : null}
                 fromCheck={needsJob && job ? (fromCheck ?? null) : null}
                 whatsappHref={whatsappHref}
@@ -291,6 +296,10 @@ function DetailsStep(props: {
   chosen: { name: string; price: number } | undefined;
   // A CV tailored to a job: the job it came from, or the advert asked for here
   tailoring: boolean;
+  // A LinkedIn revamp (or a package with one): ask for the current profile next to the CV
+  linkedin: boolean;
+  // Arrived straight on this step: bring the CV upload into view
+  jumpToCv: boolean;
   job: CardJob | null;
   fromCheck: CardCheck | null;
   whatsappHref: string;
@@ -305,6 +314,13 @@ function DetailsStep(props: {
   // Tailoring needs a CV to tailor
   const noCv = noCvTicked && !props.tailoring;
   const checkCv = props.fromCheck?.cv ?? null;
+  const upload = useRef<HTMLDivElement>(null);
+  const { jumpToCv } = props;
+  useEffect(() => {
+    if (!jumpToCv) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    upload.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  }, [jumpToCv]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -454,42 +470,68 @@ function DetailsStep(props: {
             {fieldError("advert")}
           </div>
         )}
-        {!noCv && (
-          <label className={cvName || checkCv ? "cv-drop has-file" : "cv-drop"}>
-            <input
-              type="file"
-              name="cv"
-              accept=".pdf,.doc,.docx,image/*"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                setCvName(file ? { name: file.name, size: file.size } : null);
-              }}
-            />
-            <Icon name="upload" />
-            <span>
-              {cvName ? (
-                <>
-                  <strong>{cvName.name}</strong>
-                  <small>{Math.max(1, Math.round(cvName.size / 1024))} KB · tap to change</small>
-                </>
-              ) : checkCv ? (
-                <>
-                  <strong>Your CV from the check: {checkCv.name}</strong>
-                  <small>
-                    Already attached. Kept privately until {keptUntilText(checkCv.keptUntil)}, then deleted unless you
-                    order · tap to use a different CV
-                  </small>
-                </>
-              ) : (
-                <>
-                  <strong>{props.tailoring ? "Upload the CV to tailor" : "Upload your current CV"}</strong>
-                  <small>PDF, Word, or a clear photo of it · up to 10 MB</small>
-                </>
-              )}
-            </span>
-          </label>
-        )}
-        {fieldError("cv")}
+        <div className="od-upload" ref={upload}>
+          {props.linkedin && (
+            <div className="od-field od-linkedin">
+              <label htmlFor="od-linkedin">
+                Your current LinkedIn profile <small>optional</small>
+              </label>
+              <span className="od-input-icon">
+                <Icon name="linkedin" />
+                <input
+                  id="od-linkedin"
+                  name="linkedinUrl"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="url"
+                  placeholder="linkedin.com/in/your-name"
+                  maxLength={200}
+                />
+              </span>
+              <small className="od-hint">
+                Open your profile on LinkedIn and copy the link. No profile yet? Leave this empty and we&apos;ll build
+                one.
+              </small>
+              {fieldError("linkedinUrl")}
+            </div>
+          )}
+          {!noCv && (
+            <label className={cvName || checkCv ? "cv-drop has-file" : "cv-drop"}>
+              <input
+                type="file"
+                name="cv"
+                accept=".pdf,.doc,.docx,image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  setCvName(file ? { name: file.name, size: file.size } : null);
+                }}
+              />
+              <Icon name="upload" />
+              <span>
+                {cvName ? (
+                  <>
+                    <strong>{cvName.name}</strong>
+                    <small>{Math.max(1, Math.round(cvName.size / 1024))} KB · tap to change</small>
+                  </>
+                ) : checkCv ? (
+                  <>
+                    <strong>Your CV from the check: {checkCv.name}</strong>
+                    <small>
+                      Already attached. Kept privately until {keptUntilText(checkCv.keptUntil)}, then deleted unless you
+                      order · tap to use a different CV
+                    </small>
+                  </>
+                ) : (
+                  <>
+                    <strong>{props.tailoring ? "Upload the CV to tailor" : "Upload your current CV"}</strong>
+                    <small>PDF, Word, or a clear photo of it · up to 10 MB</small>
+                  </>
+                )}
+              </span>
+            </label>
+          )}
+          {fieldError("cv")}
+        </div>
         {!props.tailoring && (
           <label className="od-check">
             <input type="checkbox" name="noCv" checked={noCv} onChange={(event) => setNoCv(event.target.checked)} /> I

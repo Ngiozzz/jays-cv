@@ -248,7 +248,7 @@
   display: block;
   font: 500 24px/32px var(--serif);
 }
-.fact span {
+.fact > span {
   font-size: 14px;
   color: var(--text-2);
 }

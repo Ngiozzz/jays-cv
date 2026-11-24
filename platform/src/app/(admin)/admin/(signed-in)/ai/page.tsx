@@ -4,6 +4,7 @@ import { TeamAllowances } from "@/components/admin/ai/TeamAllowances";
 import { OpenTokenRequest, RequestTokensButton } from "@/components/admin/dashboard/TokenRequest";
 import { NotAllowed } from "@/components/admin/NotAllowed";
 import { formatNumber } from "@/lib/money";
+import { MONTHLY_TOKENS } from "@/modules/ai/tokens";
 import { loadAiPage, type AiPageData } from "@/modules/ai/tokens.service";
 import { requireMember } from "@/modules/team/current-member";
 import { can } from "@/modules/team/permissions";
@@ -15,8 +16,19 @@ const kenya = (iso: string, options: Intl.DateTimeFormatOptions) =>
 const dayMonth = (iso: string) => kenya(iso, { day: "numeric", month: "short" });
 const time = (iso: string) => kenya(iso, { weekday: "short", hour: "2-digit", minute: "2-digit" });
 
+// Month names in Nairobi time: this one, the one before (where leftovers came from), the next
+function monthNames(now: Date) {
+  const local = new Date(now.getTime() + 3 * 3_600_000);
+  const name = (offset: number) =>
+    new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + offset, 1)).toLocaleDateString("en-GB", {
+      month: "long",
+      timeZone: "UTC",
+    });
+  return { lastMonth: name(-1), thisMonth: name(0), nextMonth: name(1) };
+}
+
 const ADDED_LABEL: Record<string, string> = {
-  GRANT: "Monthly allowance",
+  GRANT: "Monthly tokens",
   TOP_UP: "Top-up you asked for",
   ADJUSTMENT: "Correction",
 };
@@ -28,6 +40,7 @@ export default async function AiPage() {
   if (!can(member, "requestTokens")) return <NotAllowed what="the AI tokens" />;
   const data = await loadAiPage(member);
   const { balance } = data;
+  const { lastMonth, thisMonth, nextMonth } = monthNames(new Date());
   const runsOutBeforeMonthEnd =
     data.runsOutOn !== null && new Date(data.runsOutOn).getMonth() === new Date().getMonth();
 
@@ -56,7 +69,9 @@ export default async function AiPage() {
             Tokens left
           </span>
           <span className={balance.low ? "stat-v late" : "stat-v"}>{formatNumber(balance.remaining)}</span>
-          <span className="stat-c">of {formatNumber(balance.granted)} given</span>
+          <span className="stat-c">
+            of {formatNumber(balance.granted)} for {thisMonth}
+          </span>
           <div className={balance.low ? "meter low" : "meter"}>
             <span style={{ width: `${balance.percentLeft}%` }} />
           </div>
@@ -65,6 +80,32 @@ export default async function AiPage() {
             <span>Warn at {data.warnPct}%</span>
             <span>{formatNumber(balance.granted)}</span>
           </span>
+          <dl className="token-sources">
+            <div>
+              <dt>Monthly tokens for {thisMonth}</dt>
+              <dd>{formatNumber(balance.monthly)}</dd>
+            </div>
+            {balance.carriedOver > 0 && (
+              <div className="carried">
+                <dt>
+                  <span className="carried-tag">Carried over</span> Unused from {lastMonth}
+                </dt>
+                <dd>+{formatNumber(balance.carriedOver)}</dd>
+              </div>
+            )}
+            {balance.added !== 0 && (
+              <div>
+                <dt>Top-ups this month</dt>
+                <dd>
+                  {balance.added > 0 ? "+" : ""}
+                  {formatNumber(balance.added)}
+                </dd>
+              </div>
+            )}
+          </dl>
+          <p className="token-reset">
+            On 1 {nextMonth} you get a fresh {formatNumber(MONTHLY_TOKENS)}. Anything left carries over.
+          </p>
         </div>
         <div className="stat">
           <span className="stat-l">Used a day this month</span>

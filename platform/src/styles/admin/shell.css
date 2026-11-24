@@ -1435,6 +1435,54 @@ a.row-t:hover {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+/* Where this month's tokens came from; leftovers from last month get a gold tag */
+.token-sources {
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.token-sources div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+.token-sources dt {
+  color: var(--text-2);
+}
+.token-sources dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.token-sources .carried {
+  margin: 2px -8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--gold-soft);
+}
+.token-sources .carried dt {
+  color: var(--text);
+}
+.token-sources .carried dd {
+  color: var(--gold-ink);
+}
+.carried-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--gold);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.token-reset {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
 .ai-balance .stat {
   border-left: 1px solid var(--line);
 }
@@ -1494,8 +1542,10 @@ td .cell-sub {
   height: 4px;
   margin-top: 6px;
 }
-.ai-team .row-off td {
-  color: var(--muted);
+/* AI off for someone: their usage dims, the name and the switch stay readable */
+.ai-team .row-off .num,
+.ai-team .row-off .meter {
+  opacity: 0.55;
 }
 .allow-value {
   display: inline-flex;
@@ -1532,34 +1582,64 @@ td .cell-sub {
 .allow-form input:focus {
   box-shadow: inset 0 0 0 1.5px var(--gold);
 }
+/* Off is a live control too: an outlined track with a dark knob, never a faded grey */
 .switch {
   position: relative;
   width: 36px;
   height: 20px;
   flex: none;
   border-radius: 10px;
-  background: var(--line-strong);
-  transition: background-color 160ms var(--ease);
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px var(--text-2);
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease),
+    box-shadow 160ms var(--ease);
 }
 .switch span {
   position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-2);
+  transition:
+    transform 160ms var(--ease),
+    background-color 160ms var(--ease);
+}
+.switch:hover {
+  box-shadow: inset 0 0 0 1.5px var(--text);
+}
+.switch[aria-checked="true"] {
+  background: var(--ink);
+  box-shadow: none;
+}
+.switch[aria-checked="true"] span {
   top: 2px;
   left: 2px;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgba(28, 27, 25, 0.2);
-  transition: transform 160ms var(--ease);
-}
-.switch[aria-checked="true"] {
-  background: var(--ink);
-}
-.switch[aria-checked="true"] span {
   transform: translateX(16px);
 }
+.switch:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 .switch:disabled {
-  opacity: 0.5;
+  cursor: progress;
+}
+.switch-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.switch-field .is-off {
+  color: var(--text-2);
 }
 .ai-setting {
   display: flex;

@@ -11,9 +11,10 @@ export function serviceDetails(prices: PriceList, checkPrice?: number): ServiceD
   const service = (name: string) => priceByName(prices.services, name);
   const draftTimes = prices.packages.map((p) => p.firstDraftHours);
   const revisionRange = prices.packages.map(revisionsLabel);
-  const order = (name?: string) => {
+  // details: open the order card on its last step (details and CV), since the service is chosen
+  const order = (name?: string, { details = false } = {}) => {
     const picked = name && prices.services.find((item) => item.name === name);
-    return picked ? `/order?service=${picked.id}` : "/order";
+    return picked ? `/order?service=${picked.id}${details ? "&go=details" : ""}` : "/order";
   };
 
   return [
@@ -77,7 +78,7 @@ export function serviceDetails(prices: PriceList, checkPrice?: number): ServiceD
         { label: "From", value: from(service("LinkedIn profile revamp")), href: "/pricing" },
         { label: "Turnaround", value: "3 days" },
       ],
-      action: { label: "Revamp my LinkedIn", href: order("LinkedIn profile revamp") },
+      action: { label: "Revamp my LinkedIn", href: order("LinkedIn profile revamp", { details: true }) },
       image: { src: "/img/photos/service-linkedin.jpg", alt: "Professional updating an online profile at his desk" },
       flip: true,
     },

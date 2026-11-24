@@ -6,6 +6,8 @@ import { assertCan } from "@/modules/team/permissions";
 import { findOpenRequest } from "./token-requests.repo";
 import {
   MEMBER_AI_MESSAGE,
+  MONTHLY_TOKENS,
+  monthlyGrant,
   memberAiStop,
   parseAllowance,
   tokenBalance,
@@ -15,13 +17,18 @@ import {
 } from "./tokens";
 import * as repo from "./tokens.repo";
 
-export async function getTokenBalance(tenantId: string): Promise<TokenBalance> {
-  const [remaining, granted, settings] = await Promise.all([
+// The business's tokens. The first look in a new month gives it that month's tokens.
+export async function getTokenBalance(tenantId: string, now: Date = new Date()): Promise<TokenBalance> {
+  const monthStart = periodStart("month", now)!;
+  const grant = monthlyGrant(tenantId, monthStart);
+  const monthly = await repo.grantMonthlyTokens(tenantId, { ...grant, tokens: MONTHLY_TOKENS, at: monthStart });
+  const [remaining, carriedOver, added, settings] = await Promise.all([
     repo.sumTokenDeltas(tenantId),
-    repo.sumGrantedTokens(tenantId),
+    repo.sumDeltasBefore(tenantId, monthStart),
+    repo.sumAddedSince(tenantId, monthStart, grant.id),
     findSettings(tenantId),
   ]);
-  return tokenBalance(remaining, granted, settings.aiWarnPct, settings.aiPaused);
+  return tokenBalance(remaining, { carriedOver, monthly, added }, settings.aiWarnPct, settings.aiPaused);
 }
 
 // Whether this person may run the AI right now (the business's balance is checked separately):
@@ -47,7 +54,7 @@ export async function loadAiPage(member: CurrentMember, now: Date = new Date()) 
   const tenantId = member.tenant.id;
   const monthStart = periodStart("month", now)!;
   const [balance, settings, byFeature, usage, runs, added, request, team] = await Promise.all([
-    getTokenBalance(tenantId),
+    getTokenBalance(tenantId, now),
     findSettings(tenantId),
     repo.sumUsageByFeature(tenantId, monthStart),
     repo.findUsageSince(tenantId, monthStart),

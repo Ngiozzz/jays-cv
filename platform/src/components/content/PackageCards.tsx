@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { formatNumber } from "@/lib/money";
 import { orderHref } from "@/modules/content/packages";
+import { DraftByDate } from "./DraftByDate";
+import type { Include } from "./package-includes";
 
 // The fields a price card shows; the admin's live preview passes an unsaved package in the same shape
 export type PackageCardData = {
@@ -14,13 +16,18 @@ export type PackageCardData = {
   firstDraftHours?: number;
 };
 
-type Props = { packages: (PackageCardData & { id: string })[]; showEta?: boolean };
+type Props = {
+  packages: (PackageCardData & { id: string })[];
+  showEta?: boolean;
+  // The pricing page: each card lists everything it includes, row for row with the others
+  includes?: (pkg: PackageCardData & { id: string }) => Include[];
+};
 
-export function PackageCards({ packages, showEta = false }: Props) {
+export function PackageCards({ packages, showEta = false, includes }: Props) {
   return (
-    <div className="pricing-grid">
+    <div className={includes ? "pricing-grid is-compare" : "pricing-grid"}>
       {packages.map((pkg) => (
-        <PackageCard key={pkg.id} pkg={pkg} showEta={showEta} />
+        <PackageCard key={pkg.id} pkg={pkg} showEta={showEta} includes={includes?.(pkg)} />
       ))}
     </div>
   );
@@ -33,14 +40,24 @@ function DraftBy({ hours }: { hours: number }) {
     <div className="eta">
       <span>Order today</span>
       <i />
-      <b data-draft-hours={hours}>Draft within {hours} hours</b>
+      <DraftByDate hours={hours} />
     </div>
   );
 }
 
-export function PackageCard({ pkg, showEta = false }: { pkg: PackageCardData; className?: string; showEta?: boolean }) {
+type CardProps = { pkg: PackageCardData; showEta?: boolean; includes?: Include[] };
+
+// With includes, the card spans one grid row per part (head, price, delivery, each include, button)
+// so the rows of all three cards line up; see .pricing-grid.is-compare
+const HEAD_ROWS = 4;
+const FOOT_ROWS = 2;
+
+export function PackageCard({ pkg, showEta = false, includes }: CardProps) {
   return (
-    <article className={pkg.popular ? "price-card main" : "price-card"}>
+    <article
+      className={pkg.popular ? "price-card main" : "price-card"}
+      style={includes ? { gridRow: `span ${HEAD_ROWS + includes.length + FOOT_ROWS}` } : undefined}
+    >
       <div className="name">
         <h3>{pkg.name}</h3>
         {pkg.popular && <small>Chosen most often</small>}
@@ -51,14 +68,29 @@ export function PackageCard({ pkg, showEta = false }: { pkg: PackageCardData; cl
         {formatNumber(pkg.price)}
       </p>
       {showEta && pkg.firstDraftHours ? <DraftBy hours={pkg.firstDraftHours} /> : <p className="once">One payment</p>}
-      <ul className="price-features">
-        {pkg.features.map((feature, i) => (
-          <li key={`${i}-${feature}`}>
-            <Icon name="check" size={16} />
-            {feature}
-          </li>
-        ))}
-      </ul>
+      {includes ? (
+        <ul className="price-includes" style={{ gridRow: `span ${includes.length}` }}>
+          {includes.map((item) => (
+            <li key={item.label} className={item.value === false ? "not" : undefined}>
+              {item.value === false ? <span className="mark" aria-hidden="true" /> : <Icon name="check" size={16} />}
+              <span>
+                {item.label}
+                {typeof item.value === "string" && <small>{item.value}</small>}
+                {item.value === false && <span className="sr-only"> (not included)</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="price-features">
+          {pkg.features.map((feature, i) => (
+            <li key={`${i}-${feature}`}>
+              <Icon name="check" size={16} />
+              {feature}
+            </li>
+          ))}
+        </ul>
+      )}
       <Link
         className={pkg.popular ? "btn btn-primary btn-block" : "btn btn-ghost btn-block"}
         href={orderHref(pkg.shortName)}

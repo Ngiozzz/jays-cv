@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CompareTable } from "@/components/content/CompareTable";
 import { FaqList } from "@/components/content/FaqList";
+import { packageIncludes } from "@/components/content/package-includes";
 import { PackageCards } from "@/components/content/PackageCards";
 import { PaymentSection } from "@/components/content/PaymentSection";
 import { CtaBand } from "@/components/site/CtaBand";
@@ -52,17 +52,14 @@ export default async function PricingPage({ params }: PageProps<"/[tenant]/prici
         title="One price, paid once"
         lead={`Pick the package that fits your career stage, pay by M-Pesa, and get your first draft within ${draftTime}. Revisions are included and there are no hidden charges.`}
       >
-        <div className="hero-plans">
-          <PackageCards packages={prices.packages} showEta />
+        <div className="hero-plans" id="plans">
+          <PackageCards
+            packages={prices.packages}
+            showEta
+            includes={(pkg) => packageIncludes(prices.packages.find((p) => p.id === pkg.id)!)}
+          />
         </div>
       </PageHero>
-
-      <section className="section" id="compare">
-        <div className="container">
-          <SectionHead title="What each package includes" />
-          <CompareTable packages={prices.packages} />
-        </div>
-      </section>
 
       <section className="section section-alt" id="individual">
         <div className="container">

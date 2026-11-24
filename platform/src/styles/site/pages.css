@@ -252,6 +252,64 @@
   color: var(--muted);
 }
 
+/* Pricing: each card lists everything it includes. Cards and their lists are subgrids, so every
+   row (price, delivery, each include, button) lines up across the three cards. */
+.pricing-grid.is-compare {
+  row-gap: 0;
+  align-items: stretch;
+}
+.pricing-grid.is-compare .price-card {
+  display: grid;
+  grid-template-rows: subgrid;
+  align-content: start;
+}
+.pricing-grid.is-compare .price-card > * {
+  min-width: 0;
+}
+.price-includes {
+  display: grid;
+  grid-template-rows: subgrid;
+  margin: 4px 0 24px;
+  font-size: 15px;
+  line-height: 22px;
+}
+.price-includes li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+.price-includes li:first-child {
+  border-top: 0;
+}
+.price-includes svg {
+  margin-top: 3px;
+  color: var(--text-2);
+}
+.price-card.main .price-includes svg {
+  color: var(--gold-ink);
+}
+.price-includes small {
+  display: block;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+}
+.price-includes li.not {
+  color: var(--muted);
+}
+.price-includes .mark {
+  width: 10px;
+  height: 1.5px;
+  margin: 11px 3px 0;
+  background: var(--line-strong);
+}
+.pricing-grid.is-compare .price-card .btn {
+  align-self: end;
+}
+
 /* Pricing: plans in the page head */
 .hero-plans {
   margin-top: 40px;
@@ -716,8 +774,13 @@
   .paybox {
     grid-template-columns: 1fr;
   }
-  .cmp {
-    min-width: 680px;
+  /* One card per row: the rows can't line up across cards any more, so space the cards apart */
+  .pricing-grid.is-compare {
+    row-gap: 16px;
+  }
+  .pricing-grid.is-compare .price-card {
+    display: block;
+    grid-row: auto !important;
   }
   .tl::before {
     left: 23px;

@@ -1,11 +1,38 @@
 // The owner sees AI as a token balance only, never as money.
 
-// paused: the platform owner switched this business's AI off from the Command Center
-export type TokenBalance = { remaining: number; granted: number; percentLeft: number; low: boolean; paused: boolean };
+// Every business starts each month (Nairobi time) with this many tokens. Tokens left from earlier
+// months are not lost: they carry over on top, and the AI page shows them apart.
+export const MONTHLY_TOKENS = 5_000_000;
 
-export function tokenBalance(remaining: number, granted: number, warnPct: number, paused = false): TokenBalance {
-  const percentLeft = granted > 0 ? Math.max(0, Math.round((remaining / granted) * 100)) : 0;
-  return { remaining, granted, percentLeft, low: percentLeft <= warnPct, paused };
+// This month's tokens, split by where they came from
+export type TokenMonth = { carriedOver: number; monthly: number; added: number };
+
+// paused: the platform owner switched this business's AI off from the Command Center.
+// granted: everything available this month (carried over + the monthly tokens + top-ups), so
+// "% left" is about this month.
+export type TokenBalance = TokenMonth & {
+  remaining: number;
+  granted: number;
+  percentLeft: number;
+  low: boolean;
+  paused: boolean;
+};
+
+export function tokenBalance(remaining: number, month: TokenMonth, warnPct: number, paused = false): TokenBalance {
+  const carriedOver = Math.max(0, month.carriedOver);
+  const granted = carriedOver + month.monthly + month.added;
+  const percentLeft = granted > 0 ? Math.min(100, Math.max(0, Math.round((remaining / granted) * 100))) : 0;
+  return { remaining, granted, percentLeft, low: percentLeft <= warnPct, paused, ...month, carriedOver };
+}
+
+// The ledger entry holding one month's tokens. Its id is fixed per business and month, so the
+// grant can only ever be made once, however many requests race to make it.
+export function monthlyGrant(tenantId: string, monthStart: Date) {
+  // monthStart is midnight in Nairobi (UTC+3)
+  const local = new Date(monthStart.getTime() + 3 * 3_600_000);
+  const key = local.toISOString().slice(0, 7);
+  const name = local.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+  return { id: `monthly-${tenantId}-${key}`, note: `Monthly tokens for ${name}` };
 }
 
 // The AI may run only while it isn't paused and tokens are left

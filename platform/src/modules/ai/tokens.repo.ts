@@ -6,13 +6,45 @@ export async function sumTokenDeltas(tenantId: string): Promise<number> {
   return result._sum.delta ?? 0;
 }
 
-// Everything given, less any tokens taken back (a minus correction), so "% left" stays right
-export async function sumGrantedTokens(tenantId: string): Promise<number> {
+// Everything left from before a date (what carries over into the month that starts then)
+export async function sumDeltasBefore(tenantId: string, before: Date): Promise<number> {
   const result = await tenantDb(tenantId).tokenLedgerEntry.aggregate({
-    where: { OR: [{ delta: { gt: 0 } }, { kind: "ADJUSTMENT" }] },
+    where: { createdAt: { lt: before } },
     _sum: { delta: true },
   });
   return result._sum.delta ?? 0;
+}
+
+// Tokens given since a date other than one entry (the monthly grant), less any taken back
+export async function sumAddedSince(tenantId: string, since: Date, exceptId: string): Promise<number> {
+  const result = await tenantDb(tenantId).tokenLedgerEntry.aggregate({
+    where: {
+      createdAt: { gte: since },
+      id: { not: exceptId },
+      OR: [{ kind: { in: ["TOP_UP", "GRANT"] } }, { kind: "ADJUSTMENT" }],
+    },
+    _sum: { delta: true },
+  });
+  return result._sum.delta ?? 0;
+}
+
+// The month's tokens, given once: the fixed id makes a second attempt fail instead of doubling them
+export async function grantMonthlyTokens(
+  tenantId: string,
+  grant: { id: string; note: string; tokens: number; at: Date },
+): Promise<number> {
+  const scoped = tenantDb(tenantId);
+  const existing = await scoped.tokenLedgerEntry.findUnique({ where: { id: grant.id }, select: { delta: true } });
+  if (existing) return existing.delta;
+  try {
+    await scoped.tokenLedgerEntry.create({
+      data: { id: grant.id, tenantId, kind: "GRANT", delta: grant.tokens, note: grant.note, createdAt: grant.at },
+    });
+  } catch (error) {
+    // Another request gave them a moment ago
+    if ((error as { code?: string }).code !== "P2002") throw error;
+  }
+  return grant.tokens;
 }
 
 export function recordUsage(

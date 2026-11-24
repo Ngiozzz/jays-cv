@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CountUp } from "./CountUp";
 import type { HomepageStat } from "@/modules/content/content.schema";
 
 type Props = { headline: string; highlight: string; lead: string; draftTime: string; stats: HomepageStat[] };
@@ -34,7 +35,9 @@ export function HomeHero({ headline, highlight, lead, stats }: Props) {
           <div className="container facts-inner">
             {stats.map((stat) => (
               <div key={stat.label} className="fact">
-                <b className="num">{stat.value}</b>
+                <b className="num">
+                  <CountUp value={stat.value} />
+                </b>
                 <span>{stat.label}</span>
               </div>
             ))}

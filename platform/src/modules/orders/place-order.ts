@@ -38,6 +38,19 @@ export function kenyanMobile(input: string): string | null {
 
 const optionalText = (max: number, message: string) => z.string().trim().max(max, message).default("");
 
+// A LinkedIn profile however it's pasted ("linkedin.com/in/faith", "www.linkedin.com/in/faith/",
+// a full https link, or the phone app's ke.linkedin.com link), stored as one https link
+export function linkedinProfile(input: string): string | null {
+  const text = input.trim().replace(/^https?:\/\//i, "");
+  const match = /^(?:[a-z]{2,3}\.)?linkedin\.com\/((?:in|pub)\/[^\s/?#]{2,100})\/?(?:[?#].*)?$/i.exec(text);
+  return match ? `https://www.linkedin.com/${match[1]}` : null;
+}
+
+// Packages and services that include a LinkedIn revamp, so the order card asks for the profile
+export function includesLinkedin(itemName: string): boolean {
+  return /linkedin|executive/i.test(itemName);
+}
+
 export const orderDetailsSchema = z.object({
   item: z.string().refine((value) => parseItem(value) !== null, "Choose a package or service"),
   need: z.enum(NEEDS.map((need) => need.key) as [NeedKey, ...NeedKey[]]).optional(),
@@ -60,6 +73,19 @@ export const orderDetailsSchema = z.object({
   // A CV tailored to a job: the job page it was ordered from, or the advert pasted in
   jobSlug: optionalText(200, "Choose the job again from the jobs board"),
   jobAdvert: optionalText(5000, "Keep the job advert under 5,000 characters (or paste a link to it)"),
+  linkedinUrl: z
+    .string()
+    .default("")
+    .transform((value, ctx) => {
+      if (value.trim() === "") return "";
+      const profile = linkedinProfile(value);
+      if (!profile)
+        ctx.addIssue({
+          code: "custom",
+          message: "Paste the link to your profile, for example linkedin.com/in/your-name",
+        });
+      return profile ?? "";
+    }),
   noCv: z.boolean(),
   whatsappUpdates: z.boolean(),
 });
@@ -78,6 +104,7 @@ export function orderFormToInput(form: FormData): unknown {
     notes: text("notes"),
     jobSlug: text("jobSlug"),
     jobAdvert: text("jobAdvert"),
+    linkedinUrl: text("linkedinUrl"),
     noCv: form.get("noCv") === "on",
     whatsappUpdates: form.get("whatsappUpdates") === "on",
   };

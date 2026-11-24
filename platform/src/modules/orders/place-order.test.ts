@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   cvProblem,
+  includesLinkedin,
   kenyanMobile,
+  linkedinProfile,
   orderDetailsSchema,
   orderFormToInput,
   parseItem,
@@ -97,5 +99,31 @@ describe("tailoringProblems", () => {
     expect(tailoringProblems({ ...order, hasCv: false, fromJobPage: true })).toEqual({
       cv: "Please upload the CV you'd like tailored.",
     });
+  });
+});
+
+describe("linkedinProfile", () => {
+  it("accepts a profile however it's pasted and stores one https link", () => {
+    expect(linkedinProfile("linkedin.com/in/faith-njeri")).toBe("https://www.linkedin.com/in/faith-njeri");
+    expect(linkedinProfile(" https://www.linkedin.com/in/faith-njeri/ ")).toBe(
+      "https://www.linkedin.com/in/faith-njeri",
+    );
+    expect(linkedinProfile("https://ke.linkedin.com/in/faith-njeri?utm_source=share")).toBe(
+      "https://www.linkedin.com/in/faith-njeri",
+    );
+  });
+
+  it("refuses anything that isn't a LinkedIn profile", () => {
+    expect(linkedinProfile("faith njeri")).toBeNull();
+    expect(linkedinProfile("https://evil.example/linkedin.com/in/x")).toBeNull();
+    expect(linkedinProfile("https://www.linkedin.com/company/safaricom")).toBeNull();
+  });
+});
+
+describe("includesLinkedin", () => {
+  it("asks for the profile for a LinkedIn revamp or the Executive package", () => {
+    expect(includesLinkedin("LinkedIn profile revamp")).toBe(true);
+    expect(includesLinkedin("Executive package")).toBe(true);
+    expect(includesLinkedin("Professional package")).toBe(false);
   });
 });

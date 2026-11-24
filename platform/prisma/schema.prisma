@@ -388,6 +388,8 @@ model Order {
   jobId               String?
   job                 Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
   jobAdvert           String?
+  // For a LinkedIn revamp: the client's current profile, so the writer can start from it
+  linkedinUrl         String?
   noCv                Boolean     @default(false)
   source              String      @default("website")
   // Only a hash of the private tracking-link token is stored, so a database leak can't reveal links

@@ -92,6 +92,7 @@ export function findOrderDetail(tenantId: string, number: number) {
       experience: true,
       notes: true,
       jobAdvert: true,
+      linkedinUrl: true,
       job: { select: { slug: true, title: true, company: true } },
       noCv: true,
       source: true,

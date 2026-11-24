@@ -95,6 +95,16 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[re
                   <dt>Experience</dt>
                   <dd>{order.brief.experience || "Not given"}</dd>
                 </div>
+                {order.brief.linkedinUrl && (
+                  <div className="wide">
+                    <dt>Current LinkedIn profile</dt>
+                    <dd>
+                      <a href={order.brief.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                        {order.brief.linkedinUrl.replace(/^https:\/\/www\./, "")} ↗
+                      </a>
+                    </dd>
+                  </div>
+                )}
                 <div className="wide">
                   <dt>Client&apos;s notes</dt>
                   <dd>{order.brief.notes || "None"}</dd>

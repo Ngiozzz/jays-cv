@@ -230,6 +230,34 @@
   display: grid;
   gap: 8px;
 }
+/* The CV upload, with the LinkedIn profile above it for a LinkedIn revamp */
+.od-upload {
+  display: grid;
+  gap: 16px;
+  scroll-margin: 96px;
+}
+.od-input-icon {
+  position: relative;
+  display: block;
+}
+.od-input-icon svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: var(--text-2);
+  pointer-events: none;
+}
+.od-field .od-input-icon input {
+  padding-left: 42px;
+}
+.od-hint {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+}
 .od-field label {
   font-size: 14px;
   font-weight: 500;

@@ -119,17 +119,22 @@ function PersonRow({ person }: { person: Person }) {
         {person.owner ? (
           <span className="cell-sub">Always</span>
         ) : (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={person.aiEnabled}
-            aria-label={`AI for ${person.name}`}
-            className="switch"
-            onClick={toggle}
-            disabled={pending}
-          >
-            <span />
-          </button>
+          <span className="switch-field">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={person.aiEnabled}
+              aria-label={`AI for ${person.name}`}
+              className="switch"
+              onClick={toggle}
+              disabled={pending}
+            >
+              <span />
+            </button>
+            <span className={person.aiEnabled ? undefined : "is-off"} aria-hidden="true">
+              {person.aiEnabled ? "On" : "Off"}
+            </span>
+          </span>
         )}
       </td>
     </tr>

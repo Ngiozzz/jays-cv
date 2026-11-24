@@ -151,6 +151,7 @@ export async function placeOrder(
             targetRole: details.targetRole || job?.title || null,
             jobId: job?.id ?? null,
             jobAdvert: needsJobAdvert ? details.jobAdvert || null : null,
+            linkedinUrl: details.linkedinUrl || null,
             notes: notes || null,
             noCv: details.noCv && !file,
             source: "website",
